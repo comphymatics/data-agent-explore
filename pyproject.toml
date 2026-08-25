@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "data-agent-explore-complete"
+version = "1.0.0"
+requires-python = ">=3.10"
+dependencies = [
+  "openpyxl>=3.1",
+  "python-docx>=1.1",
+  "PyYAML>=6.0"
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[tool.setuptools.packages.find]
+include = ["enterprise_data_context*", "explore_agent*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

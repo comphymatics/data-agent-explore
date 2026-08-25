@@ -1,0 +1,12 @@
+# Design Decisions
+- Context-first, not ontology-first.
+- Machine representation != LLM representation.
+- Rich Context Page is the local reasoning unit.
+- Context Bundle is the retrieval unit.
+- Parser-first, LLM-assisted, Agent-evolved.
+- Canonical Resolution before Fusion.
+- Section-level Fusion with source authority.
+- Typed references are resolved through a Canonical Registry.
+- Page-level retrieval first; Element-level expansion second.
+- Partial knowledge is a normal operating condition.
+- Environment Binding is late/runtime binding.
