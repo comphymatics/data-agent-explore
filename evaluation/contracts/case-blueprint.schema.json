@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://data-agent.local/evaluation/case-blueprint.schema.json",
+  "title": "Enterprise Context Case Construction Blueprint",
+  "type": "object",
+  "required": [
+    "blueprint_id",
+    "generation_version",
+    "automation_status",
+    "candidate_case",
+    "proposed_required_evidence",
+    "evidence_preview",
+    "oracle_required",
+    "review_checks"
+  ],
+  "properties": {
+    "blueprint_id": {"type": "string", "pattern": "^bp-"},
+    "generation_version": {"const": "case-constructor/v1"},
+    "automation_status": {"const": "CANDIDATE"},
+    "candidate_case": {"type": "object"},
+    "proposed_required_evidence": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^ev-"},
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "evidence_preview": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["evidence_id", "statement", "source_id"],
+        "properties": {
+          "evidence_id": {"type": "string", "pattern": "^ev-"},
+          "statement": {"type": "string", "minLength": 1},
+          "source_id": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "oracle_required": {"type": "boolean"},
+    "review_checks": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "additionalProperties": false
+}

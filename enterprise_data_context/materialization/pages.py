@@ -4,8 +4,11 @@ ORDER = [
     ("classification.layer","Layer"),("topic_domain","Topic Domain"),("topic","Topic"),
     ("primary_objects","Primary Business Objects"),("related_objects","Related Business Objects"),
     ("grain","Grain"),("dimensions","Dimensions"),("metrics","Metrics"),
-    ("analysis_purposes","Analysis Purposes"),("important_fields","Important Fields"),
-    ("formula","Formula"),("constraints","Constraints")
+    ("analysis_purposes","Analysis Purposes"),
+    ("formula","Formula"),("customer_value","Customer Value"),
+    ("measurement_point","Measurement Point"),("interfaces","Interfaces"),
+    ("probes","Probes"),("semantic_reference.sid_domain","SID Domain"),
+    ("semantic_reference.sid_abe","SID ABE"),("constraints","Constraints")
 ]
 
 def fmt(v):
@@ -25,11 +28,36 @@ class PageMaterializer:
         confirmed=[r for r in ctx.references if r.status=="CONFIRMED" and r.target_path]
         if confirmed:
             lines += ["","## References"] + [f"- {r.relation}: {r.target_path}" for r in confirmed]
-        facets={k:ctx.sections.get(k) for k in ("classification.layer","topic_domain","topic","grain","primary_objects") if ctx.sections.get(k)}
+        facet_sections={
+            "layer":"classification.layer", "topic_domain":"topic_domain", "topic":"topic",
+            "grain":"grain", "primary_objects":"primary_objects",
+            "sid_domain":"semantic_reference.sid_domain",
+        }
+        facets={facet:ctx.sections.get(section) for facet,section in facet_sections.items() if ctx.sections.get(section)}
         return ContextPage(
-            ctx.canonical_id,ctx.path,ctx.context_type,ctx.name,ctx.aliases,facets,
-            l0,"\n".join(lines),dict(ctx.sections),
-            [{"relation":r.relation,"raw_target":r.raw_target,"target_path":r.target_path,
-              "status":r.status,"confidence":r.confidence} for r in ctx.references],
-            dict(ctx.coverage),dict(ctx.environment_binding)
+            canonical_id=ctx.canonical_id,
+            path=ctx.path,
+            context_type=ctx.context_type,
+            name=ctx.name,
+            aliases=list(ctx.aliases),
+            facets=facets,
+            l0=l0,
+            l1="\n".join(lines),
+            l2=dict(ctx.sections),
+            references=[
+                {
+                    "relation":r.relation,
+                    "raw_target":r.raw_target,
+                    "target_path":r.target_path,
+                    "status":r.status,
+                    "confidence":r.confidence,
+                }
+                for r in ctx.references
+            ],
+            coverage=dict(ctx.coverage),
+            environment_binding=dict(ctx.environment_binding),
+            identity_status=ctx.identity_status,
+            section_status=dict(ctx.section_status),
+            candidates={k:list(v) for k,v in ctx.candidate_sections.items()},
+            conflicts=list(ctx.conflicts),
         )

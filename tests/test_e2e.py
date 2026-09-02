@@ -20,7 +20,9 @@ def test_e2e(tmp_path):
     bundle=ExploreAgent(runtime.retrieval).explore("RSRP 有哪些现有模型可以提供？")
     assert any(x["name"]=="RSRP" for x in bundle.primary_contexts)
     assert any(x["name"]=="LTE Periodic MR" for x in bundle.primary_contexts)
-    assert bundle.environment["binding_required"] is False
+    assert bundle.environment["binding_required"] is True
+    assert bundle.environment["availability_state"] == "UNSUPPORTED"
+    assert "environment_availability" in bundle.missing_context
 
 def test_partial_knowledge_is_explicit(tmp_path):
     k=tmp_path/"kpi.xlsx"; wb=Workbook(); ws=wb.active

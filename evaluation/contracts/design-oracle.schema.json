@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://data-agent.local/evaluation/design-oracle.schema.json",
+  "title": "Hidden Model Design Oracle",
+  "type": "object",
+  "required": [
+    "case_id",
+    "target_model",
+    "design_status",
+    "grain",
+    "keys",
+    "schema_elements",
+    "sources",
+    "joins",
+    "processing_steps",
+    "missing_decisions",
+    "reviewer_ids"
+  ],
+  "properties": {
+    "case_id": {"type": "string", "pattern": "^case-"},
+    "target_model": {
+      "type": "object",
+      "required": ["model_id", "name", "description"],
+      "properties": {
+        "model_id": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "design_status": {"enum": ["APPROVED", "PARTIAL", "BLOCKED"]},
+    "grain": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "keys": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "schema_elements": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/schemaElement"}
+    },
+    "sources": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "joins": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/join"}
+    },
+    "processing_steps": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/processingStep"}
+    },
+    "required_decisions": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true,
+      "default": []
+    },
+    "missing_decisions": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "reviewer_ids": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "schemaElement": {
+      "type": "object",
+      "required": ["name", "role", "description", "evidence_ids"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "role": {"enum": ["key", "dimension", "measure", "audit", "partition"]},
+        "data_type": {"type": ["string", "null"]},
+        "nullable": {"type": ["boolean", "null"]},
+        "description": {"type": "string", "minLength": 1},
+        "evidence_ids": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^ev-"},
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "join": {
+      "type": "object",
+      "required": ["left", "right", "join_type", "condition", "evidence_ids"],
+      "properties": {
+        "left": {"type": "string", "minLength": 1},
+        "right": {"type": "string", "minLength": 1},
+        "join_type": {"enum": ["inner", "left", "right", "full", "lookup", "unknown"]},
+        "condition": {"type": "string", "minLength": 1},
+        "evidence_ids": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^ev-"},
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "processingStep": {
+      "type": "object",
+      "required": ["step_id", "step_type", "description", "evidence_ids"],
+      "properties": {
+        "step_id": {"type": "string", "minLength": 1},
+        "step_type": {
+          "enum": ["source", "filter", "join", "derive", "aggregate", "deduplicate", "quality", "publish"]
+        },
+        "description": {"type": "string", "minLength": 1},
+        "evidence_ids": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^ev-"},
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

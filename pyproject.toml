@@ -9,14 +9,22 @@ requires-python = ">=3.10"
 dependencies = [
   "openpyxl>=3.1",
   "python-docx>=1.1",
-  "PyYAML>=6.0"
+  "PyYAML>=6.0",
+  "jsonschema>=4.23"
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
 
+[project.scripts]
+data-context-mcp = "enterprise_data_context.adapters.mcp_stdio:main"
+
 [tool.setuptools.packages.find]
-include = ["enterprise_data_context*", "explore_agent*"]
+include = ["enterprise_data_context*", "explore_agent*", "evaluation*", "contracts*"]
+
+[tool.setuptools.package-data]
+enterprise_data_context = ["catalogs/*.json"]
+contracts = ["*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

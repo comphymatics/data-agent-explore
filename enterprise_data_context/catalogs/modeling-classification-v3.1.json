@@ -1,0 +1,118 @@
+{
+  "catalog_version": "modeling-classification-3.1",
+  "formal_layers": ["ODS", "SDL", "ODI", "ADS"],
+  "source": {
+    "title": "数据模型设计和开发规范3.1",
+    "path": "source-materials/数据模型设计和开发规范3.1.md",
+    "sections": ["模型分层分域规范", "统一命名规范"]
+  },
+  "layers": {
+    "ODS": {
+      "name": "源数据标准层",
+      "aliases": ["ODS", "源数据标准层", "Original Data Standard", "Original Data Standard Model"],
+      "approximate_aliases": [],
+      "domain_policy": "source_type"
+    },
+    "SDL": {
+      "name": "主题数据联结层",
+      "aliases": ["SDL", "主题数据联结层", "主题联结层", "Subject Data Linkage", "Subject Data Linkage Model", "DWD"],
+      "approximate_aliases": ["DWD"],
+      "domain_policy": "controlled_topic"
+    },
+    "ODI": {
+      "name": "业务对象洞察层",
+      "aliases": ["ODI", "业务对象洞察层", "对象洞察层", "Object Data Insight", "Object Data Insight Model", "DWS"],
+      "approximate_aliases": ["DWS"],
+      "domain_policy": "controlled_object"
+    },
+    "ADS": {
+      "name": "业务应用层",
+      "aliases": ["ADS", "业务应用层", "应用层", "Application Data Store", "Application Data"],
+      "approximate_aliases": [],
+      "domain_policy": "application_scenario"
+    }
+  },
+  "domains": {
+    "SDL": {
+      "性能": {
+        "english": "Performance",
+        "code": "PERF",
+        "aliases": ["性能", "性能域", "Performance", "PERF"],
+        "topics": ["2/3G CS", "IMS", "2/3G PS", "4G PS", "5G PS", "漫游", "无线性能", "无线覆盖", "无线话务", "终端性能", "家宽终端质量", "2H数据质量", "2H语音质量", "宽带接入质量", "家宽宽带质量", "家宽设备质量", "家宽平台质量"],
+        "topic_aliases": {"Wireless Coverage": "无线覆盖", "Wireless Performance": "无线性能"}
+      },
+      "业务": {
+        "english": "Service",
+        "code": "SER",
+        "aliases": ["业务", "业务域", "Service", "SER"],
+        "topics": ["2/3G语音", "VoLTE", "VoNR", "CS FB", "EPS FB", "WEB", "视频", "OTT", "Cloud X", "PLC", "视频回传", "IoT", "ToB管道", "家宽宽带", "家宽IPTV", "家宽质差", "家宽劣化"],
+        "topic_aliases": {}
+      },
+      "用户": {
+        "english": "User",
+        "code": "USER",
+        "aliases": ["用户", "用户域", "User", "USER"],
+        "topics": ["投诉", "VIP", "CEI", "NPS", "用户行为", "用户覆盖", "家宽用户", "质差用户"],
+        "topic_aliases": {}
+      },
+      "事件": {
+        "english": "Incident",
+        "code": "INC",
+        "aliases": ["事件", "事件域", "Incident", "INC"],
+        "topics": ["用户事件", "网络事件", "业务事件", "终端事件"],
+        "topic_aliases": {"Network Incident": "网络事件"}
+      },
+      "规划": {
+        "english": "Planning",
+        "code": "PLAN",
+        "aliases": ["规划", "规划域", "Planning", "PLAN"],
+        "topics": [],
+        "topic_aliases": {},
+        "catalog_status": "PARTIAL"
+      },
+      "运维": {
+        "english": "Maintenance",
+        "code": "MAIN",
+        "aliases": ["运维", "运维域", "Maintenance", "MAIN"],
+        "topics": ["割接", "变更", "日常"],
+        "topic_aliases": {}
+      },
+      "资源": {
+        "english": "Resource",
+        "code": "RES",
+        "aliases": ["资源", "资源域", "Resource", "RES"],
+        "topics": ["GIS地图", "工参", "协议库", "码号资源", "终端库", "区域配置", "网元配置", "物理站点", "物理机房", "固网设备", "传输设备", "数通设备", "NFV设备", "家宽设备", "无线资源", "核心网设备", "5GC设备"],
+        "topic_aliases": {}
+      }
+    },
+    "ODI": {
+      "用户对象": {
+        "english": "User Object",
+        "code": "USER",
+        "aliases": ["用户对象", "User Object"],
+        "topics": ["个人用户"],
+        "topic_aliases": {"Subscriber": "个人用户"}
+      },
+      "网络对象": {
+        "english": "Network Object",
+        "code": "NET",
+        "aliases": ["网络对象", "Network Object"],
+        "topics": ["小区", "基站", "区域", "网元", "网格"],
+        "topic_aliases": {"Cell": "小区", "Site": "基站", "Network Element": "网元", "Grid": "网格"}
+      },
+      "业务对象": {
+        "english": "Service Object",
+        "code": "SER",
+        "aliases": ["业务对象", "Service Object"],
+        "topics": ["应用业务", "家宽业务", "IPTV业务"],
+        "topic_aliases": {"Application Service": "应用业务"}
+      }
+    }
+  },
+  "review_items": [
+    {
+      "code": "planning_topics_ambiguous",
+      "description": "规范将楼宇、敏捷扩容、智能洞察列在事件域，但描述为规划数据；未自动归入规划域。"
+    }
+  ]
+}

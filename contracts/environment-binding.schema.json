@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/contracts/environment-binding.schema.json",
+  "title": "Normalized Environment Binding Result",
+  "type": "object",
+  "required": [
+    "binding_required",
+    "binding_status",
+    "availability_state",
+    "provider",
+    "environment_id",
+    "capability_revision",
+    "snapshot_token",
+    "captured_at",
+    "operations",
+    "asset_types",
+    "matched_assets",
+    "coverage",
+    "warnings",
+    "cursor",
+    "truncated"
+  ],
+  "properties": {
+    "binding_required": {"type": "boolean"},
+    "binding_status": {
+      "enum": [
+        "not_required",
+        "resolved",
+        "partial",
+        "not_found_confirmed",
+        "unsupported",
+        "unavailable",
+        "truncated"
+      ]
+    },
+    "availability_state": {
+      "enum": [
+        "FOUND",
+        "PARTIAL",
+        "NOT_FOUND_CONFIRMED",
+        "UNSUPPORTED",
+        "UNAVAILABLE",
+        "TRUNCATED"
+      ]
+    },
+    "provider": {"type": ["string", "null"]},
+    "environment_id": {"type": ["string", "null"]},
+    "capability_revision": {"type": ["string", "null"]},
+    "snapshot_token": {"type": ["string", "null"]},
+    "captured_at": {"type": ["string", "null"]},
+    "operations": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "asset_types": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "matched_assets": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/environmentAsset"}
+    },
+    "coverage": {"type": "object", "additionalProperties": {"type": "boolean"}},
+    "warnings": {"type": "array", "items": {"$ref": "#/$defs/warning"}},
+    "cursor": {"type": ["string", "null"]},
+    "truncated": {"type": "boolean"}
+  },
+  "$defs": {
+    "environmentAsset": {
+      "type": "object",
+      "required": [
+        "id",
+        "type",
+        "provider_type",
+        "code",
+        "name",
+        "description",
+        "aliases",
+        "domain",
+        "attributes",
+        "score",
+        "matched_by",
+        "knowledge_layer",
+        "assertion_status",
+        "evidence"
+      ],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "type": {"type": "string", "minLength": 1},
+        "provider_type": {"type": "string", "minLength": 1},
+        "code": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "description": {"type": "string"},
+        "aliases": {"type": "array", "items": {"type": "string"}},
+        "domain": {"type": ["string", "null"]},
+        "attributes": {"type": "object"},
+        "score": {"type": "number"},
+        "matched_by": {"type": "array", "items": {"type": "string"}},
+        "knowledge_layer": {"const": "ENVIRONMENT"},
+        "assertion_status": {"enum": ["EXPLICIT", "DERIVED", "CANDIDATE"]},
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["provider", "environment_id", "captured_at", "snapshot_token", "provider_refs"],
+            "properties": {
+              "provider": {"type": "string"},
+              "environment_id": {"type": ["string", "null"]},
+              "captured_at": {"type": "string"},
+              "snapshot_token": {"type": ["string", "null"]},
+              "provider_refs": {"type": "array", "items": {"type": "string"}}
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "warning": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": {"type": "string"},
+        "message": {"type": "string"}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

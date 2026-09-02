@@ -7,6 +7,7 @@ ContextType = Literal[
     "metric", "dimension", "logical-model", "physical-model", "unknown"
 ]
 RefStatus = Literal["CONFIRMED", "CANDIDATE", "UNRESOLVED"]
+ProvenanceStatus = Literal["EXPLICIT", "DERIVED", "INFERRED", "CANDIDATE"]
 
 @dataclass
 class SourceLocation:
@@ -68,6 +69,7 @@ class ContextFragment:
     evidence: list[Evidence] = field(default_factory=list)
     source_type: str = "unknown"
     confidence: float = 1.0
+    status: ProvenanceStatus = "EXPLICIT"
 
 @dataclass
 class CanonicalContext:
@@ -76,7 +78,11 @@ class CanonicalContext:
     name: str
     path: str
     aliases: list[str] = field(default_factory=list)
+    identity_hints: dict[str, str] = field(default_factory=dict)
+    identity_status: ProvenanceStatus = "EXPLICIT"
     sections: dict[str, Any] = field(default_factory=dict)
+    section_status: dict[str, ProvenanceStatus] = field(default_factory=dict)
+    candidate_sections: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
     references: list[TypedReference] = field(default_factory=list)
     evidence: dict[str, list[Evidence]] = field(default_factory=dict)
     conflicts: list[dict[str, Any]] = field(default_factory=list)
@@ -101,6 +107,10 @@ class ContextPage:
     references: list[dict[str, Any]]
     coverage: dict[str, bool]
     environment_binding: dict[str, Any]
+    identity_status: ProvenanceStatus = "EXPLICIT"
+    section_status: dict[str, ProvenanceStatus] = field(default_factory=dict)
+    candidates: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
+    conflicts: list[dict[str, Any]] = field(default_factory=list)
 
 @dataclass
 class SearchHit:
@@ -126,6 +136,22 @@ class ContextBundle:
     missing_context: list[str]
     sources: list[dict[str, Any]]
     confidence: float
+    conflicts: list[dict[str, Any]] = field(default_factory=list)
+    candidates: list[dict[str, Any]] = field(default_factory=list)
+    warnings: list[dict[str, Any]] = field(default_factory=list)
+    truncated: bool = False
+    truncation_reasons: list[str] = field(default_factory=list)
+    index_version: str | None = None
+    policy: dict[str, Any] = field(default_factory=dict)
+    budget: dict[str, Any] = field(default_factory=dict)
+    novelty: dict[str, Any] = field(default_factory=dict)
+    selected_context_ids: list[str] = field(default_factory=list)
+    seen_context_ids: list[str] = field(default_factory=list)
+    exploration_state: dict[str, Any] = field(default_factory=dict)
+    stop_reason: str | None = None
+    reference_index_version: str | None = None
+    binding_policy_version: str | None = None
+    binding_overlay: dict[str, Any] = field(default_factory=dict)
 
 def dump(obj):
     return asdict(obj)

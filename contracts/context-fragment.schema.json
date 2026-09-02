@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://data-agent.local/contracts/context-fragment.schema.json",
+  "title": "Internal Context Fragment Compatibility Record",
+  "description": "Internal normalized IR and legacy compatibility format. It is not the external parser delivery contract; parser deliveries use template-input.schema.json.",
+  "type": "object",
+  "required": ["fragment_id", "context_type", "candidate_name", "section_type", "payload", "evidence"],
+  "properties": {
+    "fragment_id": {"type": "string", "minLength": 1},
+    "context_type": {
+      "enum": ["scenario", "topic", "analysis-purpose", "business-object", "metric", "dimension", "logical-model", "physical-model", "unknown"]
+    },
+    "candidate_name": {"type": "string", "minLength": 1},
+    "section_type": {"type": "string", "minLength": 1},
+    "payload": {},
+    "aliases": {"type": "array", "items": {"type": "string"}, "default": []},
+    "identity_hints": {"type": "object", "additionalProperties": {"type": "string"}, "default": {}},
+    "features": {"type": "object", "default": {}},
+    "source_type": {"type": "string", "default": "unknown"},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1, "default": 1},
+    "status": {"enum": ["EXPLICIT", "DERIVED", "INFERRED", "CANDIDATE"], "default": "EXPLICIT"},
+    "references": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/reference"},
+      "default": []
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/evidence"}
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "source": {
+      "type": "object",
+      "required": ["source_id", "path"],
+      "properties": {
+        "source_id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "sheet": {"type": ["string", "null"]},
+        "section": {"type": ["string", "null"]},
+        "table": {"type": ["string", "null"]},
+        "row": {"type": ["integer", "null"], "minimum": 1},
+        "column": {"type": ["integer", "null"], "minimum": 1},
+        "cell": {"type": ["string", "null"]}
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["source"],
+      "properties": {
+        "source": {"$ref": "#/$defs/source"},
+        "note": {"type": ["string", "null"]}
+      },
+      "additionalProperties": false
+    },
+    "reference": {
+      "type": "object",
+      "required": ["relation", "raw_target"],
+      "properties": {
+        "relation": {"type": "string", "minLength": 1},
+        "raw_target": {"type": "string", "minLength": 1},
+        "target_type": {"type": ["string", "null"]},
+        "status": {"enum": ["CONFIRMED", "CANDIDATE", "UNRESOLVED"], "default": "UNRESOLVED"},
+        "target_path": {"type": ["string", "null"]},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1, "default": 0},
+        "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}, "default": []}
+      },
+      "additionalProperties": false
+    }
+  }
+}

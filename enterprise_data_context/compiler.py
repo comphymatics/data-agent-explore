@@ -12,37 +12,68 @@ from .indexes.page import PageIndex
 from .indexes.element import ElementIndex
 from .graph.backend import BackendGraph
 from .quality import validate_contexts
+from .classification import normalize_context_classification
 
 class ContextCompiler:
     def __init__(self,semantic_provider=None):
         self.rule=RuleExtractor()
         self.heuristic=HeuristicExtractor()
         self.semantic=SemanticExtractor(semantic_provider)
-        self.canonical=CanonicalResolver()
-        self.merge=MergeEngine()
         self.mapper=BusinessSemanticMapper()
         self.materializer=PageMaterializer()
 
     def compile(self,sources):
-        docs=[]; fragments=[]
+        """Compatibility entrypoint: parse registered sources, then compile downstream."""
+        docs=[]
         for s in sources:
             doc=parse_document(s["id"],s["path"],s.get("type","unknown"))
             docs.append(doc)
+        return self.compile_documents(docs, sources=sources)
+
+    def compile_documents(self, documents, sources=None):
+        """Compile parser-owned DocumentIR objects without reading raw files."""
+        fragments=[]
+        for doc in documents:
             fragments += self.rule.extract(doc)
             fragments += self.heuristic.extract(doc)
             fragments += self.semantic.extract(doc)
+        return self.compile_fragments(fragments, documents=documents, sources=sources)
+
+    def compile_template_inputs(self, path):
+        """Compile the external parser's agreed Template JSON delivery."""
+        from .template_input import load_template_inputs
+
+        batch = load_template_inputs(path)
+        compiled = self.compile_fragments(batch["fragments"], sources=batch["sources"])
+        compiled["template_input_files"] = batch["files"]
+        return compiled
+
+    def compile_fragments(self, fragments, documents=None, sources=None):
+        """
+        Compile normalized internal ContextFragment IR.
+
+        External parser teams deliver the Template JSON contract consumed by
+        ``compile_template_inputs``. This lower-level entrypoint remains the internal
+        normalization boundary and a compatibility API for tests and existing callers.
+        All governed downstream behavior starts here.
+        """
+        fragments=list(fragments)
+        documents=list(documents or [])
+        canonical=CanonicalResolver()
+        merge=MergeEngine()
 
         grouped=defaultdict(list); contexts={}
         for f in fragments:
-            c=self.canonical.resolve_or_create(f)
+            c=canonical.resolve_or_create(f)
             contexts[c.canonical_id]=c
             grouped[c.canonical_id].append(f)
-            self.merge.merge(c,f)
+            merge.merge(c,f)
 
         for cid,fs in grouped.items():
             self.mapper.apply(contexts[cid],fs)
+            normalize_context_classification(contexts[cid])
 
-        rr=ReferenceResolver(self.canonical.registry)
+        rr=ReferenceResolver(canonical.registry)
         for c in contexts.values():
             rr.resolve_context(c)
             c.coverage={
@@ -62,8 +93,11 @@ class ContextCompiler:
         for p in pages: pidx.add(p); eidx.add(p)
         graph=BackendGraph().project(list(contexts.values()))
         return {
-            "documents":docs,"fragments":fragments,"contexts":list(contexts.values()),"pages":pages,
+            "documents":documents,"fragments":fragments,"contexts":list(contexts.values()),"pages":pages,
             "page_index":pidx,"element_index":eidx,"graph":graph,
             "backrefs":build_backrefs(list(contexts.values())),
-            "quality_issues":validate_contexts(list(contexts.values()))
+            "quality_issues":validate_contexts(list(contexts.values())),
+            "source_fingerprints":{
+                s["id"]: s.get("fingerprint") for s in (sources or []) if s.get("id")
+            },
         }

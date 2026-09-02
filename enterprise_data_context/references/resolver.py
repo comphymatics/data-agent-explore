@@ -8,7 +8,7 @@ class ReferenceResolver:
                 continue
             if ref.target_type:
                 target = self.registry.lookup(ref.target_type, ref.raw_target)
-                if target:
+                if target and target.identity_status in {"EXPLICIT", "DERIVED"}:
                     ref.status = "CONFIRMED"
                     ref.target_path = target.path
                     ref.confidence = 1.0
@@ -19,6 +19,8 @@ class ReferenceResolver:
 def build_backrefs(contexts):
     out={}
     for c in contexts:
+        if c.identity_status in {"INFERRED","CANDIDATE"}:
+            continue
         for r in c.references:
             if r.status=="CONFIRMED" and r.target_path:
                 out.setdefault(r.target_path,[]).append({"source":c.path,"relation":r.relation})

@@ -10,6 +10,8 @@ class BackendGraph:
 
     def project(self,contexts):
         for c in contexts:
+            if c.identity_status in {"INFERRED","CANDIDATE"}:
+                continue
             for r in c.references:
                 if r.status=="CONFIRMED" and r.target_path:
                     self.add(c.path,r.relation,r.target_path)

@@ -1,0 +1,307 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://data-agent.local/contracts/template-input.schema.json",
+  "title": "Parser Template JSON Delivery",
+  "description": "Stable cross-team parser delivery contract for the five structures under source-materials/templates. Content is data, never executable instructions.",
+  "x-contract-version": "1.0",
+  "oneOf": [
+    { "$ref": "#/$defs/presales" },
+    { "$ref": "#/$defs/kpiKqi" },
+    { "$ref": "#/$defs/tables" },
+    { "$ref": "#/$defs/modeling" },
+    { "$ref": "#/$defs/sid" }
+  ],
+  "$defs": {
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "stringArray": { "type": "array", "items": { "type": "string" } },
+    "presales": {
+      "type": "object",
+      "required": ["apps"],
+      "properties": {
+        "apps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["app_name", "features"],
+            "properties": {
+              "app_name": { "$ref": "#/$defs/nonEmptyString" },
+              "features": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["feature_name", "feature_summary", "customer_value", "feature_description"],
+                  "properties": {
+                    "feature_name": { "$ref": "#/$defs/nonEmptyString" },
+                    "feature_summary": { "type": "string" },
+                    "customer_value": { "type": "string" },
+                    "feature_description": {
+                      "type": "object",
+                      "required": ["metric_name"],
+                      "properties": { "metric_name": { "$ref": "#/$defs/stringArray" } }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "metric": {
+      "type": "object",
+      "required": ["metric_name", "metric_type", "related_counters", "related_dimensions"],
+      "properties": {
+        "metric_name": { "$ref": "#/$defs/nonEmptyString" },
+        "interface": { "type": "string" },
+        "metric_type": { "type": "string" },
+        "description": { "type": "string" },
+        "metric_group": { "type": "string" },
+        "unit": { "type": "string" },
+        "calculation_formula": { "type": "string" },
+        "related_sdr_field_formula": { "type": "string" },
+        "related_counters": { "$ref": "#/$defs/stringArray" },
+        "related_dimensions": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "counter": {
+      "type": "object",
+      "required": ["counter_name", "field", "sources", "related_dimensions"],
+      "properties": {
+        "counter_name": { "$ref": "#/$defs/nonEmptyString" },
+        "counter_name_en": { "type": "string" },
+        "description": { "type": "string" },
+        "field_description": { "type": "string" },
+        "field": {
+          "type": "object",
+          "required": ["field_name", "field_type", "data_type"],
+          "properties": {
+            "field_name": { "type": "string" },
+            "field_type": { "type": "string" },
+            "data_type": { "type": "string" }
+          }
+        },
+        "counter_formula": { "type": "string" },
+        "sources": {
+          "type": "object",
+          "required": ["original_xdr", "related_sdr", "record_origins"],
+          "properties": {
+            "original_xdr": { "$ref": "#/$defs/stringArray" },
+            "related_sdr": { "$ref": "#/$defs/stringArray" },
+            "record_origins": { "$ref": "#/$defs/stringArray" }
+          }
+        },
+        "related_dimensions": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "dimension": {
+      "type": "object",
+      "required": ["dimension_name", "sdr_name", "field_name", "data_type", "field_definition", "description"],
+      "properties": {
+        "dimension_name": { "$ref": "#/$defs/nonEmptyString" },
+        "sdr_name": { "type": "string" },
+        "field_name": { "type": "string" },
+        "data_type": { "type": "string" },
+        "field_definition": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "kpiKqi": {
+      "type": "object",
+      "required": ["metric_summaries", "counter_summaries", "dimension"],
+      "properties": {
+        "metric_summaries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["sheet_name", "summary_type", "metrics"],
+            "properties": {
+              "sheet_name": { "type": "string" },
+              "summary_type": { "type": "string" },
+              "metrics": { "type": "array", "items": { "$ref": "#/$defs/metric" } }
+            }
+          }
+        },
+        "counter_summaries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["summary_name", "summary_type", "application", "description", "counters"],
+            "properties": {
+              "summary_name": { "type": "string" },
+              "summary_type": { "type": "string" },
+              "application": { "type": "string" },
+              "description": { "type": "string" },
+              "counters": { "type": "array", "items": { "$ref": "#/$defs/counter" } }
+            }
+          }
+        },
+        "dimension": { "type": "array", "items": { "$ref": "#/$defs/dimension" } }
+      }
+    },
+    "column": {
+      "type": "object",
+      "required": ["column_name", "column_description", "data_type", "content_decription", "catagory", "corresponding_counter_or_dim", "unit", "source_columns", "processing_logic", "supported_scenarios"],
+      "properties": {
+        "column_name": { "$ref": "#/$defs/nonEmptyString" },
+        "column_description": { "type": "string" },
+        "data_type": { "type": "string" },
+        "content_decription": { "type": "string" },
+        "catagory": { "type": "string" },
+        "corresponding_counter_or_dim": { "type": "string" },
+        "unit": { "type": "string" },
+        "source_columns": { "$ref": "#/$defs/stringArray" },
+        "processing_logic": { "type": "string" },
+        "supported_scenarios": { "type": "string" }
+      }
+    },
+    "tables": {
+      "type": "object",
+      "required": ["tables"],
+      "properties": {
+        "tables": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["table_name", "table_description", "logic_model_name", "layer", "model_type", "granularity", "storage", "domain", "topic", "app_name", "source", "columns"],
+            "properties": {
+              "table_name": { "$ref": "#/$defs/nonEmptyString" },
+              "table_description": { "type": "string" },
+              "logic_model_name": { "type": "string" },
+              "layer": {
+                "type": "string",
+                "minLength": 1,
+                "description": "正式层级为 ODS/SDL/ODI/ADS；DWD/DWS 仅作为 SDL/ODI 的输入别名。未知原值允许进入治理边界，但只会成为候选并产生质量告警。",
+                "x-canonical-values": ["ODS", "SDL", "ODI", "ADS"],
+                "x-input-aliases": ["DWD", "DWS", "源数据标准层", "主题数据联结层", "主题联结层", "业务对象洞察层", "对象洞察层", "业务应用层", "应用层"]
+              },
+              "model_type": { "type": "string" },
+              "granularity": { "type": "string" },
+              "storage": { "type": "string" },
+              "domain": { "type": "string" },
+              "topic": { "type": "string" },
+              "app_name": { "type": "string" },
+              "source": {
+                "type": "object",
+                "required": ["source_tables", "processing_logic"],
+                "properties": {
+                  "source_tables": { "$ref": "#/$defs/stringArray" },
+                  "processing_logic": { "type": "string" }
+                }
+              },
+              "columns": { "type": "array", "items": { "$ref": "#/$defs/column" } }
+            }
+          }
+        }
+      }
+    },
+    "calculationMetric": {
+      "type": "object",
+      "required": ["metric_name", "calculation_formula", "measurement_point", "interfaces", "probes", "dimensions"],
+      "properties": {
+        "metric_name": { "$ref": "#/$defs/nonEmptyString" },
+        "calculation_formula": { "type": "string" },
+        "measurement_point": { "type": "string" },
+        "interfaces": { "type": "string" },
+        "probes": { "type": "string" },
+        "dimensions": { "type": "string" }
+      }
+    },
+    "modeling": {
+      "type": "object",
+      "required": ["analysis_groups"],
+      "properties": {
+        "analysis_groups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["analysis_name", "analysis_summaries"],
+            "properties": {
+              "analysis_name": { "$ref": "#/$defs/nonEmptyString" },
+              "analysis_summaries": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["analysis_type", "description", "calculation_metric_tables"],
+                  "properties": {
+                    "analysis_type": { "$ref": "#/$defs/nonEmptyString" },
+                    "description": { "type": "string" },
+                    "calculation_metric_tables": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["table_name", "calculation_metrics"],
+                        "properties": {
+                          "table_name": { "type": "string" },
+                          "calculation_metrics": { "type": "array", "items": { "$ref": "#/$defs/calculationMetric" } }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "sidAttribute": {
+      "type": "object",
+      "required": ["name", "description"],
+      "properties": {
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "description": { "type": "string" }
+      }
+    },
+    "sidBusinessEntity": {
+      "type": "object",
+      "required": ["description", "gb922_predefined", "source", "source_table", "attributes"],
+      "properties": {
+        "description": { "type": "string" },
+        "gb922_predefined": { "type": "string" },
+        "source": { "type": "string" },
+        "source_table": { "type": "string" },
+        "attributes": { "type": "array", "items": { "$ref": "#/$defs/sidAttribute" } }
+      }
+    },
+    "sid": {
+      "type": "object",
+      "required": ["metadata", "domains"],
+      "properties": {
+        "metadata": {
+          "type": "object",
+          "required": ["version", "source", "total_records", "description"],
+          "properties": {
+            "version": { "type": "string" },
+            "source": { "type": "string" },
+            "total_records": { "type": "integer" },
+            "description": { "type": "string" }
+          }
+        },
+        "domains": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["description", "abes"],
+            "properties": {
+              "description": { "type": "string" },
+              "abes": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "required": ["description", "bes"],
+                  "properties": {
+                    "description": { "type": "string" },
+                    "bes": {
+                      "type": "object",
+                      "additionalProperties": { "$ref": "#/$defs/sidBusinessEntity" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

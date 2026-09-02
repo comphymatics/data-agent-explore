@@ -1,0 +1,20 @@
+{
+  "opencode_explore": {
+    "enabled": true,
+    "command": "opencode",
+    "model": "opencode/big-pickle",
+    "primary_agent": "plan",
+    "pure": true,
+    "timeout_seconds": 600
+  },
+  "openviking": {
+    "enabled": true,
+    "base_url": "http://127.0.0.1:1933",
+    "api_key_env": "OPENVIKING_API_KEY",
+    "mode": "search",
+    "target_uri": "viking://resources/data-context-eval-v0-1-0",
+    "limit": 20,
+    "read_content": true,
+    "timeout_seconds": 300
+  }
+}

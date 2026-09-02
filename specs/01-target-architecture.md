@@ -5,7 +5,9 @@ Source Materials
   -> Deterministic Parsers
   -> Document IR
   -> Source-aware Extraction
-  -> Context Fragments
+  -> Five Template JSON Delivery Shapes
+  -> Template Schema Gate + Shape Adapters
+  -> Internal Context Fragments
   -> Canonical Resolution
   -> Business Semantic Mapping
   -> Context Accumulator

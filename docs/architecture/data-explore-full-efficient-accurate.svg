@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="architecture-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 1660" width="1800" height="1660" role="img" aria-labelledby="diagram-title diagram-desc">
+<title id="diagram-title">Data Explore 技术方案：全、省、准</title>
+<desc id="diagram-desc">以全、省、准为一级原则，展示外部解析交接、企业数据上下文编译、版本化 Context Serving，以及面向 Main Agent 的 Explore SubAgent。</desc>
+<style>
+text { font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', 'Microsoft JhengHei', SimHei, sans-serif; }
+.title { font-size:30px;font-weight:700;fill:#111827 }.subtitle{font-size:14px;fill:#6b7280}
+.principle-title{font-size:19px;font-weight:700;fill:#111827}.principle-role{font-size:12px;font-weight:700;fill:#4b5563}.principle-body{font-size:12px;fill:#4b5563}.principle-mark{font-size:22px;font-weight:800;fill:#fff}
+.lane-title{font-size:16px;font-weight:700;fill:#111827}.lane-sub{font-size:12px;fill:#6b7280}.lane-badge{font-size:11px;font-weight:700;fill:#374151}
+.node-title{font-size:16px;font-weight:700;fill:#111827}.node-sub{font-size:12px;fill:#4b5563}.status{font-size:11px;font-weight:700;fill:#374151}.edge-label{font-size:11px;font-weight:700;fill:#374151}
+.legend{font-size:12px;fill:#4b5563}.note-title{font-size:13px;font-weight:700;fill:#111827}.note{font-size:12px;fill:#4b5563}
+.edge{fill:none;stroke-linecap:round;stroke-linejoin:round}.node{cursor:pointer;transition:opacity .18s}.node:hover rect:first-child,.node:focus rect:first-child{stroke-width:3}.node.dim{opacity:.16}.principle-card{cursor:pointer}
+</style>
+<defs>
+<marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#2563eb"/></marker>
+<marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#16a34a"/></marker>
+<marker id="arrow-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#9333ea"/></marker>
+<marker id="arrow-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#ea580c"/></marker>
+<marker id="arrow-gray" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#6b7280"/></marker>
+</defs>
+<rect class="canvas-bg" width="1800" height="1660" fill="#ffffff"/>
+<text x="48" y="48" class="title" text-anchor="start">Data Explore 技术方案 · 全 / 省 / 准</text>
+<text x="48" y="76" class="subtitle" text-anchor="start">Explore 是面向 Main Agent 的只读 SubAgent；MCP 是访问 Enterprise Data Context 的稳定协议。</text>
+<g id="principle-full" class="principle-card" data-principle="full" tabindex="0">
+<rect x="40" y="105" width="540" height="112" rx="14" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6"/>
+<circle cx="82" cy="142" r="22" fill="#3b82f6"/>
+<text x="82" y="150" class="principle-mark" text-anchor="middle">全</text>
+<text x="118" y="137" class="principle-title" text-anchor="start">全 · Query-relative Coverage</text>
+<text x="118" y="158" class="principle-role" text-anchor="start">任务目标</text>
+<text x="64" y="194" class="principle-body" text-anchor="start">所需上下文覆盖完整；证据不足或材料缺失必须显式返回</text>
+</g>
+<g id="principle-efficient" class="principle-card" data-principle="efficient" tabindex="0">
+<rect x="630" y="105" width="540" height="112" rx="14" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.6"/>
+<circle cx="672" cy="142" r="22" fill="#22c55e"/>
+<text x="672" y="150" class="principle-mark" text-anchor="middle">省</text>
+<text x="708" y="137" class="principle-title" text-anchor="start">省 · Bounded Context Cost</text>
+<text x="708" y="158" class="principle-role" text-anchor="start">优化目标</text>
+<text x="654" y="194" class="principle-body" text-anchor="start">少 Tool Call、少重复 Page、少 Token；优先少量 Rich Reads</text>
+</g>
+<g id="principle-accurate" class="principle-card" data-principle="accurate" tabindex="0">
+<rect x="1220" y="105" width="540" height="112" rx="14" fill="#faf5ff" stroke="#8b5cf6" stroke-width="1.6"/>
+<circle cx="1262" cy="142" r="22" fill="#8b5cf6"/>
+<text x="1262" y="150" class="principle-mark" text-anchor="middle">准</text>
+<text x="1298" y="137" class="principle-title" text-anchor="start">准 · Evidence-governed</text>
+<text x="1298" y="158" class="principle-role" text-anchor="start">硬约束</text>
+<text x="1244" y="194" class="principle-body" text-anchor="start">事实可定位、可解释、可重放；候选与冲突不能冒充事实</text>
+</g>
+<g data-graph-role="container" id="lane-01">
+<rect x="40" y="250" width="1720" height="240" rx="16" fill="#fff7ed" stroke="#fdba74" stroke-width="1.5" stroke-dasharray="7 5"/>
+<text x="64" y="280" class="lane-title" text-anchor="start">01  INPUT &amp; PARSER DELIVERY</text>
+<text x="64" y="302" class="lane-sub" text-anchor="start">真实材料只在外部解析侧打开；五类 Template JSON 结构与目录是唯一跨团队正式边界</text>
+<rect x="1520" y="266" width="208" height="28" rx="14" fill="#ffffff" fill-opacity=".85" stroke="#fdba74"/>
+<text x="1624.0" y="285" class="lane-badge" text-anchor="middle">外部 Parser / 稳定契约</text>
+</g>
+<g data-graph-role="container" id="lane-02">
+<rect x="40" y="520" width="1720" height="290" rx="16" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5" stroke-dasharray="7 5"/>
+<text x="64" y="550" class="lane-title" text-anchor="start">02  ENTERPRISE DATA CONTEXT COMPILE</text>
+<text x="64" y="572" class="lane-sub" text-anchor="start">Canonical Resolution 先于多来源 Fusion；Graph 面向机器，Rich Context Page 面向 LLM</text>
+<rect x="1558" y="536" width="170" height="28" rx="14" fill="#ffffff" fill-opacity=".85" stroke="#93c5fd"/>
+<text x="1643.0" y="555" class="lane-badge" text-anchor="middle">确定性编译 / 事实治理</text>
+</g>
+<g data-graph-role="container" id="lane-03">
+<rect x="40" y="840" width="1720" height="280" rx="16" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5" stroke-dasharray="7 5"/>
+<text x="64" y="870" class="lane-title" text-anchor="start">03  GOVERNED CONTEXT SERVING</text>
+<text x="64" y="892" class="lane-sub" text-anchor="start">不可变版本发布后重建 Page/Element Index、Backrefs 与 Machine Graph；MCP/HTTP 仅是传输适配</text>
+<rect x="1494" y="856" width="234" height="28" rx="14" fill="#ffffff" fill-opacity=".85" stroke="#86efac"/>
+<text x="1611.0" y="875" class="lane-badge" text-anchor="middle">IndexVersion / 可重放</text>
+</g>
+<g data-graph-role="container" id="lane-04">
+<rect x="40" y="1150" width="1720" height="380" rx="16" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="1.5" stroke-dasharray="7 5"/>
+<text x="64" y="1180" class="lane-title" text-anchor="start">04  ONLINE EXPLORE SUBAGENT</text>
+<text x="64" y="1202" class="lane-sub" text-anchor="start">Main Agent 只接收 Context Bundle；Explore 负责 Policy、Coverage、Focused Expansion 与显式 Exploration State</text>
+<rect x="1442" y="1166" width="286" height="28" rx="14" fill="#ffffff" fill-opacity=".85" stroke="#c4b5fd"/>
+<text x="1585.0" y="1185" class="lane-badge" text-anchor="middle">只读 SubAgent / 无 SQL 生成</text>
+</g>
+<g data-graph-role="container" id="explore-subagent-boundary">
+<rect x="330" y="1215" width="1140" height="280" rx="14" fill="#ffffff" fill-opacity=".35" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="8 5"/>
+<rect x="352" y="1199" width="196" height="26" rx="13" fill="#ede9fe" stroke="#c4b5fd"/>
+<text x="450" y="1217" class="lane-badge" text-anchor="middle">Explore SubAgent · Logical Boundary</text>
+</g>
+<g id="e-source-parser" data-graph-role="edge" data-source="source-materials" data-target="external-parser">
+<path d="M 320 392 L 390 392" class="edge" stroke="#2563eb" stroke-width="2.3" marker-end="url(#arrow-blue)"/>
+<rect x="326.0" y="358" width="58" height="21" rx="10" fill="#ffffff" fill-opacity=".96" stroke="#2563eb" stroke-opacity=".25"/>
+<text x="355" y="372" class="edge-label" text-anchor="middle">raw</text>
+</g>
+<g id="e-parser-fragment" data-graph-role="edge" data-source="external-parser" data-target="fragment-contract">
+<path d="M 660 392 L 740 392" class="edge" stroke="#2563eb" stroke-width="2.3" marker-end="url(#arrow-blue)"/>
+<rect x="658.0" y="358" width="84" height="21" rx="10" fill="#ffffff" fill-opacity=".96" stroke="#2563eb" stroke-opacity=".25"/>
+<text x="700" y="372" class="edge-label" text-anchor="middle">JSON 目录</text>
+</g>
+<g id="e-fragment-gate" data-graph-role="edge" data-source="fragment-contract" data-target="contract-gate">
+<path d="M 1030 392 L 1110 392" class="edge" stroke="#16a34a" stroke-width="2.3" marker-end="url(#arrow-green)"/>
+<rect x="1034.0" y="358" width="72" height="21" rx="10" fill="#ffffff" fill-opacity=".96" stroke="#16a34a" stroke-opacity=".25"/>
+<text x="1070" y="372" class="edge-label" text-anchor="middle">schema</text>
+</g>
+<g id="e-gate-compiler" data-graph-role="edge" data-source="contract-gate" data-target="downstream-compiler">
+<path d="M 1360 392 L 1440 392" class="edge" stroke="#2563eb" stroke-width="2.3" marker-end="url(#arrow-blue)"/>
+<rect x="1370.0" y="358" width="60" height="21" rx="10" fill="#ffffff" fill-opacity=".96" stroke="#2563eb" stroke-opacity=".25"/>
+<text x="1400" y="372" class="edge-label" text-anchor="middle">batch</text>
+</g>
+<g id="e-compiler-canonical" data-graph-role="edge" data-source="downstream-compiler" data-target="canonical">
+<path d="M 1580 455 L 1580 610" class="edge" stroke="#2563eb" stroke-width="2.3" marker-end="url(#arrow-blue)"/>
+<rect x="1567.0" y="516" width="132" height="21" rx="10" fill="#ffffff" fill-opacity=".96" stroke="#2563eb" stroke-opacity=".25"/>
+<text x="1633" y="530" class="edge-label" text-anchor="middle">Internal IR</text>
+</g>
+<g id="e-canonical-fusion" data-graph-role="edge" data-source="canonical" data-target="fusion">
+<path d="M 1430 667 L 1360 667" class="edge" stroke="#2563eb" stroke-width="2.3" marker-end="url(#arrow-blue)"/>
+<rect x="1347.0" y="633" width="96" height="21" rx="10" fill="#ffffff" fill-opacity=".96" stroke="#2563eb" stroke-opacity=".25"/>
+<text x="1395" y="647" class="edge-label" text-anchor="middle">identity</text>
+</g>
+<g id="e-fusion-mapping" data-graph-role="edge" data-source="fusion" data-target="mapping-refs">
+<path d="M 1080 667 L 1000 667" class="edge" stroke="#2563eb" stroke-width="2.3" marker-end="url(#arrow-blue)"/>
+<rect x="992.0" y="633" width="96" height="21" rx="10" fill="#ffffff" fill-opacity=".96" stroke="#2563eb" stroke-opacity=".25"/>
+<text x="1040" y="647" class="edge-label" text-anchor="middle">sections</text>
+</g>
+<g id="e-mapping-pages" data-graph-role="edge" data-source="mapping-refs" data-target="rich-pages">
+<path d="M 680 667 L 590 667" class="edge" stroke="#2563eb" stroke-width="2.3" marker-end="url(#arrow-blue)"/>
+<rect x="593.0" y="633" width="84" height="21" rx="10" fill="#ffffff" fill-opacity=".96" stroke="#2563eb" stroke-opacity=".25"/>
+<text x="635" y="647" class="edge-label" text-anchor="middle">Page IR</text>
+</g>
+<g id="e-fusion-candidates" data-graph-role="edge" data-source="fusion" data-target="candidate-governance">
+<path d="M 1220 725 L 1220 745" class="edge" stroke="#9333ea" stroke-width="1.8" marker-end="url(#arrow-purple)" stroke-dasharray="6 4"/>
+</g>
+<g id="e-pages-quality" data-graph-role="edge" data-source="rich-pages" data-target="quality-gate">
+<path d="M 410 725 L 410 925" class="edge" stroke="#16a34a" stroke-width="2.3" marker-end="url(#arrow-green)"/>
+<rect x="400.0" y="809" width="132" height="21" rx="10" fill="#ffffff" fill-opacity=".96" stroke="#16a34a" stroke-opacity=".25"/>
+<text x="466" y="823" class="edge-label" text-anchor="middle">materialize</text>
+</g>
+<g id="e-quality-snapshot" data-graph-role="edge" data-source="quality-gate" data-target="immutable-snapshot">
+<path d="M 590 985 L 660 985" class="edge" stroke="#16a34a" stroke-width="2.3" marker-end="url(#arrow-green)"/>
+<rect x="583.0" y="951" width="84" height="21" rx="10" fill="#ffffff" fill-opacity=".96" stroke="#16a34a" stroke-opacity=".25"/>
+<text x="625" y="965" class="edge-label" text-anchor="middle">publish</text>
+</g>
+<g id="e-snapshot-runtime" data-graph-role="edge" data-source="immutable-snapshot" data-target="pinned-runtime">
+<path d="M 980 985 L 1050 985" class="edge" stroke="#16a34a" stroke-width="2.3" marker-end="url(#arrow-green)"/>
+<rect x="979.0" y="951" width="72" height="21" rx="10" fill="#ffffff" fill-opacity=".96" stroke="#16a34a" stroke-opacity=".25"/>
+<text x="1015" y="965" class="edge-label" text-anchor="middle">pinned</text>
+</g>
+<g id="e-runtime-serving" data-graph-role="edge" data-source="pinned-runtime" data-target="context-serving">
+<path d="M 1370 985 L 1440 985" class="edge" stroke="#16a34a" stroke-width="2.3" marker-end="url(#arrow-green)"/>
+<rect x="1375.0" y="951" width="60" height="21" rx="10" fill="#ffffff" fill-opacity=".96" stroke="#16a34a" stroke-opacity=".25"/>
+<text x="1405" y="965" class="edge-label" text-anchor="middle">serve</text>
+</g>
+<g id="e-candidate-quality" data-graph-role="edge" data-source="candidate-governance" data-target="quality-gate">
+<path d="M 1220 795 L 1220 885 L 610 885 L 610 985 L 590 985" class="edge" stroke="#9333ea" stroke-width="1.8" marker-end="url(#arrow-purple)" stroke-dasharray="6 4"/>
+<rect x="879.0" y="859" width="72" height="21" rx="10" fill="#ffffff" fill-opacity=".96" stroke="#9333ea" stroke-opacity=".25"/>
+<text x="915" y="873" class="edge-label" text-anchor="middle">review</text>
+</g>
+<g id="e-explore-serving" data-graph-role="edge" data-source="anchor-search" data-target="context-serving">
+<path d="M 750 1280 L 750 1128 L 1510 1128 L 1510 1045" class="edge" stroke="#2563eb" stroke-width="2.3" marker-end="url(#arrow-blue)"/>
+<rect x="1126.0" y="1102" width="108" height="21" rx="10" fill="#ffffff" fill-opacity=".96" stroke="#2563eb" stroke-opacity=".25"/>
+<text x="1180" y="1116" class="edge-label" text-anchor="middle">MCP calls</text>
+</g>
+<g id="e-serving-explore" data-graph-role="edge" data-source="context-serving" data-target="bundle-assembly">
+<path d="M 1580 1045 L 1580 1145 L 1040 1145 L 1040 1265" class="edge" stroke="#16a34a" stroke-width="2.3" marker-end="url(#arrow-green)"/>
+<rect x="1190.0" y="1149" width="240" height="21" rx="10" fill="#ffffff" fill-opacity=".96" stroke="#16a34a" stroke-opacity=".25"/>
+<text x="1310" y="1163" class="edge-label" text-anchor="middle">Rich Page / Evidence</text>
+</g>
+<g id="e-main-router" data-graph-role="edge" data-source="main-agent" data-target="intent-policy">
+<path d="M 280 1332 L 370 1332" class="edge" stroke="#2563eb" stroke-width="2.3" marker-end="url(#arrow-blue)"/>
+<rect x="289.0" y="1298" width="72" height="21" rx="10" fill="#ffffff" fill-opacity=".96" stroke="#2563eb" stroke-opacity=".25"/>
+<text x="325" y="1312" class="edge-label" text-anchor="middle">invoke</text>
+</g>
+<g id="e-router-anchor" data-graph-role="edge" data-source="intent-policy" data-target="anchor-search">
+<path d="M 590 1332 L 640 1332" class="edge" stroke="#2563eb" stroke-width="2.3" marker-end="url(#arrow-blue)"/>
+<rect x="579.0" y="1298" width="72" height="21" rx="10" fill="#ffffff" fill-opacity=".96" stroke="#2563eb" stroke-opacity=".25"/>
+<text x="615" y="1312" class="edge-label" text-anchor="middle">policy</text>
+</g>
+<g id="e-anchor-assembly" data-graph-role="edge" data-source="anchor-search" data-target="bundle-assembly">
+<path d="M 860 1332 L 910 1332" class="edge" stroke="#2563eb" stroke-width="2.3" marker-end="url(#arrow-blue)"/>
+<rect x="843.0" y="1298" width="84" height="21" rx="10" fill="#ffffff" fill-opacity=".96" stroke="#2563eb" stroke-opacity=".25"/>
+<text x="885" y="1312" class="edge-label" text-anchor="middle">anchors</text>
+</g>
+<g id="e-assembly-coverage" data-graph-role="edge" data-source="bundle-assembly" data-target="coverage-check">
+<path d="M 1170 1332 L 1220 1332" class="edge" stroke="#9333ea" stroke-width="2.3" marker-end="url(#arrow-purple)"/>
+<rect x="1159.0" y="1298" width="72" height="21" rx="10" fill="#ffffff" fill-opacity=".96" stroke="#9333ea" stroke-opacity=".25"/>
+<text x="1195" y="1312" class="edge-label" text-anchor="middle">bundle</text>
+</g>
+<g id="e-coverage-output" data-graph-role="edge" data-source="coverage-check" data-target="context-bundle">
+<path d="M 1430 1332 L 1510 1332" class="edge" stroke="#9333ea" stroke-width="2.3" marker-end="url(#arrow-purple)"/>
+<rect x="1434.0" y="1298" width="72" height="21" rx="10" fill="#ffffff" fill-opacity=".96" stroke="#9333ea" stroke-opacity=".25"/>
+<text x="1470" y="1312" class="edge-label" text-anchor="middle">enough</text>
+</g>
+<g id="e-coverage-focus" data-graph-role="edge" data-source="coverage-check" data-target="focused-expand">
+<path d="M 1260 1385 L 1260 1398 L 1195 1398 L 1195 1441 L 1170 1441" class="edge" stroke="#9333ea" stroke-width="1.8" marker-end="url(#arrow-purple)" stroke-dasharray="6 4"/>
+<rect x="1176.0" y="1372" width="84" height="21" rx="10" fill="#ffffff" fill-opacity=".96" stroke="#9333ea" stroke-opacity=".25"/>
+<text x="1218" y="1386" class="edge-label" text-anchor="middle">missing</text>
+</g>
+<g id="e-focus-assembly" data-graph-role="edge" data-source="focused-expand" data-target="bundle-assembly">
+<path d="M 1040 1408 L 1040 1390" class="edge" stroke="#9333ea" stroke-width="1.8" marker-end="url(#arrow-purple)" stroke-dasharray="6 4"/>
+<rect x="1050.0" y="1392" width="60" height="21" rx="10" fill="#ffffff" fill-opacity=".96" stroke="#9333ea" stroke-opacity=".25"/>
+<text x="1080" y="1406" class="edge-label" text-anchor="middle">retry</text>
+</g>
+<g id="e-env-assembly" data-graph-role="edge" data-source="environment-binding" data-target="bundle-assembly">
+<path d="M 860 1441 L 885 1441 L 885 1380 L 910 1380" class="edge" stroke="#ea580c" stroke-width="1.8" marker-end="url(#arrow-orange)" stroke-dasharray="6 4"/>
+</g>
+<g id="e-coverage-state" data-graph-role="edge" data-source="coverage-check" data-target="exploration-state">
+<path d="M 1325 1385 L 1325 1408" class="edge" stroke="#9333ea" stroke-width="1.8" marker-end="url(#arrow-purple)" stroke-dasharray="6 4"/>
+</g>
+<g id="e-state-main" data-graph-role="edge" data-source="exploration-state" data-target="main-agent">
+<path d="M 1220 1441 L 1180 1441 L 1180 1510 L 170 1510 L 170 1385" class="edge" stroke="#9333ea" stroke-width="1.8" marker-end="url(#arrow-purple)" stroke-dasharray="6 4"/>
+<rect x="573.0" y="1483" width="204" height="21" rx="10" fill="#ffffff" fill-opacity=".96" stroke="#9333ea" stroke-opacity=".25"/>
+<text x="675" y="1497" class="edge-label" text-anchor="middle">resume next round</text>
+</g>
+<g id="source-materials" class="node" data-graph-role="node" data-title="企业材料与语义参考" data-detail="Word / Excel / JSON / SQL；SID / 标准 / 全局模型声明" data-principles="full accurate" tabindex="0">
+<rect x="70" y="340" width="250" height="105" rx="10" fill="#ffffff" stroke="#fb923c" stroke-width="1.6" stroke-dasharray="6 4"/>
+<rect x="256" y="350" width="54" height="22" rx="11" fill="#ffffff" fill-opacity=".9" stroke="#fb923c"/>
+<text x="283.0" y="365" class="status" text-anchor="middle">原始输入</text>
+<text x="88" y="372" class="node-title" text-anchor="start">企业材料与语义参考</text>
+<text x="88" y="398" class="node-sub" text-anchor="start">Word / Excel / JSON / SQL</text>
+<text x="88" y="418" class="node-sub" text-anchor="start">SID / 标准 / 全局模型声明</text>
+</g>
+<g id="external-parser" class="node" data-graph-role="node" data-title="外部解析与抽取" data-detail="确定性结构解析 → Document IR；规则优先；可选 LLM 语义辅助；真实材料仅解析团队可访问" data-principles="accurate" tabindex="0">
+<rect x="390" y="330" width="270" height="125" rx="10" fill="#fff7ed" stroke="#fb923c" stroke-width="1.6" stroke-dasharray="6 4"/>
+<rect x="596" y="340" width="54" height="22" rx="11" fill="#ffffff" fill-opacity=".9" stroke="#fb923c"/>
+<text x="623.0" y="355" class="status" text-anchor="middle">同事负责</text>
+<text x="408" y="362" class="node-title" text-anchor="start">外部解析与抽取</text>
+<text x="408" y="388" class="node-sub" text-anchor="start">确定性结构解析 → Document IR</text>
+<text x="408" y="408" class="node-sub" text-anchor="start">规则优先；可选 LLM 语义辅助</text>
+<text x="408" y="428" class="node-sub" text-anchor="start">真实材料仅解析团队可访问</text>
+</g>
+<g id="fragment-contract" class="node" data-graph-role="node" data-title="Template JSON 交付契约" data-detail="五类 JSON 结构 / 批次目录；template-input.schema.json；Schema 文件不入事实库" data-principles="full accurate" tabindex="0">
+<rect x="740" y="330" width="290" height="125" rx="10" fill="#f0fdfa" stroke="#2dd4bf" stroke-width="1.6"/>
+<rect x="966" y="340" width="54" height="22" rx="11" fill="#ffffff" fill-opacity=".9" stroke="#2dd4bf"/>
+<text x="993.0" y="355" class="status" text-anchor="middle">唯一边界</text>
+<text x="758" y="362" class="node-title" text-anchor="start">Template JSON 交付契约</text>
+<text x="758" y="388" class="node-sub" text-anchor="start">五类 JSON 结构 / 批次目录</text>
+<text x="758" y="408" class="node-sub" text-anchor="start">template-input.schema.json</text>
+<text x="758" y="428" class="node-sub" text-anchor="start">Schema 文件不入事实库</text>
+</g>
+<g id="contract-gate" class="node" data-graph-role="node" data-title="Template Contract Gate" data-detail="逐文件 Union Schema 校验；拒绝缺字段与错误结构" data-principles="accurate" tabindex="0">
+<rect x="1110" y="340" width="250" height="105" rx="10" fill="#eff6ff" stroke="#60a5fa" stroke-width="1.6"/>
+<rect x="1296" y="350" width="54" height="22" rx="11" fill="#ffffff" fill-opacity=".9" stroke="#60a5fa"/>
+<text x="1323.0" y="365" class="status" text-anchor="middle">已实现</text>
+<text x="1128" y="372" class="node-title" text-anchor="start">Template Contract Gate</text>
+<text x="1128" y="398" class="node-sub" text-anchor="start">逐文件 Union Schema 校验</text>
+<text x="1128" y="418" class="node-sub" text-anchor="start">拒绝缺字段与错误结构</text>
+</g>
+<g id="downstream-compiler" class="node" data-graph-role="node" data-title="Template Adapter + Compiler" data-detail="compile_template_inputs(path)；Shape → 内部 ContextFragment IR；不重开原始 Word / Excel" data-principles="accurate" tabindex="0">
+<rect x="1440" y="330" width="290" height="125" rx="10" fill="#eff6ff" stroke="#60a5fa" stroke-width="1.6"/>
+<rect x="1666" y="340" width="54" height="22" rx="11" fill="#ffffff" fill-opacity=".9" stroke="#60a5fa"/>
+<text x="1693.0" y="355" class="status" text-anchor="middle">已实现</text>
+<text x="1458" y="362" class="node-title" text-anchor="start">Template Adapter + Compiler</text>
+<text x="1458" y="388" class="node-sub" text-anchor="start">compile_template_inputs(path)</text>
+<text x="1458" y="408" class="node-sub" text-anchor="start">Shape → 内部 ContextFragment IR</text>
+<text x="1458" y="428" class="node-sub" text-anchor="start">不重开原始 Word / Excel</text>
+</g>
+<g id="rich-pages" class="node" data-graph-role="node" data-title="④ Rich Context Page" data-detail="L0 定位摘要 / L1 局部推理；L2 sections / refs / Evidence；Primary LLM-facing information unit" data-principles="full efficient accurate" tabindex="0">
+<rect x="230" y="610" width="360" height="115" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6"/>
+<rect x="508" y="620" width="72" height="22" rx="11" fill="#ffffff" fill-opacity=".9" stroke="#3b82f6"/>
+<text x="544.0" y="635" class="status" text-anchor="middle">LLM 单元</text>
+<text x="248" y="642" class="node-title" text-anchor="start">④ Rich Context Page</text>
+<text x="248" y="668" class="node-sub" text-anchor="start">L0 定位摘要 / L1 局部推理</text>
+<text x="248" y="688" class="node-sub" text-anchor="start">L2 sections / refs / Evidence</text>
+<text x="248" y="708" class="node-sub" text-anchor="start">Primary LLM-facing information unit</text>
+</g>
+<g id="mapping-refs" class="node" data-graph-role="node" data-title="③ Mapping &amp; References" data-detail="Physical/Field → Object/Attribute；Typed References → Backrefs；环境适配不在全局编译发生" data-principles="full accurate" tabindex="0">
+<rect x="680" y="610" width="320" height="115" rx="10" fill="#ffffff" stroke="#60a5fa" stroke-width="1.6"/>
+<rect x="936" y="620" width="54" height="22" rx="11" fill="#ffffff" fill-opacity=".9" stroke="#60a5fa"/>
+<text x="963.0" y="635" class="status" text-anchor="middle">策略驱动</text>
+<text x="698" y="642" class="node-title" text-anchor="start">③ Mapping &amp; References</text>
+<text x="698" y="668" class="node-sub" text-anchor="start">Physical/Field → Object/Attribute</text>
+<text x="698" y="688" class="node-sub" text-anchor="start">Typed References → Backrefs</text>
+<text x="698" y="708" class="node-sub" text-anchor="start">环境适配不在全局编译发生</text>
+</g>
+<g id="fusion" class="node" data-graph-role="node" data-title="② Section-level Fusion" data-detail="来源权威策略 + list union；保留 kept / discarded 冲突；缺失不等于不存在" data-principles="full accurate" tabindex="0">
+<rect x="1080" y="610" width="280" height="115" rx="10" fill="#ffffff" stroke="#60a5fa" stroke-width="1.6"/>
+<rect x="1296" y="620" width="54" height="22" rx="11" fill="#ffffff" fill-opacity=".9" stroke="#60a5fa"/>
+<text x="1323.0" y="635" class="status" text-anchor="middle">确定性</text>
+<text x="1098" y="642" class="node-title" text-anchor="start">② Section-level Fusion</text>
+<text x="1098" y="668" class="node-sub" text-anchor="start">来源权威策略 + list union</text>
+<text x="1098" y="688" class="node-sub" text-anchor="start">保留 kept / discarded 冲突</text>
+<text x="1098" y="708" class="node-sub" text-anchor="start">缺失不等于不存在</text>
+</g>
+<g id="canonical" class="node" data-graph-role="node" data-title="① Canonical Resolution" data-detail="identity_hints → exact → aliases；UNCERTAIN 保持分离；先 Resolution，后多来源 Fusion" data-principles="accurate" tabindex="0">
+<rect x="1430" y="610" width="300" height="115" rx="10" fill="#ffffff" stroke="#60a5fa" stroke-width="1.6"/>
+<rect x="1666" y="620" width="54" height="22" rx="11" fill="#ffffff" fill-opacity=".9" stroke="#60a5fa"/>
+<text x="1693.0" y="635" class="status" text-anchor="middle">确定性</text>
+<text x="1448" y="642" class="node-title" text-anchor="start">① Canonical Resolution</text>
+<text x="1448" y="668" class="node-sub" text-anchor="start">identity_hints → exact → aliases</text>
+<text x="1448" y="688" class="node-sub" text-anchor="start">UNCERTAIN 保持分离</text>
+<text x="1448" y="708" class="node-sub" text-anchor="start">先 Resolution，后多来源 Fusion</text>
+</g>
+<g id="candidate-governance" class="node" data-graph-role="node" data-title="Candidates / Conflicts · 独立保存" data-detail="" data-principles="accurate" tabindex="0">
+<rect x="1080" y="745" width="280" height="50" rx="10" fill="#faf5ff" stroke="#c084fc" stroke-width="1.6"/>
+<text x="1098" y="777" class="node-title" text-anchor="start">Candidates / Conflicts · 独立保存</text>
+</g>
+<g id="quality-gate" class="node" data-graph-role="node" data-title="Quality &amp; Golden Gate" data-detail="Evidence / path / ref 检查；Golden Context Recall / Coverage；候选不得进入正式索引" data-principles="full accurate" tabindex="0">
+<rect x="230" y="925" width="360" height="120" rx="10" fill="#ffffff" stroke="#4ade80" stroke-width="1.6"/>
+<rect x="526" y="935" width="54" height="22" rx="11" fill="#ffffff" fill-opacity=".9" stroke="#4ade80"/>
+<text x="553.0" y="950" class="status" text-anchor="middle">准入治理</text>
+<text x="248" y="957" class="node-title" text-anchor="start">Quality &amp; Golden Gate</text>
+<text x="248" y="983" class="node-sub" text-anchor="start">Evidence / path / ref 检查</text>
+<text x="248" y="1003" class="node-sub" text-anchor="start">Golden Context Recall / Coverage</text>
+<text x="248" y="1023" class="node-sub" text-anchor="start">候选不得进入正式索引</text>
+</g>
+<g id="immutable-snapshot" class="node" data-graph-role="node" data-title="Immutable Context Snapshot" data-detail="fragments / contexts / pages；quality.json + manifest.json；content hash → IndexVersion" data-principles="accurate" tabindex="0">
+<rect x="660" y="925" width="320" height="120" rx="10" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.6"/>
+<rect x="916" y="935" width="54" height="22" rx="11" fill="#ffffff" fill-opacity=".9" stroke="#22c55e"/>
+<text x="943.0" y="950" class="status" text-anchor="middle">不可变</text>
+<text x="678" y="957" class="node-title" text-anchor="start">Immutable Context Snapshot</text>
+<text x="678" y="983" class="node-sub" text-anchor="start">fragments / contexts / pages</text>
+<text x="678" y="1003" class="node-sub" text-anchor="start">quality.json + manifest.json</text>
+<text x="678" y="1023" class="node-sub" text-anchor="start">content hash → IndexVersion</text>
+</g>
+<g id="pinned-runtime" class="node" data-graph-role="node" data-title="Pinned Runtime View" data-detail="Rich Pages + Page/Element Index；Machine Graph + Backrefs；固定 IndexVersion，可重放" data-principles="efficient accurate" tabindex="0">
+<rect x="1050" y="925" width="320" height="120" rx="10" fill="#f0fdf4" stroke="#4ade80" stroke-width="1.6"/>
+<rect x="1306" y="935" width="54" height="22" rx="11" fill="#ffffff" fill-opacity=".9" stroke="#4ade80"/>
+<text x="1333.0" y="950" class="status" text-anchor="middle">可复现</text>
+<text x="1068" y="957" class="node-title" text-anchor="start">Pinned Runtime View</text>
+<text x="1068" y="983" class="node-sub" text-anchor="start">Rich Pages + Page/Element Index</text>
+<text x="1068" y="1003" class="node-sub" text-anchor="start">Machine Graph + Backrefs</text>
+<text x="1068" y="1023" class="node-sub" text-anchor="start">固定 IndexVersion，可重放</text>
+</g>
+<g id="context-serving" class="node" data-graph-role="node" data-title="Context Serving · MCP" data-detail="data_search / data_read；data_expand / data_source；平台中立；MCP / HTTP adapter" data-principles="efficient accurate" tabindex="0">
+<rect x="1440" y="925" width="290" height="120" rx="10" fill="#eff6ff" stroke="#60a5fa" stroke-width="1.6"/>
+<rect x="1636" y="935" width="84" height="22" rx="11" fill="#ffffff" fill-opacity=".9" stroke="#60a5fa"/>
+<text x="1678.0" y="950" class="status" text-anchor="middle">4 个只读工具</text>
+<text x="1458" y="957" class="node-title" text-anchor="start">Context Serving · MCP</text>
+<text x="1458" y="983" class="node-sub" text-anchor="start">data_search / data_read</text>
+<text x="1458" y="1003" class="node-sub" text-anchor="start">data_expand / data_source</text>
+<text x="1458" y="1023" class="node-sub" text-anchor="start">平台中立；MCP / HTTP adapter</text>
+</g>
+<g id="main-agent" class="node" data-graph-role="node" data-title="Main Agent / User" data-detail="提交探索问题；接收并复用 Context Bundle" data-principles="full efficient accurate" tabindex="0">
+<rect x="60" y="1280" width="220" height="105" rx="10" fill="#ffffff" stroke="#a78bfa" stroke-width="1.6"/>
+<rect x="216" y="1290" width="54" height="22" rx="11" fill="#ffffff" fill-opacity=".9" stroke="#a78bfa"/>
+<text x="243.0" y="1305" class="status" text-anchor="middle">调用方</text>
+<text x="78" y="1312" class="node-title" text-anchor="start">Main Agent / User</text>
+<text x="78" y="1338" class="node-sub" text-anchor="start">提交探索问题</text>
+<text x="78" y="1358" class="node-sub" text-anchor="start">接收并复用 Context Bundle</text>
+</g>
+<g id="intent-policy" class="node" data-graph-role="node" data-title="Intent + Context Policy" data-detail="范围 / 意图 / required coverage；准是门槛；全是任务目标" data-principles="full accurate" tabindex="0">
+<rect x="370" y="1280" width="220" height="105" rx="10" fill="#faf5ff" stroke="#8b5cf6" stroke-width="1.6"/>
+<rect x="526" y="1290" width="54" height="22" rx="11" fill="#ffffff" fill-opacity=".9" stroke="#8b5cf6"/>
+<text x="553.0" y="1305" class="status" text-anchor="middle">全</text>
+<text x="388" y="1312" class="node-title" text-anchor="start">Intent + Context Policy</text>
+<text x="388" y="1338" class="node-sub" text-anchor="start">范围 / 意图 / required coverage</text>
+<text x="388" y="1358" class="node-sub" text-anchor="start">准是门槛；全是任务目标</text>
+</g>
+<g id="anchor-search" class="node" data-graph-role="node" data-title="Anchor Search" data-detail="Fast: inline L0 / L1；Managed: Top-N anchor pages" data-principles="efficient" tabindex="0">
+<rect x="640" y="1280" width="220" height="105" rx="10" fill="#ffffff" stroke="#8b5cf6" stroke-width="1.6"/>
+<rect x="796" y="1290" width="54" height="22" rx="11" fill="#ffffff" fill-opacity=".9" stroke="#8b5cf6"/>
+<text x="823.0" y="1305" class="status" text-anchor="middle">省</text>
+<text x="658" y="1312" class="node-title" text-anchor="start">Anchor Search</text>
+<text x="658" y="1338" class="node-sub" text-anchor="start">Fast: inline L0 / L1</text>
+<text x="658" y="1358" class="node-sub" text-anchor="start">Managed: Top-N anchor pages</text>
+</g>
+<g id="bundle-assembly" class="node" data-graph-role="node" data-title="Managed Bundle Assembly" data-detail="Typed expansion + rerank；Dedup / Diversity / Novelty；Token-budget hydration" data-principles="full efficient accurate" tabindex="0">
+<rect x="910" y="1265" width="260" height="125" rx="10" fill="#faf5ff" stroke="#8b5cf6" stroke-width="1.6"/>
+<rect x="1106" y="1275" width="54" height="22" rx="11" fill="#ffffff" fill-opacity=".9" stroke="#8b5cf6"/>
+<text x="1133.0" y="1290" class="status" text-anchor="middle">省</text>
+<text x="928" y="1297" class="node-title" text-anchor="start">Managed Bundle Assembly</text>
+<text x="928" y="1323" class="node-sub" text-anchor="start">Typed expansion + rerank</text>
+<text x="928" y="1343" class="node-sub" text-anchor="start">Dedup / Diversity / Novelty</text>
+<text x="928" y="1363" class="node-sub" text-anchor="start">Token-budget hydration</text>
+</g>
+<g id="coverage-check" class="node" data-graph-role="node" data-title="Coverage Check" data-detail="required coverage satisfied?；不足则 Focused Expansion" data-principles="full accurate" tabindex="0">
+<rect x="1220" y="1280" width="210" height="105" rx="10" fill="#ffffff" stroke="#8b5cf6" stroke-width="1.6"/>
+<rect x="1366" y="1290" width="54" height="22" rx="11" fill="#ffffff" fill-opacity=".9" stroke="#8b5cf6"/>
+<text x="1393.0" y="1305" class="status" text-anchor="middle">全</text>
+<text x="1238" y="1312" class="node-title" text-anchor="start">Coverage Check</text>
+<text x="1238" y="1338" class="node-sub" text-anchor="start">required coverage satisfied?</text>
+<text x="1238" y="1358" class="node-sub" text-anchor="start">不足则 Focused Expansion</text>
+</g>
+<g id="environment-binding" class="node" data-graph-role="node" data-title="Environment Binding" data-detail="requirements ⇄ matched assets" data-principles="full accurate" tabindex="0">
+<rect x="640" y="1408" width="220" height="67" rx="10" fill="#fff7ed" stroke="#fb923c" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text x="658" y="1440" class="node-title" text-anchor="start">Environment Binding</text>
+<text x="658" y="1466" class="node-sub" text-anchor="start">requirements ⇄ matched assets</text>
+</g>
+<g id="focused-expand" class="node" data-graph-role="node" data-title="Focused Expansion" data-detail="只补缺失且未看过的 Context" data-principles="full efficient" tabindex="0">
+<rect x="910" y="1408" width="260" height="67" rx="10" fill="#faf5ff" stroke="#8b5cf6" stroke-width="1.6"/>
+<text x="928" y="1440" class="node-title" text-anchor="start">Focused Expansion</text>
+<text x="928" y="1466" class="node-sub" text-anchor="start">只补缺失且未看过的 Context</text>
+</g>
+<g id="exploration-state" class="node" data-graph-role="node" data-title="Exploration State" data-detail="seen IDs / anchors / budget / version" data-principles="efficient accurate" tabindex="0">
+<rect x="1220" y="1408" width="210" height="67" rx="10" fill="#faf5ff" stroke="#8b5cf6" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text x="1238" y="1440" class="node-title" text-anchor="start">Exploration State</text>
+<text x="1238" y="1466" class="node-sub" text-anchor="start">seen IDs / anchors / budget / version</text>
+</g>
+<g id="context-bundle" class="node" data-graph-role="node" data-title="Context Bundle" data-detail="coverage / missing / budget；sources / conflicts / candidates；warnings / truncated / IndexVersion" data-principles="full efficient accurate" tabindex="0">
+<rect x="1510" y="1270" width="230" height="125" rx="10" fill="#faf5ff" stroke="#8b5cf6" stroke-width="1.6"/>
+<rect x="1676" y="1280" width="54" height="22" rx="11" fill="#ffffff" fill-opacity=".9" stroke="#8b5cf6"/>
+<text x="1703.0" y="1295" class="status" text-anchor="middle">主输出</text>
+<text x="1528" y="1302" class="node-title" text-anchor="start">Context Bundle</text>
+<text x="1528" y="1328" class="node-sub" text-anchor="start">coverage / missing / budget</text>
+<text x="1528" y="1348" class="node-sub" text-anchor="start">sources / conflicts / candidates</text>
+<text x="1528" y="1368" class="node-sub" text-anchor="start">warnings / truncated / IndexVersion</text>
+</g>
+<path data-graph-role="decoration" d="M54 1550 H1746 Q1760 1550 1760 1564 V1626 Q1760 1640 1746 1640 H54 Q40 1640 40 1626 V1564 Q40 1550 54 1550Z" fill="#f9fafb" stroke="#e5e7eb"/>
+<text x="64" y="1578" class="note-title" text-anchor="start">原则约束</text>
+<text x="140" y="1578" class="note" text-anchor="start">准是硬约束；全是 Query-dependent 任务目标；省是在前两者满足后最小化读取、跳转与 Token。</text>
+<text x="64" y="1608" class="note-title" text-anchor="start">职责边界</text>
+<text x="140" y="1608" class="note" text-anchor="start">Explore 是逻辑 SubAgent；MCP 是协议；Context Engine 不回答问题，Main Agent 不直接遍历 Backend Graph。</text>
+<text x="64" y="1632" class="note-title" text-anchor="start">状态边界</text>
+<text x="140" y="1632" class="note" text-anchor="start">每轮显式返回 Context Bundle + Exploration State；不依赖 SubAgent session memory。</text>
+</svg>

@@ -1,0 +1,184 @@
+<svg xmlns="http://www.w3.org/2000/svg" id="architecture-svg" viewBox="0 0 1800 1300" width="1800" height="1300" role="img" aria-labelledby="diagram-title diagram-desc">
+<title id="diagram-title">Data Agent Explore 双层知识库与 MetaOne Binding 方案</title>
+<desc id="diagram-desc">参考基础知识库与 MetaOne 环境知识库保持分离，通过 Environment-first 查询、能力适配、可用性判断和临时 Binding Overlay 组成双层 Context Bundle。</desc>
+<style>
+text{font-family:"Helvetica Neue",Helvetica,Arial,"PingFang SC","Microsoft YaHei",sans-serif}.title{font-size:27px;font-weight:700;fill:#111827}.subtitle{font-size:13px;fill:#64748b}.lane-title{font-size:17px;font-weight:700;fill:#111827}.lane-sub{font-size:12px;fill:#64748b}.group-title{font-size:12px;font-weight:700;letter-spacing:.08em;fill:#475569}.node-title{font-size:15px;font-weight:700;fill:#111827}.node-sub{font-size:12px;fill:#475569}.status{font-size:10px;font-weight:700;fill:#334155}.edge-label{font-size:11px;font-weight:700;fill:#475569}.note-title{font-size:12px;font-weight:700;fill:#111827}.note{font-size:12px;fill:#475569}.edge{fill:none;stroke-linecap:round;stroke-linejoin:round}.node{cursor:pointer}.node:hover rect:first-child,.node:focus rect:first-child{stroke-width:3}.canvas-bg{fill:#ffffff}
+</style>
+<defs>
+<marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#2563eb"/></marker>
+<marker id="arrow-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#ea580c"/></marker>
+<marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#16a34a"/></marker>
+<marker id="arrow-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#9333ea"/></marker>
+<marker id="arrow-gray" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#6b7280"/></marker>
+</defs>
+<rect class="canvas-bg" width="1800" height="1300"/>
+<text x="48" y="48" class="title" text-anchor="start">Data Agent Explore · 双层知识库与 MetaOne Binding</text>
+<text x="48" y="76" class="subtitle" text-anchor="start">环境事实优先 · 参考语义补全 · 确认缺失才回退 · MCP 变化隔离在 Adapter</text>
+<g id="lane-01" data-graph-role="container"><rect x="40" y="105" width="1720" height="305" rx="18" fill="#f9fafb" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="7 5"/><text x="64" y="136" class="lane-title">01  两层知识来源</text><text x="64" y="159" class="lane-sub">参考库是全局版本化语义基线；MetaOne 是当前租户 / 环境事实，两者不做全局盲融合</text></g>
+<g id="reference-plane" data-graph-role="decoration"><rect x="64" y="176" width="790" height="200" rx="14" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.2" data-graph-role="decoration"/><text x="82" y="203" class="group-title">REFERENCE KNOWLEDGE · 已实现</text></g>
+<g id="environment-plane" data-graph-role="decoration"><rect x="946" y="176" width="790" height="200" rx="14" fill="#fff7ed" stroke="#fdba74" stroke-width="1.2" data-graph-role="decoration"/><text x="964" y="203" class="group-title">ENVIRONMENT KNOWLEDGE · 目标适配</text></g>
+<g id="lane-02" data-graph-role="container"><rect x="40" y="440" width="1720" height="450" rx="18" fill="#ffffff" stroke="#c4b5fd" stroke-width="1.5" stroke-dasharray="7 5"/><text x="64" y="471" class="lane-title">02  Environment-first 查询与语义绑定</text><text x="64" y="494" class="lane-sub">先确认现网资产，再用参考库补语义；只有确认不存在时才返回 Reference-only 候选</text></g>
+<g id="lane-03" data-graph-role="container"><rect x="40" y="920" width="1720" height="225" rx="18" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5" stroke-dasharray="7 5"/><text x="64" y="951" class="lane-title">03  Context Bundle 与治理输出</text><text x="64" y="974" class="lane-sub">双版本、双证据链；候选、冲突、缺失、接口不可用与截断均显式返回</text></g>
+<g id="e-template-compiler" data-graph-role="edge" data-source="template-json" data-target="reference-compiler"><path d="M 294 286 L 344 286" class="edge" stroke="#2563eb" stroke-width="2.3" marker-end="url(#arrow-blue)"/></g>
+<g id="e-compiler-reference" data-graph-role="edge" data-source="reference-compiler" data-target="reference-snapshot"><path d="M 574 286 L 624 286" class="edge" stroke="#2563eb" stroke-width="2.3" marker-end="url(#arrow-blue)"/></g>
+<g id="e-metaone-adapter" data-graph-role="edge" data-source="metaone-mcp" data-target="metaone-adapter"><path d="M 1194 286 L 1234 286" class="edge" stroke="#ea580c" stroke-width="2.3" marker-end="url(#arrow-orange)"/></g>
+<g id="e-adapter-env" data-graph-role="edge" data-source="metaone-adapter" data-target="environment-view"><path d="M 1464 286 L 1504 286" class="edge" stroke="#ea580c" stroke-width="2.3" marker-end="url(#arrow-orange)"/></g>
+<g id="e-query-intent" data-graph-role="edge" data-source="business-query" data-target="requirements"><path d="M 280 574 L 330 574" class="edge" stroke="#2563eb" stroke-width="2.3" marker-end="url(#arrow-blue)"/></g>
+<g id="e-intent-env" data-graph-role="edge" data-source="requirements" data-target="environment-first"><path d="M 570 574 L 620 574" class="edge" stroke="#2563eb" stroke-width="2.3" marker-end="url(#arrow-blue)"/></g>
+<g id="e-env-gate" data-graph-role="edge" data-source="environment-first" data-target="availability-gate"><path d="M 880 574 L 930 574" class="edge" stroke="#ea580c" stroke-width="2.3" marker-end="url(#arrow-orange)"/></g>
+<g id="e-gate-overlay" data-graph-role="edge" data-source="availability-gate" data-target="binding-overlay"><path d="M 1210 556 L 1460 556" class="edge" stroke="#16a34a" stroke-width="2.3" marker-end="url(#arrow-green)"/></g>
+<g id="e-env-view-search" data-graph-role="edge" data-source="environment-view" data-target="environment-first"><path d="M 1614 346 L 1614 468 L 750 468 L 750 506" class="edge" stroke="#ea580c" stroke-width="2.3" marker-end="url(#arrow-orange)"/></g>
+<g id="e-reference-enrich" data-graph-role="edge" data-source="reference-snapshot" data-target="reference-enrichment"><path d="M 724 346 L 724 420 L 600 420 L 600 760 L 590 760" class="edge" stroke="#2563eb" stroke-width="2.3" marker-end="url(#arrow-blue)"/></g>
+<g id="e-gate-reference-only" data-graph-role="edge" data-source="availability-gate" data-target="reference-only"><path d="M 1070 654 L 1070 700" class="edge" stroke="#9333ea" stroke-width="2.3" marker-end="url(#arrow-purple)"/></g>
+<g id="e-gate-missing" data-graph-role="edge" data-source="availability-gate" data-target="missing-state"><path d="M 960 654 L 960 676 L 780 676 L 780 700" class="edge" stroke="#6b7280" stroke-width="2.3" marker-end="url(#arrow-gray)" stroke-dasharray="6 4"/></g>
+<g id="e-reference-only-overlay" data-graph-role="edge" data-source="reference-only" data-target="binding-overlay"><path d="M 1210 760 L 1410 760 L 1410 674 L 1530 674 L 1530 654" class="edge" stroke="#9333ea" stroke-width="2.3" marker-end="url(#arrow-purple)" stroke-dasharray="6 4"/></g>
+<g id="e-enrich-overlay" data-graph-role="edge" data-source="reference-enrichment" data-target="binding-overlay"><path d="M 460 820 L 460 850 L 1590 850 L 1590 654" class="edge" stroke="#2563eb" stroke-width="2.3" marker-end="url(#arrow-blue)"/></g>
+<g id="e-missing-overlay" data-graph-role="edge" data-source="missing-state" data-target="binding-overlay"><path d="M 780 820 L 780 870 L 1650 870 L 1650 654" class="edge" stroke="#6b7280" stroke-width="2.3" marker-end="url(#arrow-gray)" stroke-dasharray="6 4"/></g>
+<g id="e-overlay-bundle" data-graph-role="edge" data-source="binding-overlay" data-target="context-bundle"><path d="M 1710 654 L 1710 894 L 420 894 L 420 1002" class="edge" stroke="#16a34a" stroke-width="2.3" marker-end="url(#arrow-green)"/></g>
+<g id="e-bundle-consumers" data-graph-role="edge" data-source="context-bundle" data-target="consumers"><path d="M 650 1058 L 760 1058" class="edge" stroke="#16a34a" stroke-width="2.3" marker-end="url(#arrow-green)"/></g>
+<g id="e-bundle-review" data-graph-role="edge" data-source="context-bundle" data-target="governance"><path d="M 420 1114 L 420 1128 L 1385 1128 L 1385 1114" class="edge" stroke="#9333ea" stroke-width="2.3" marker-end="url(#arrow-purple)" stroke-dasharray="6 4"/></g>
+<g id="template-json" class="node" data-graph-role="node" data-title="Template JSON + SID" data-detail="五类交付结构；建模规范 / 参考语义" tabindex="0">
+<rect x="94" y="226" width="200" height="120" rx="10" fill="#ffffff" stroke="#60a5fa" stroke-width="1.6"/>
+<text x="112" y="258" class="node-title" text-anchor="start">Template JSON + SID</text>
+<text x="112" y="285" class="node-sub" text-anchor="start">五类交付结构</text>
+<text x="112" y="305" class="node-sub" text-anchor="start">建模规范 / 参考语义</text>
+</g>
+<g id="reference-compiler" class="node" data-graph-role="node" data-title="Reference Compiler" data-detail="Canonical + Fusion；Evidence + Rich Page；Machine Graph / Index" tabindex="0">
+<rect x="344" y="216" width="230" height="140" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6"/>
+<text x="362" y="248" class="node-title" text-anchor="start">Reference Compiler</text>
+<text x="362" y="275" class="node-sub" text-anchor="start">Canonical + Fusion</text>
+<text x="362" y="295" class="node-sub" text-anchor="start">Evidence + Rich Page</text>
+<text x="362" y="315" class="node-sub" text-anchor="start">Machine Graph / Index</text>
+</g>
+<g id="reference-snapshot" class="node" data-graph-role="node" data-title="Reference Snapshot" data-detail="场景 / 需求 / 业务对象；语义定义 / 分层分域" tabindex="0">
+<rect x="624" y="226" width="200" height="120" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="1.6"/>
+<text x="642" y="258" class="node-title" text-anchor="start">Reference Snapshot</text>
+<text x="642" y="285" class="node-sub" text-anchor="start">场景 / 需求 / 业务对象</text>
+<text x="642" y="305" class="node-sub" text-anchor="start">语义定义 / 分层分域</text>
+</g>
+<g id="metaone-mcp" class="node" data-graph-role="node" data-title="MetaOne MCP" data-detail="真实环境元数据；接口允许增删改" tabindex="0">
+<rect x="976" y="226" width="218" height="120" rx="10" fill="#ffffff" stroke="#fb923c" stroke-width="1.6"/>
+<rect x="1120" y="236" width="64" height="22" rx="11" fill="#ffffff" fill-opacity="0.9" stroke="#fb923c"/>
+<text x="1152.0" y="251" class="status" text-anchor="middle">外部</text>
+<text x="994" y="258" class="node-title" text-anchor="start">MetaOne MCP</text>
+<text x="994" y="285" class="node-sub" text-anchor="start">真实环境元数据</text>
+<text x="994" y="305" class="node-sub" text-anchor="start">接口允许增删改</text>
+</g>
+<g id="metaone-adapter" class="node" data-graph-role="node" data-title="Capability Adapter" data-detail="tools/list + capability；字段 / 类型归一化；错误 / 分页 / 截断" tabindex="0">
+<rect x="1234" y="216" width="230" height="140" rx="10" fill="#fff7ed" stroke="#f97316" stroke-width="1.6"/>
+<text x="1252" y="248" class="node-title" text-anchor="start">Capability Adapter</text>
+<text x="1252" y="275" class="node-sub" text-anchor="start">tools/list + capability</text>
+<text x="1252" y="295" class="node-sub" text-anchor="start">字段 / 类型归一化</text>
+<text x="1252" y="315" class="node-sub" text-anchor="start">错误 / 分页 / 截断</text>
+</g>
+<g id="environment-view" class="node" data-graph-role="node" data-title="Environment View" data-detail="维度 / 度量 / 指标；逻辑 / 物理 / 字段" tabindex="0">
+<rect x="1504" y="226" width="202" height="120" rx="10" fill="#ffedd5" stroke="#ea580c" stroke-width="1.6"/>
+<text x="1522" y="258" class="node-title" text-anchor="start">Environment View</text>
+<text x="1522" y="285" class="node-sub" text-anchor="start">维度 / 度量 / 指标</text>
+<text x="1522" y="305" class="node-sub" text-anchor="start">逻辑 / 物理 / 字段</text>
+</g>
+<g id="business-query" class="node" data-graph-role="node" data-title="需求调研 / 模型设计" data-detail="业务问题与约束" tabindex="0">
+<rect x="80" y="526" width="200" height="96" rx="10" fill="#ffffff" stroke="#a78bfa" stroke-width="1.6"/>
+<text x="98" y="558" class="node-title" text-anchor="start">需求调研 / 模型设计</text>
+<text x="98" y="585" class="node-sub" text-anchor="start">业务问题与约束</text>
+</g>
+<g id="requirements" class="node" data-graph-role="node" data-title="Intent + Requirements" data-detail="场景 / 指标 / 粒度；所需 coverage" tabindex="0">
+<rect x="330" y="516" width="240" height="116" rx="10" fill="#faf5ff" stroke="#8b5cf6" stroke-width="1.6"/>
+<text x="348" y="548" class="node-title" text-anchor="start">Intent + Requirements</text>
+<text x="348" y="575" class="node-sub" text-anchor="start">场景 / 指标 / 粒度</text>
+<text x="348" y="595" class="node-sub" text-anchor="start">所需 coverage</text>
+</g>
+<g id="environment-first" class="node" data-graph-role="node" data-title="Environment-first Lookup" data-detail="先 search MetaOne；再 read / expand；少量锚点 + 明确预算" tabindex="0">
+<rect x="620" y="506" width="260" height="136" rx="10" fill="#fff7ed" stroke="#f97316" stroke-width="1.6"/>
+<text x="638" y="538" class="node-title" text-anchor="start">Environment-first Lookup</text>
+<text x="638" y="565" class="node-sub" text-anchor="start">先 search MetaOne</text>
+<text x="638" y="585" class="node-sub" text-anchor="start">再 read / expand</text>
+<text x="638" y="605" class="node-sub" text-anchor="start">少量锚点 + 明确预算</text>
+</g>
+<g id="availability-gate" class="node" data-graph-role="node" data-title="Availability + Coverage Gate" data-detail="FOUND / PARTIAL；NOT_FOUND_CONFIRMED；UNSUPPORTED / UNAVAILABLE；TRUNCATED ≠ 不存在" tabindex="0">
+<rect x="930" y="494" width="280" height="160" rx="10" fill="#ffffff" stroke="#7c3aed" stroke-width="1.6"/>
+<text x="948" y="526" class="node-title" text-anchor="start">Availability + Coverage Gate</text>
+<text x="948" y="553" class="node-sub" text-anchor="start">FOUND / PARTIAL</text>
+<text x="948" y="573" class="node-sub" text-anchor="start">NOT_FOUND_CONFIRMED</text>
+<text x="948" y="593" class="node-sub" text-anchor="start">UNSUPPORTED / UNAVAILABLE</text>
+<text x="948" y="613" class="node-sub" text-anchor="start">TRUNCATED ≠ 不存在</text>
+</g>
+<g id="binding-overlay" class="node" data-graph-role="node" data-title="Query-scoped Binding Overlay" data-detail="环境事实 + 参考语义；confirmed / derived / candidate；不回写两层知识库" tabindex="0">
+<rect x="1460" y="506" width="260" height="148" rx="10" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.6"/>
+<text x="1478" y="538" class="node-title" text-anchor="start">Query-scoped Binding Overlay</text>
+<text x="1478" y="565" class="node-sub" text-anchor="start">环境事实 + 参考语义</text>
+<text x="1478" y="585" class="node-sub" text-anchor="start">confirmed / derived / candidate</text>
+<text x="1478" y="605" class="node-sub" text-anchor="start">不回写两层知识库</text>
+</g>
+<g id="reference-enrichment" class="node" data-graph-role="node" data-title="Reference Semantic Enrichment" data-detail="场景 / 需求 / 业务对象；SID / 分层分域规则" tabindex="0">
+<rect x="330" y="700" width="260" height="120" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.6"/>
+<text x="348" y="732" class="node-title" text-anchor="start">Reference Semantic Enrichment</text>
+<text x="348" y="759" class="node-sub" text-anchor="start">场景 / 需求 / 业务对象</text>
+<text x="348" y="779" class="node-sub" text-anchor="start">SID / 分层分域规则</text>
+</g>
+<g id="missing-state" class="node" data-graph-role="node" data-title="Missing / Unknown" data-detail="无权限 / 超时 / 不支持；保持 unknown，不假装缺失" tabindex="0">
+<rect x="660" y="700" width="240" height="120" rx="10" fill="#f9fafb" stroke="#94a3b8" stroke-width="1.6"/>
+<rect x="826" y="710" width="64" height="22" rx="11" fill="#ffffff" fill-opacity="0.9" stroke="#94a3b8"/>
+<text x="858.0" y="725" class="status" text-anchor="middle">显式</text>
+<text x="678" y="732" class="node-title" text-anchor="start">Missing / Unknown</text>
+<text x="678" y="759" class="node-sub" text-anchor="start">无权限 / 超时 / 不支持</text>
+<text x="678" y="779" class="node-sub" text-anchor="start">保持 unknown，不假装缺失</text>
+</g>
+<g id="reference-only" class="node" data-graph-role="node" data-title="Reference-only Candidate" data-detail="仅确认现网不存在后启用；不能声称环境可用" tabindex="0">
+<rect x="950" y="700" width="260" height="120" rx="10" fill="#faf5ff" stroke="#a855f7" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text x="968" y="732" class="node-title" text-anchor="start">Reference-only Candidate</text>
+<text x="968" y="759" class="node-sub" text-anchor="start">仅确认现网不存在后启用</text>
+<text x="968" y="779" class="node-sub" text-anchor="start">不能声称环境可用</text>
+</g>
+<g id="context-bundle" class="node" data-graph-role="node" data-title="Dual-layer Context Bundle" data-detail="environment facts / reference semantics；missing / conflicts / candidates / warnings；reference + environment + policy versions" tabindex="0">
+<rect x="190" y="1002" width="460" height="112" rx="10" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.6"/>
+<rect x="576" y="1012" width="64" height="22" rx="11" fill="#ffffff" fill-opacity="0.9" stroke="#16a34a"/>
+<text x="608.0" y="1027" class="status" text-anchor="middle">主输出</text>
+<text x="208" y="1034" class="node-title" text-anchor="start">Dual-layer Context Bundle</text>
+<text x="208" y="1061" class="node-sub" text-anchor="start">environment facts / reference semantics</text>
+<text x="208" y="1081" class="node-sub" text-anchor="start">missing / conflicts / candidates / warnings</text>
+<text x="208" y="1101" class="node-sub" text-anchor="start">reference + environment + policy versions</text>
+</g>
+<g id="consumers" class="node" data-graph-role="node" data-title="下游消费者" data-detail="Main Agent / 建模 Agent；SQL Agent / 人工评审" tabindex="0">
+<rect x="760" y="1002" width="320" height="112" rx="10" fill="#ffffff" stroke="#22c55e" stroke-width="1.6"/>
+<rect x="1006" y="1012" width="64" height="22" rx="11" fill="#ffffff" fill-opacity="0.9" stroke="#22c55e"/>
+<text x="1038.0" y="1027" class="status" text-anchor="middle">只读</text>
+<text x="778" y="1034" class="node-title" text-anchor="start">下游消费者</text>
+<text x="778" y="1061" class="node-sub" text-anchor="start">Main Agent / 建模 Agent</text>
+<text x="778" y="1081" class="node-sub" text-anchor="start">SQL Agent / 人工评审</text>
+</g>
+<g id="governance" class="node" data-graph-role="node" data-title="Review + Golden Governance" data-detail="候选映射人工确认；接口兼容 fixtures / coverage cases；禁止候选自动升级为事实" tabindex="0">
+<rect x="1180" y="1002" width="410" height="112" rx="10" fill="#faf5ff" stroke="#a855f7" stroke-width="1.6"/>
+<rect x="1516" y="1012" width="64" height="22" rx="11" fill="#ffffff" fill-opacity="0.9" stroke="#a855f7"/>
+<text x="1548.0" y="1027" class="status" text-anchor="middle">治理</text>
+<text x="1198" y="1034" class="node-title" text-anchor="start">Review + Golden Governance</text>
+<text x="1198" y="1061" class="node-sub" text-anchor="start">候选映射人工确认</text>
+<text x="1198" y="1081" class="node-sub" text-anchor="start">接口兼容 fixtures / coverage cases</text>
+<text x="1198" y="1101" class="node-sub" text-anchor="start">禁止候选自动升级为事实</text>
+</g>
+<text x="319" y="268" class="edge-label" text-anchor="middle">validated JSON</text>
+<text x="599" y="268" class="edge-label" text-anchor="middle">Rich Pages</text>
+<text x="1214" y="268" class="edge-label" text-anchor="middle">MCP tools</text>
+<text x="1484" y="268" class="edge-label" text-anchor="middle">normalized</text>
+<text x="305" y="557" class="edge-label" text-anchor="middle">query</text>
+<text x="595" y="557" class="edge-label" text-anchor="middle">requirements</text>
+<text x="905" y="557" class="edge-label" text-anchor="middle">facts + state</text>
+<text x="1335" y="539" class="edge-label" text-anchor="middle">FOUND / PARTIAL</text>
+<text x="1180" y="455" class="edge-label" text-anchor="middle">environment read</text>
+<text x="650" y="682" class="edge-label" text-anchor="middle">reference read</text>
+<text x="1152" y="682" class="edge-label" text-anchor="middle">NOT_FOUND_CONFIRMED</text>
+<text x="870" y="666" class="edge-label" text-anchor="middle">unknown</text>
+<text x="1310" y="744" class="edge-label" text-anchor="middle">candidate</text>
+<text x="1025" y="837" class="edge-label" text-anchor="middle">semantic enrichment</text>
+<text x="1215" y="857" class="edge-label" text-anchor="middle">missing / warning</text>
+<text x="1065" y="881" class="edge-label" text-anchor="middle">binding overlay</text>
+<text x="705" y="1041" class="edge-label" text-anchor="middle">read-only context</text>
+<text x="902" y="1120" class="edge-label" text-anchor="middle">candidates / conflicts</text>
+<rect x="40" y="1172" width="1720" height="94" rx="14" fill="#f9fafb" stroke="#e5e7eb"/>
+<text x="64" y="1201" class="note-title" text-anchor="start">权威规则</text>
+<text x="136" y="1201" class="note" text-anchor="start">MetaOne 决定当前环境有什么；Reference Context 解释它意味着什么；Binding Overlay 只负责本次查询的对齐。</text>
+<text x="64" y="1230" class="note-title" text-anchor="start">回退规则</text>
+<text x="136" y="1230" class="note" text-anchor="start">只有 NOT_FOUND_CONFIRMED 才允许 Reference-only；超时、无权限、不支持与截断均返回 Unknown / Missing。</text>
+<text x="64" y="1254" class="note-title" text-anchor="start">版本轴</text>
+<text x="136" y="1254" class="note" text-anchor="start">referenceIndexVersion + environment snapshot/capturedAt + capabilityRevision + bindingPolicyVersion。</text>
+</svg>

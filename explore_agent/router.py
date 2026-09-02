@@ -1,15 +1,17 @@
 import re
 
+from enterprise_data_context.classification import classification_scope
+
 KNOWN_TECH = ["LTE","5G","NR","VoLTE","VoNR","IMS","EPC"]
 
 class QueryRouter:
     def route(self,query):
-        q=query.lower(); scope={}
+        q=query.lower(); scope=classification_scope(query)
         for t in KNOWN_TECH:
             if t.lower() in q: scope["technology"]=t; break
         if "地铁" in query or "metro" in q: scope["scenario"]="metro"
         if "弱覆盖" in query: scope["analysis_purpose"]="weak-coverage"
-        metrics=re.findall(r"\b[A-Z][A-Z0-9_]{2,}\b",query)
+        metrics=[x for x in re.findall(r"\b[A-Z][A-Z0-9_]{2,}\b",query) if x not in {"ODS","SDL","ODI","ADS","DWD","DWS"}]
         if metrics: scope["symbol"]=metrics[0]
         return scope
 

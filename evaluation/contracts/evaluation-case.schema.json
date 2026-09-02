@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://data-agent.local/evaluation/evaluation-case.schema.json",
+  "title": "Enterprise Context Evaluation Case",
+  "type": "object",
+  "required": [
+    "case_id",
+    "scenario_family",
+    "subtype",
+    "query",
+    "query_variants",
+    "difficulty",
+    "environment_scope",
+    "context_token_budget",
+    "required_layers",
+    "required_evidence",
+    "allowed_relevant_evidence",
+    "forbidden_evidence",
+    "expected_missing",
+    "expected_conflicts",
+    "negative",
+    "review_status",
+    "reviewer_ids"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "pattern": "^case-[a-z0-9][a-z0-9._-]*$"
+    },
+    "scenario_family": {
+      "enum": ["requirement_research", "model_design_preparation"]
+    },
+    "subtype": {
+      "enum": [
+        "single_layer",
+        "adjacent_mapping",
+        "multi_layer",
+        "environment_gap_conflict",
+        "schema_context",
+        "processing_context",
+        "full_design_context",
+        "reuse_and_change",
+        "insufficient_context"
+      ]
+    },
+    "query": {"type": "string", "minLength": 1},
+    "query_variants": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "difficulty": {"enum": ["S", "M", "L"]},
+    "environment_scope": {"enum": ["global", "current_environment", "both"]},
+    "context_token_budget": {"enum": [2048, 4096, 8192]},
+    "required_layers": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "scenario",
+          "metric",
+          "business_object",
+          "logical_model",
+          "physical_model",
+          "table",
+          "field",
+          "dimension",
+          "grain",
+          "lineage",
+          "processing_logic",
+          "environment_asset"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "required_evidence": {"$ref": "#/$defs/evidenceIds"},
+    "allowed_relevant_evidence": {"$ref": "#/$defs/evidenceIds"},
+    "forbidden_evidence": {"$ref": "#/$defs/evidenceIds"},
+    "expected_missing": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "expected_conflicts": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/conflict"},
+      "uniqueItems": true
+    },
+    "negative": {"type": "boolean"},
+    "review_status": {"enum": ["DRAFT", "APPROVED", "REJECTED"]},
+    "reviewer_ids": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "notes": {"type": "string"}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"negative": {"const": true}},
+        "required": ["negative"]
+      },
+      "then": {
+        "properties": {"required_evidence": {"maxItems": 0}}
+      },
+      "else": {
+        "properties": {"required_evidence": {"minItems": 1}}
+      }
+    },
+    {
+      "if": {
+        "properties": {"review_status": {"const": "APPROVED"}},
+        "required": ["review_status"]
+      },
+      "then": {
+        "properties": {"reviewer_ids": {"minItems": 1}}
+      }
+    }
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "evidenceIds": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^ev-"},
+      "uniqueItems": true
+    },
+    "conflict": {
+      "type": "object",
+      "required": ["conflict_id", "evidence_ids", "description"],
+      "properties": {
+        "conflict_id": {"type": "string", "minLength": 1},
+        "evidence_ids": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^ev-"},
+          "minItems": 2,
+          "uniqueItems": true
+        },
+        "description": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/contracts/context-bundle.schema.json",
+  "title": "Data Explore Context Bundle",
+  "type": "object",
+  "required": [
+    "query",
+    "summary",
+    "primary_contexts",
+    "analysis_context",
+    "data_context",
+    "business_mapping",
+    "constraints",
+    "environment",
+    "coverage",
+    "missing_context",
+    "sources",
+    "confidence",
+    "conflicts",
+    "candidates",
+    "warnings",
+    "truncated",
+    "truncation_reasons",
+    "index_version",
+    "policy",
+    "budget",
+    "novelty",
+    "selected_context_ids",
+    "seen_context_ids",
+    "exploration_state",
+    "stop_reason",
+    "reference_index_version",
+    "binding_policy_version",
+    "binding_overlay"
+  ],
+  "properties": {
+    "query": {"type": "object"},
+    "summary": {"type": "string"},
+    "primary_contexts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "type", "name", "relevance", "content_level", "content"],
+        "properties": {
+          "path": {"type": "string"},
+          "type": {"type": "string"},
+          "name": {"type": "string"},
+          "relevance": {"type": "number"},
+          "reasons": {"type": "array", "items": {"type": "string"}},
+          "content_level": {"type": ["string", "null"], "enum": ["L0", "L1", null]},
+          "content": {"type": ["string", "null"]}
+        },
+        "additionalProperties": false
+      }
+    },
+    "analysis_context": {"type": "object"},
+    "data_context": {"type": "object"},
+    "business_mapping": {"type": "object"},
+    "constraints": {"type": "array"},
+    "environment": {"type": "object"},
+    "coverage": {"type": "object", "additionalProperties": {"type": "boolean"}},
+    "missing_context": {"type": "array", "items": {"type": "string"}},
+    "sources": {"type": "array", "items": {"type": "object"}},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "conflicts": {"type": "array", "items": {"type": "object"}},
+    "candidates": {"type": "array", "items": {"type": "object"}},
+    "warnings": {"type": "array", "items": {"type": "object"}},
+    "truncated": {"type": "boolean"},
+    "truncation_reasons": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "index_version": {"type": ["string", "null"]},
+    "reference_index_version": {"type": ["string", "null"]},
+    "binding_policy_version": {"type": ["string", "null"]},
+    "binding_overlay": {
+      "type": "object",
+      "required": [
+        "environment_facts",
+        "reference_semantics",
+        "confirmed_bindings",
+        "derived_bindings",
+        "candidate_bindings",
+        "reference_only_assets",
+        "conflicts",
+        "missing_context"
+      ],
+      "properties": {
+        "environment_facts": {"type": "array", "items": {"type": "object"}},
+        "reference_semantics": {"type": "array", "items": {"type": "object"}},
+        "confirmed_bindings": {"type": "array", "items": {"type": "object"}},
+        "derived_bindings": {"type": "array", "items": {"type": "object"}},
+        "candidate_bindings": {"type": "array", "items": {"type": "object"}},
+        "reference_only_assets": {"type": "array", "items": {"type": "object"}},
+        "conflicts": {"type": "array", "items": {"type": "object"}},
+        "missing_context": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      },
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "required": ["intent", "required_coverage", "top_k", "bundle_k", "token_budget"]
+    },
+    "budget": {
+      "type": "object",
+      "required": ["scope", "token_budget", "estimated_tokens", "remaining_tokens"]
+    },
+    "novelty": {
+      "type": "object",
+      "required": ["candidate_count", "novel_candidate_count", "selected_new_count", "seen_skipped_count"]
+    },
+    "selected_context_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "seen_context_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "exploration_state": {
+      "type": "object",
+      "required": ["index_version", "seen_context_ids", "coverage", "rounds", "used_tokens", "last_intent", "stop_reason"]
+    },
+    "stop_reason": {"type": ["string", "null"]}
+  },
+  "additionalProperties": false
+}

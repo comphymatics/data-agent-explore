@@ -10,3 +10,9 @@
 - Page-level retrieval first; Element-level expansion second.
 - Partial knowledge is a normal operating condition.
 - Environment Binding is late/runtime binding.
+- Reference Knowledge and Environment Knowledge remain separate stores and version axes.
+- MetaOne is authoritative for current-environment existence and technical metadata.
+- Reference Context supplies semantic enrichment; it cannot prove environment availability.
+- Environment-first selection uses field-level authority, not blind cross-store fusion.
+- Only confirmed `NOT_FOUND` allows a reference-only asset fallback; provider failure remains unknown.
+- MetaOne MCP volatility is isolated behind a capability-negotiated, platform-neutral adapter.

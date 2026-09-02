@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://data-agent.local/evaluation/dataset-manifest.schema.json",
+  "title": "Enterprise Context Evaluation Dataset Manifest",
+  "type": "object",
+  "required": [
+    "dataset_id",
+    "version",
+    "status",
+    "created_at",
+    "source_snapshot_id",
+    "description",
+    "security_classification",
+    "authority_policy",
+    "files",
+    "created_by",
+    "approved_by"
+  ],
+  "properties": {
+    "dataset_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "version": {"type": "string", "minLength": 1},
+    "status": {"enum": ["DRAFT", "FROZEN", "RETIRED"]},
+    "created_at": {"type": "string", "format": "date-time"},
+    "source_snapshot_id": {"type": "string", "minLength": 1},
+    "description": {"type": "string", "minLength": 1},
+    "security_classification": {"enum": ["SYNTHETIC", "INTERNAL", "CONFIDENTIAL", "RESTRICTED"]},
+    "authority_policy": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["rank", "source_type", "description"],
+        "properties": {
+          "rank": {"type": "integer", "minimum": 1},
+          "source_type": {"type": "string", "minLength": 1},
+          "description": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "files": {
+      "type": "object",
+      "required": ["evidence", "cases", "design_oracles"],
+      "properties": {
+        "evidence": {"const": "evidence.jsonl"},
+        "cases": {"const": "cases.jsonl"},
+        "design_oracles": {"const": "design-oracles.jsonl"}
+      },
+      "additionalProperties": false
+    },
+    "created_by": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "approved_by": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "notes": {"type": "string"}
+  },
+  "additionalProperties": false
+}

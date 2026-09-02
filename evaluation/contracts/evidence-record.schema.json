@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://data-agent.local/evaluation/evidence-record.schema.json",
+  "title": "Enterprise Context Evaluation Evidence Record",
+  "type": "object",
+  "required": [
+    "evidence_id",
+    "assertion_status",
+    "statement",
+    "subject",
+    "predicate",
+    "object",
+    "source",
+    "excerpt",
+    "content_hash",
+    "confidence",
+    "review_status",
+    "reviewer_ids"
+  ],
+  "properties": {
+    "evidence_id": {
+      "type": "string",
+      "pattern": "^ev-[a-z0-9][a-z0-9._-]*$"
+    },
+    "assertion_status": {
+      "enum": ["EXPLICIT", "DERIVED", "INFERRED", "CANDIDATE"]
+    },
+    "statement": {"type": "string", "minLength": 1},
+    "subject": {"$ref": "#/$defs/entity"},
+    "predicate": {"type": "string", "minLength": 1},
+    "object": {
+      "oneOf": [
+        {"$ref": "#/$defs/entity"},
+        {"$ref": "#/$defs/scalar"}
+      ]
+    },
+    "source": {"$ref": "#/$defs/source"},
+    "excerpt": {"type": "string", "minLength": 1},
+    "content_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "derived_from": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^ev-"},
+      "uniqueItems": true,
+      "default": []
+    },
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "review_status": {"enum": ["DRAFT", "APPROVED", "REJECTED"]},
+    "reviewer_ids": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "tags": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true,
+      "default": []
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"assertion_status": {"const": "DERIVED"}},
+        "required": ["assertion_status"]
+      },
+      "then": {
+        "properties": {"derived_from": {"minItems": 1}}
+      }
+    },
+    {
+      "if": {
+        "properties": {"review_status": {"const": "APPROVED"}},
+        "required": ["review_status"]
+      },
+      "then": {
+        "properties": {"reviewer_ids": {"minItems": 1}}
+      }
+    }
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "entity": {
+      "type": "object",
+      "required": ["entity_id", "entity_type", "name"],
+      "properties": {
+        "entity_id": {"type": "string", "minLength": 1},
+        "entity_type": {
+          "enum": [
+            "scenario",
+            "metric",
+            "business_object",
+            "logical_model",
+            "physical_model",
+            "table",
+            "field",
+            "dimension",
+            "grain",
+            "processing_rule",
+            "environment_asset",
+            "target_model",
+            "other"
+          ]
+        },
+        "name": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "scalar": {
+      "type": "object",
+      "required": ["value"],
+      "properties": {
+        "value": {},
+        "value_type": {"type": "string"},
+        "unit": {"type": ["string", "null"]}
+      },
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "source_id",
+        "source_version",
+        "source_type",
+        "logical_uri",
+        "authority_level",
+        "location"
+      ],
+      "properties": {
+        "source_id": {"type": "string", "minLength": 1},
+        "source_version": {"type": "string", "minLength": 1},
+        "source_type": {
+          "enum": [
+            "application_scenario",
+            "metric_definition",
+            "data_dictionary",
+            "logical_model_spec",
+            "physical_model_spec",
+            "asset_catalog",
+            "mapping_spec",
+            "model_design",
+            "processing_spec",
+            "sql",
+            "other"
+          ]
+        },
+        "logical_uri": {"type": "string", "minLength": 1},
+        "authority_level": {"type": "integer", "minimum": 1},
+        "location": {"$ref": "#/$defs/location"}
+      },
+      "additionalProperties": false
+    },
+    "location": {
+      "type": "object",
+      "properties": {
+        "sheet": {"type": ["string", "null"]},
+        "section": {"type": ["string", "null"]},
+        "table": {"type": ["string", "null"]},
+        "row": {"type": ["integer", "null"], "minimum": 1},
+        "column": {"type": ["integer", "null"], "minimum": 1},
+        "cell": {"type": ["string", "null"]},
+        "paragraph": {"type": ["integer", "null"], "minimum": 1},
+        "line_start": {"type": ["integer", "null"], "minimum": 1},
+        "line_end": {"type": ["integer", "null"], "minimum": 1}
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "format": "enterprise-context-case-quotas/v1",
+  "quotas": {
+    "single_layer": 12,
+    "adjacent_mapping": 8,
+    "multi_layer": 10,
+    "environment_gap_conflict": 6,
+    "schema_context": 6,
+    "processing_context": 6,
+    "full_design_context": 6,
+    "reuse_and_change": 3,
+    "insufficient_context": 3
+  }
+}

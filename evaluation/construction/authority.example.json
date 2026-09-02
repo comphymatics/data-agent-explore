@@ -1,0 +1,8 @@
+{
+  "metric_definition": 1,
+  "data_dictionary": 2,
+  "model_design": 2,
+  "asset_catalog": 3,
+  "application_scenario": 3,
+  "other": 9
+}
