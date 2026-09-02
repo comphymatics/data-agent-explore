@@ -29,6 +29,12 @@ describe("telecom metadata mock and HTTP provider", () => {
     assert.equal(capabilities.tenantIsolation, true);
     assert.ok(Array.isArray(capabilities.assetTypes));
     assert.ok(Array.isArray(capabilities.sourceInterfaces));
+    assert.ok(Array.isArray(capabilities.compilerSourceInterfaces));
+    assert.ok(
+      (capabilities.compilerSourceInterfaces as Array<{ authority: string }>).every(
+        (endpoint) => endpoint.authority === "primary",
+      ),
+    );
     assert.equal(
       (capabilities.completeness as { livePayloadMappingVerified: boolean }).livePayloadMappingVerified,
       false,
@@ -55,11 +61,11 @@ describe("telecom metadata mock and HTTP provider", () => {
   it("expands only requested deterministic relations", async () => {
     const result = await provider.expandAssets({
       ids: ["indicator:drop-call-rate"],
-      relations: ["COMPUTED_FROM"],
+      relations: ["CALCULATED_FROM"],
       limit: 10,
     });
     const relations = result.relations as Array<{ predicate: string }>;
     assert.ok(relations.length > 0);
-    assert.ok(relations.every((relation) => relation.predicate === "COMPUTED_FROM"));
+    assert.ok(relations.every((relation) => relation.predicate === "CALCULATED_FROM"));
   });
 });

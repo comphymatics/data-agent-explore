@@ -4,13 +4,17 @@ export type AssetType =
   | "LOGICAL_ENTITY"
   | "LOGICAL_ATTRIBUTE"
   | "AGGREGATE_MODEL"
+  | "CATALOG"
   | "SID_ABE"
   | "SID_BE"
   | "DIMENSION"
+  | "DIMENSION_HIERARCHY"
   | "DIMENSION_LEVEL"
   | "DIMENSION_ATTRIBUTE"
   | "MEASURE"
   | "INDICATOR"
+  | "INDICATOR_VARIABLE"
+  | "DATA_FLOW"
   | "ANALYSIS_PURPOSE";
 
 export type AssertionType =
@@ -49,7 +53,6 @@ export interface ContextEdge {
     | "ALIGNS_WITH"
     | "BELONGS_TO"
     | "BASED_ON"
-    | "COMPUTED_FROM"
     | "ANALYZED_BY"
     | "USES"
     | "ABOUT"
@@ -60,7 +63,25 @@ export interface ContextEdge {
     | "SUPPORTS_DIMENSION"
     | "HAS_LEVEL"
     | "ROLLS_UP_TO"
-    | "UPSTREAM_OF";
+    | "UPSTREAM_OF"
+    | "HAS_CHILD"
+    | "HAS_HIERARCHY"
+    | "USES_DIMENSION"
+    | "MAPS_TO_LEVEL"
+    | "RELATED_TO"
+    | "RELATED_LEVEL"
+    | "PROVIDES_MEASURE"
+    | "AVAILABLE_BY"
+    | "CALCULATED_FROM"
+    | "USES_VARIABLE"
+    | "ASSOCIATED_WITH"
+    | "REFERENCES"
+    | "DRILL_DOWN"
+    | "ABNORMAL_DRILL"
+    | "DERIVES_TO"
+    | "TRANSFORMED_BY"
+    | "SOURCE_MODEL"
+    | "BELONGS_TO_CATALOG";
   targetId: string;
   assertionType: AssertionType;
   confidence: number;

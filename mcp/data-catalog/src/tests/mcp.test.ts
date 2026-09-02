@@ -43,22 +43,33 @@ describe("Data Catalog MCP", () => {
     for (const name of required) assert.ok(names.has(name), `missing required tool: ${name}`);
   });
 
-  it("exposes the interface-derived semantic backbone in capabilities", async () => {
+  it("exposes authoritative Compiler sources separately from Serving shortcuts", async () => {
     const result = await client.callTool({
       name: "metaone_get_capabilities",
       arguments: {},
     });
     assert.equal(result.isError, undefined);
     const structured = result.structuredContent as {
-      sourceInterfaces: Array<{ key: string; path: string }>;
+      sourceInterfaces: Array<{
+        key: string;
+        path: string;
+        priority: string;
+        phase: string;
+        authority: string;
+      }>;
     };
-    assert.ok(
-      structured.sourceInterfaces.some(
-        (item) =>
-          item.key === "semantic-backbone" &&
-          item.path === "/entity/v1/entityColumnRelationById",
-      ),
+    const dimension = structured.sourceInterfaces.find((item) => item.key === "dimension-domain");
+    assert.deepEqual(
+      dimension && [dimension.path, dimension.priority, dimension.phase, dimension.authority],
+      ["/plat/meta/v1/dimensions/", "P0", "compiler", "primary"],
     );
+    const bundle = structured.sourceInterfaces.find((item) => item.key === "entity-semantic-bundle");
+    assert.deepEqual(
+      bundle && [bundle.path, bundle.priority, bundle.phase, bundle.authority],
+      ["/entity/v1/entityColumnRelationById", "P1", "serving", "verification"],
+    );
+    const lineage = structured.sourceInterfaces.find((item) => item.key === "physical-lineage-v2");
+    assert.equal(lineage?.path, "/meta/lineage/v2/queryByModel");
   });
 
   it("calls focused relation expansion over MCP", async () => {
@@ -66,7 +77,7 @@ describe("Data Catalog MCP", () => {
       name: "metaone_expand_assets",
       arguments: {
         ids: ["indicator:drop-call-rate"],
-        relations: ["COMPUTED_FROM"],
+        relations: ["CALCULATED_FROM"],
         limit: 10,
       },
     });
@@ -75,6 +86,6 @@ describe("Data Catalog MCP", () => {
       relations: Array<{ predicate: string }>;
     };
     assert.ok(structured.relations.length > 0);
-    assert.ok(structured.relations.every((item) => item.predicate === "COMPUTED_FROM"));
+    assert.ok(structured.relations.every((item) => item.predicate === "CALCULATED_FROM"));
   });
 });

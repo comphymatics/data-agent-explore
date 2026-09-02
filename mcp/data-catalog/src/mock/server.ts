@@ -2,7 +2,11 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { fileURLToPath } from "node:url";
 import { CatalogIndex } from "../domain/catalog.js";
 import type { AssetType } from "../domain/types.js";
-import { METAONE_ENDPOINTS, METAONE_RELATIONS } from "../metaone/endpoints.js";
+import {
+  METAONE_COMPILER_ENDPOINTS,
+  METAONE_ENDPOINTS,
+  METAONE_RELATIONS,
+} from "../metaone/endpoints.js";
 import { telecomDataset } from "./dataset.js";
 
 const index = new CatalogIndex(telecomDataset);
@@ -34,7 +38,7 @@ export function createMockMetadataServer() {
       json(response, 200, {
         provider: "metaone-fixture",
         environmentId: "fixture-tenant",
-        capabilityRevision: "metaone-interface-inventory-v1",
+        capabilityRevision: "metaone-interface-inventory-v2",
         accessMode: "tenant_service_account",
         tenantIsolation: true,
         authorizationFiltering: false,
@@ -42,6 +46,7 @@ export function createMockMetadataServer() {
         assetTypes: [...new Set(telecomDataset.assets.map((item) => item.type))],
         relations: METAONE_RELATIONS,
         sourceInterfaces: METAONE_ENDPOINTS,
+        compilerSourceInterfaces: METAONE_COMPILER_ENDPOINTS,
         completeness: {
           interfaceInventory: true,
           livePayloadMappingVerified: false,

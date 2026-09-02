@@ -43,7 +43,7 @@ describe("CatalogIndex", () => {
 
   it("explains edges with evidence and index version", () => {
     const explanation = index.evidenceFor("edge:churn-computed-terminated");
-    assert.equal(explanation?.edge.predicate, "COMPUTED_FROM");
+    assert.equal(explanation?.edge.predicate, "CALCULATED_FROM");
     assert.equal(explanation?.source?.id, "indicator:churn-rate");
     assert.equal(explanation?.target?.id, "measure:terminated-subscriptions");
     assert.equal(explanation?.evidence.length, 1);

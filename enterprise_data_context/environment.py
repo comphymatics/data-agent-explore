@@ -196,20 +196,24 @@ class MetaOneMcpAdapter:
         "LOGICAL_MODEL": "logical-model",
         "LOGICAL_ATTRIBUTE": "business-attribute",
         "AGGREGATE_MODEL": "aggregate-model",
+        "CATALOG": "catalog",
         "SID_ABE": "business-object",
         "SID_BE": "business-object",
         "DIMENSION": "dimension",
+        "DIMENSION_HIERARCHY": "dimension-hierarchy",
         "DIMENSION_LEVEL": "dimension-level",
         "DIMENSION_ATTRIBUTE": "dimension-attribute",
         "MEASURE": "measure",
         "INDICATOR": "metric",
+        "INDICATOR_VARIABLE": "metric-variable",
         "METRIC": "metric",
+        "DATA_FLOW": "data-flow",
     }
 
     COVERAGE_TYPES = {
         "metrics": {"metric", "measure"},
         "models": {"logical-model", "physical-model", "aggregate-model"},
-        "dimensions": {"dimension", "dimension-level", "dimension-attribute"},
+        "dimensions": {"dimension", "dimension-hierarchy", "dimension-level", "dimension-attribute"},
         "fields": {"field", "business-attribute", "dimension-attribute"},
         "business_object": {"business-object", "logical-model"},
     }

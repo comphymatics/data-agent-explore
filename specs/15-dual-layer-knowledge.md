@@ -126,11 +126,13 @@ MUST NOT be copied into the stable domain contract.
 The fixture exposes the environment-side capability shape as four operations:
 `metaone_get_capabilities`, `metaone_search_assets`, `metaone_get_asset`, and
 `metaone_expand_assets`. The source-interface inventory is maintained separately in
-`mcp/data-catalog/src/metaone/endpoints.ts`. It marks
-`/entity/v1/entityColumnRelationById` as the P0 semantic relation backbone, while
-columns, model-dimension relations, dimension roll-ups, aggregate sources and lineage
-are focused expansions. This inventory does not assert unobserved HTTP methods or JSON
-field mappings.
+`mcp/data-catalog/src/metaone/endpoints.ts` and labels every interface by Compiler or
+Serving phase and by primary, supplemental, fallback or verification authority.
+`/plat/meta/v1/dimensions/`, explicit Entity/Level relations, Measure/Indicator
+relations and lineage v2 are primary Compiler sources.
+`/entity/v1/entityColumnRelationById` is a Serving-time assembled bundle used for fast
+read and consistency checks, not the Compiler fact authority. This inventory does not
+assert unobserved authentication or JSON field mappings.
 
 ## 7. Binding Overlay
 
@@ -177,9 +179,10 @@ but it is not yet the target dual-layer implementation:
 - `DataCatalogProvider` returns broad `Record<string, unknown>` values for capability,
   search and context operations, so response compatibility is not validated;
 - `HttpDataCatalogProvider` binds directly to fixed `/v1/...` endpoints;
-- MCP asset types are hard-coded in the server instead of negotiated and normalized;
-- context tools fetch the complete dataset and rebuild `CatalogIndex` per call, which
-  assumes a full-dataset API and does not fit a large live MetaOne environment;
+- fixture asset and relation types are derived from the reviewed endpoint inventory,
+  but live provider capability negotiation still needs calibration;
+- the normalized HTTP gateway contract is fixture-only and still needs a production
+  provider implementation over real MetaOne payloads;
 - the mock dataset mixes SID, analysis purposes and physical environment assets in one
   graph, so it cannot demonstrate two-layer authority or fallback rules;
 - the local adapter has not been calibrated against a live MetaOne tool list, payload,
@@ -232,6 +235,8 @@ Currently implemented in this repository:
 - query-scoped Binding Overlay, guarded `REFERENCE_ONLY` candidates and dual-version
   Context Bundle fields;
 - a generic data-catalog MCP/provider sample.
+- a phase/authority-labeled MetaOne endpoint inventory and deterministic semantic
+  construction design in `16-metaone-semantic-construction.md`.
 
 Not yet implemented:
 

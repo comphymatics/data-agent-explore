@@ -103,14 +103,15 @@ limits still require verification in a connected environment. The detailed archi
 and remaining implementation GAP are
 documented in `specs/15-dual-layer-knowledge.md`.
 
-The MetaOne-facing fixture under `mcp/data-catalog/` now exposes only four read-only
+The MetaOne-facing fixture under `mcp/data-catalog/` exposes only four read-only
 environment operations: capabilities, asset search, bounded asset read and focused
-relation expansion. Its reviewed endpoint inventory treats
-`/entity/v1/entityColumnRelationById` as the P0 deterministic semantic backbone and
-adds P1 expansion for model-dimension relations, dimension hierarchy, aggregate-model
-sources and physical lineage. The endpoint inventory is verified from interface
-descriptions only; request methods, authentication and raw response-field mappings
-remain unverified until real JSON samples are captured.
+relation expansion. Its reviewed endpoint inventory distinguishes authoritative
+Compiler sources from Serving shortcuts: `/plat/meta/v1/dimensions/`, explicit
+entity-level mappings, Measure/Indicator relations and lineage v2 form the P0
+deterministic sources; `/entity/v1/entityColumnRelationById` is a P1 assembled-bundle
+verification path. See `specs/16-metaone-semantic-construction.md`. Request methods,
+authentication and raw response-field mappings remain unverified until real JSON
+samples are captured.
 
 Review assets: `docs/architecture/dual-layer-knowledge-architecture.html` (interactive),
 with editable SVG and PNG counterparts in the same directory.
