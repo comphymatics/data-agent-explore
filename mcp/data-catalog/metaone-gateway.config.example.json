@@ -1,0 +1,33 @@
+{
+  "baseUrl": "https://api-gateway.example.com/metaone",
+  "environmentId": "replace-with-environment-id",
+  "timeoutMs": 8000,
+  "maxFanout": 8,
+  "livePayloadMappingVerified": false,
+  "headers": {
+    "x-client-id": "replace-with-non-secret-client-id"
+  },
+  "routes": [
+    {
+      "endpointKey": "dimension-domain",
+      "method": "GET",
+      "path": "/plat/meta/v1/dimensions/",
+      "argumentLocation": "query",
+      "includeArguments": ["query", "limit", "cursor"],
+      "argumentAliases": {
+        "query": "keyword",
+        "limit": "pageSize"
+      }
+    },
+    {
+      "endpointKey": "entity-semantic-bundle",
+      "method": "POST",
+      "path": "/entity/v1/entityColumnRelationById",
+      "argumentLocation": "body",
+      "includeArguments": ["id"],
+      "argumentAliases": {
+        "id": "entityId"
+      }
+    }
+  ]
+}

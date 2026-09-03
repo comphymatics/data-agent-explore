@@ -2,7 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { AssetType } from "../domain/types.js";
 import { METAONE_ASSET_TYPES, METAONE_RELATIONS } from "../metaone/endpoints.js";
-import { HttpDataCatalogProvider } from "../providers/http-provider.js";
+import { createProviderFromEnvironment } from "../providers/provider-factory.js";
 import type { DataCatalogProvider } from "../providers/provider.js";
 
 const assetTypes = METAONE_ASSET_TYPES as [AssetType, ...AssetType[]];
@@ -20,10 +20,7 @@ const asResult = (value: unknown) => ({
 export function createDataCatalogServer(provider?: DataCatalogProvider): McpServer {
   const catalogProvider =
     provider ??
-    new HttpDataCatalogProvider({
-      baseUrl: process.env.DATA_CATALOG_BASE_URL ?? "http://127.0.0.1:4100",
-      timeoutMs: Number(process.env.DATA_CATALOG_TIMEOUT_MS ?? 5000),
-    });
+    createProviderFromEnvironment();
   const server = new McpServer({
     name: "metaone-environment-metadata",
     version: "0.2.0",

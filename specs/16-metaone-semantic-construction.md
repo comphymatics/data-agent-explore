@@ -197,7 +197,13 @@ For “5G 流量可以按哪些维度分析，来自哪些表？”:
 
 ## 10. Remaining implementation work
 
-The endpoint inventory and normalized MCP/adapter fixtures are implemented. Production
-completion still requires real payload fixtures for each P0 domain, authentication and
-error calibration, endpoint-specific normalizers, incremental publication, Rich
-Environment Asset Page materialization and bounded read/expand orchestration in Explore.
+The endpoint inventory, stable four-tool MCP surface, normalized fixtures and
+configurable API-gateway transport are implemented. The transport covers authentication,
+GET/POST routing, query/body argument mapping, bounded fan-out, timeout/error handling and
+strict normalized-envelope validation.
+
+Production completion still requires real request/response fixtures for each published
+P0 route, endpoint-specific raw-payload normalizers, gateway/OpenAPI method and parameter
+verification, incremental publication, Rich Environment Asset Page materialization and
+bounded read/expand orchestration in Explore. Keep
+`livePayloadMappingVerified: false` until those fixtures pass integration tests.

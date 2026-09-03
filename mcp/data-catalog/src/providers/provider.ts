@@ -12,7 +12,10 @@ export class ProviderError extends Error {
     readonly category:
       | "TIMEOUT"
       | "CONNECTION"
+      | "UNAUTHORIZED"
       | "NOT_FOUND"
+      | "UNSUPPORTED"
+      | "INVALID_REQUEST"
       | "INVALID_RESPONSE"
       | "PROVIDER_ERROR",
     message: string,
