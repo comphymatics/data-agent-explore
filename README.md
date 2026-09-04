@@ -85,6 +85,11 @@ inventory match. Validation output follows
 `contracts/template-delivery-report.schema.json` and is persisted as
 `delivery-report.json` in the immutable snapshot.
 
+For the first real-data pilot, follow `specs/19-real-data-pilot-runbook.md`. The
+`scripts/audit_context_snapshot.py` command turns quality errors, Evidence completeness,
+candidate isolation, cross-source links, unresolved references and orphan Contexts into
+explicit pass/fail gates with scope-specific thresholds.
+
 `ContextCompiler.compile_fragments()` and `scripts/build_fragments.py` remain internal
 and backward-compatible entrypoints. They are not part of the parser team's delivery
 contract.

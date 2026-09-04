@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://data-agent.local/contracts/context-snapshot-audit.schema.json",
+  "title": "Context Snapshot Audit Report",
+  "type": "object",
+  "required": ["schema_version", "status", "index_version", "coverage_declaration", "delivery", "policy", "counts", "quality", "associations", "gates"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {"enum": ["PASSED", "FAILED"]},
+    "index_version": {"type": ["string", "null"]},
+    "coverage_declaration": {"type": "object"},
+    "delivery": {
+      "type": "object",
+      "required": ["batch_id", "manifest_present"],
+      "properties": {
+        "batch_id": {"type": ["string", "null"]},
+        "manifest_present": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "required": ["require_delivery_manifest", "require_complete_coverage", "min_cross_source_confirmed", "max_unresolved_ratio", "max_orphan_ratio"],
+      "properties": {
+        "require_delivery_manifest": {"type": "boolean"},
+        "require_complete_coverage": {"type": "boolean"},
+        "min_cross_source_confirmed": {"type": "integer", "minimum": 0},
+        "max_unresolved_ratio": {"type": "number", "minimum": 0, "maximum": 1},
+        "max_orphan_ratio": {"type": "number", "minimum": 0, "maximum": 1}
+      },
+      "additionalProperties": false
+    },
+    "counts": {"type": "object"},
+    "quality": {
+      "type": "object",
+      "required": ["error_count", "warning_count", "by_code"],
+      "properties": {
+        "error_count": {"type": "integer", "minimum": 0},
+        "warning_count": {"type": "integer", "minimum": 0},
+        "by_code": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 1}}
+      },
+      "additionalProperties": false
+    },
+    "associations": {
+      "type": "object",
+      "required": ["reference_count", "references_by_status", "cross_source_confirmed_count", "orphan_context_count", "unresolved_ratio", "orphan_ratio"],
+      "properties": {
+        "reference_count": {"type": "integer", "minimum": 0},
+        "references_by_status": {"type": "object"},
+        "cross_source_confirmed_count": {"type": "integer", "minimum": 0},
+        "orphan_context_count": {"type": "integer", "minimum": 0},
+        "unresolved_ratio": {"type": "number", "minimum": 0, "maximum": 1},
+        "orphan_ratio": {"type": "number", "minimum": 0, "maximum": 1}
+      },
+      "additionalProperties": false
+    },
+    "gates": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"type": "boolean"}
+    }
+  },
+  "additionalProperties": false
+}
