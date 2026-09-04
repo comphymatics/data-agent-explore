@@ -10,6 +10,11 @@ The parser delivery gate must reject any data file that does not conform to
 `contracts/template-input.schema.json`. Direct ContextFragment JSON/JSONL is an
 internal compatibility path and is not required from the parser team.
 
+Real parser batches must additionally pass `scripts/validate_template_delivery.py`.
+Missing batch metadata keeps coverage `PARTIAL`; a `COMPLETE` claim requires an exact,
+fingerprinted and explicitly authoritative `delivery-manifest.json`. The resulting
+delivery report must be persisted with the immutable Context snapshot.
+
 ## Dual-layer MetaOne acceptance
 
 Before enabling a concrete MetaOne adapter in production, tests must prove that:

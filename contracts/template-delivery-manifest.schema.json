@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://data-agent.local/contracts/template-delivery-manifest.schema.json",
+  "title": "Parser Template Delivery Manifest",
+  "type": "object",
+  "required": ["schema_version", "batch_id", "coverage_declaration", "files"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "batch_id": {"type": "string", "minLength": 1},
+    "coverage_declaration": {
+      "type": "object",
+      "required": ["status", "scope", "reason", "inventory_authoritative"],
+      "properties": {
+        "status": {"enum": ["PARTIAL", "COMPLETE"]},
+        "scope": {"type": "string", "minLength": 1},
+        "reason": {"type": "string", "minLength": 1},
+        "inventory_authoritative": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["path", "kind", "sha256"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1, "pattern": "^[^/].*\\.json$"},
+          "kind": {
+            "enum": ["presales_usecases", "kpi_kqi", "asset_catalog", "modeling_documents", "sid_standard"]
+          },
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://data-agent.local/contracts/template-delivery-report.schema.json",
+  "title": "Parser Template Delivery Validation Report",
+  "type": "object",
+  "required": ["schema_version", "status", "batch_id", "manifest_present", "coverage_declaration", "counts", "checks", "files"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {"const": "PASSED"},
+    "batch_id": {"type": ["string", "null"]},
+    "manifest_present": {"type": "boolean"},
+    "coverage_declaration": {
+      "type": "object",
+      "required": ["status", "scope", "reason"],
+      "properties": {
+        "status": {"enum": ["PARTIAL", "COMPLETE"]},
+        "scope": {"type": "string", "minLength": 1},
+        "reason": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "counts": {
+      "type": "object",
+      "required": ["files", "fragments", "kinds"],
+      "properties": {
+        "files": {"type": "integer", "minimum": 1},
+        "fragments": {"type": "integer", "minimum": 1},
+        "kinds": {
+          "type": "object",
+          "additionalProperties": {"type": "integer", "minimum": 1}
+        }
+      },
+      "additionalProperties": false
+    },
+    "checks": {
+      "type": "object",
+      "required": ["template_schema_valid", "fragments_non_empty", "evidence_complete", "inventory_declared", "inventory_exact", "fingerprints_match"],
+      "properties": {
+        "template_schema_valid": {"const": true},
+        "fragments_non_empty": {"const": true},
+        "evidence_complete": {"const": true},
+        "inventory_declared": {"type": "boolean"},
+        "inventory_exact": {"type": "boolean"},
+        "fingerprints_match": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["path", "kind", "sha256", "fragment_count"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "kind": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "fragment_count": {"type": "integer", "minimum": 1}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

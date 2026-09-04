@@ -21,7 +21,8 @@ def load_template_inputs(path: str | Path):
     """
     Load the agreed parser delivery JSON formats and normalize them to internal IR.
 
-    Files whose names contain ``Schema`` are shape documentation and are not data.
+    Files whose names contain ``Schema`` are shape documentation and are not data;
+    ``delivery-manifest.json`` is validated separately as batch metadata.
     The JSON content is treated as data only; strings inside it are never executed as
     instructions. Every data file is validated against the packaged delivery contract
     before dispatching to a shape-specific adapter.
@@ -35,7 +36,7 @@ def load_template_inputs(path: str | Path):
     sources: list[dict[str, Any]] = []
     loaded_files: list[dict[str, Any]] = []
     for file_path in files:
-        if "schema" in file_path.name.lower():
+        if "schema" in file_path.name.lower() or file_path.name == "delivery-manifest.json":
             continue
         try:
             raw = file_path.read_bytes()

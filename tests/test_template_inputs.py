@@ -1,10 +1,13 @@
 import json
+from hashlib import sha256
 from pathlib import Path
 
 import pytest
 from jsonschema import Draft202012Validator
 
 from enterprise_data_context.compiler import ContextCompiler
+from enterprise_data_context.delivery import validate_template_delivery
+from enterprise_data_context.persistence import load_compiled, save_compiled
 from enterprise_data_context.runtime import from_compiled
 from enterprise_data_context.template_input import TemplateInputError, load_template_inputs
 from enterprise_data_context.tools import DataContextTools
@@ -34,6 +37,8 @@ def test_agreed_parser_output_examples_match_machine_contract():
 def test_template_directory_compiles_to_governed_pages_and_indexes():
     compiled = ContextCompiler().compile_template_inputs(TEMPLATES)
     assert compiled["coverage_declaration"]["status"] == "PARTIAL"
+    assert compiled["delivery_report"]["manifest_present"] is False
+    assert compiled["delivery_report"]["checks"]["evidence_complete"] is True
     assert {row["kind"] for row in compiled["template_input_files"]} == {
         "presales_usecases", "kpi_kqi", "asset_catalog", "modeling_documents", "sid_standard",
     }
@@ -119,7 +124,97 @@ def test_runtime_delivery_gate_enforces_required_template_fields(tmp_path):
 
 
 def test_minimal_contract_table_is_compilable_without_raw_parser(tmp_path):
-    payload = {
+    payload = _minimal_table_payload()
+    path = tmp_path / "tables.json"
+    path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    compiled = ContextCompiler().compile_template_inputs(path)
+    model = compiled["contexts"][0]
+    assert model.name == "dwd_cell_day"
+    assert model.sections["important_fields"][0]["column_name"] == "cell_id"
+    assert model.section_status["dimensions"] == "DERIVED"
+    assert model.sections["classification.layer"] == "SDL"
+    assert model.sections["classification.layer_raw"] == "DWD"
+    assert model.sections["topic_domain"] == "性能"
+    assert model.sections["topic"] == "无线覆盖"
+    assert model.section_status["classification.layer"] == "DERIVED"
+    source_ids = {
+        row["source_id"]
+        for row in DataContextTools(from_compiled(compiled).retrieval).data_source(
+            model.path, "classification.layer"
+        )
+    }
+    assert source_ids == {"template:tables", "modeling-standard:3.1"}
+    assert not compiled["quality_issues"]
+
+
+def test_authoritative_delivery_manifest_controls_coverage_and_is_persisted(tmp_path):
+    payload = _minimal_table_payload()
+    raw = json.dumps(payload, ensure_ascii=False)
+    (tmp_path / "tables.json").write_text(raw, encoding="utf-8")
+    manifest = {
+        "schema_version": "1.0",
+        "batch_id": "real-parser-batch-001",
+        "coverage_declaration": {
+            "status": "COMPLETE",
+            "scope": "pilot physical-model inventory",
+            "reason": "Parser owner declares the pilot inventory complete.",
+            "inventory_authoritative": True,
+        },
+        "files": [{
+            "path": "tables.json",
+            "kind": "asset_catalog",
+            "sha256": sha256(raw.encode("utf-8")).hexdigest(),
+        }],
+    }
+    (tmp_path / "delivery-manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False), encoding="utf-8"
+    )
+
+    batch = validate_template_delivery(tmp_path)
+    assert batch["coverage_declaration"]["status"] == "COMPLETE"
+    assert batch["delivery_report"]["checks"]["inventory_exact"] is True
+    assert batch["delivery_report"]["checks"]["fingerprints_match"] is True
+
+    compiled = ContextCompiler().compile_template_inputs(tmp_path)
+    saved = save_compiled(compiled, tmp_path / "snapshot")
+    loaded = load_compiled(tmp_path / "snapshot")
+    assert saved["coverage_declaration"]["status"] == "COMPLETE"
+    assert loaded["delivery_report"]["batch_id"] == "real-parser-batch-001"
+
+
+def test_delivery_manifest_fails_closed_on_fingerprint_or_false_completeness(tmp_path):
+    payload = _minimal_table_payload()
+    raw = json.dumps(payload, ensure_ascii=False)
+    (tmp_path / "tables.json").write_text(raw, encoding="utf-8")
+    manifest = {
+        "schema_version": "1.0",
+        "batch_id": "bad-batch",
+        "coverage_declaration": {
+            "status": "COMPLETE",
+            "scope": "pilot",
+            "reason": "Claimed complete without authority.",
+            "inventory_authoritative": False,
+        },
+        "files": [{
+            "path": "tables.json",
+            "kind": "asset_catalog",
+            "sha256": sha256(raw.encode("utf-8")).hexdigest(),
+        }],
+    }
+    manifest_path = tmp_path / "delivery-manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(TemplateInputError, match="COMPLETE coverage requires"):
+        validate_template_delivery(tmp_path)
+
+    manifest["coverage_declaration"]["inventory_authoritative"] = True
+    manifest["files"][0]["sha256"] = "0" * 64
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(TemplateInputError, match="fingerprint mismatch"):
+        validate_template_delivery(tmp_path)
+
+
+def _minimal_table_payload():
+    return {
         "tables": [{
             "table_name": "dwd_cell_day",
             "table_description": "Cell daily aggregate",
@@ -141,23 +236,3 @@ def test_minimal_contract_table_is_compilable_without_raw_parser(tmp_path):
             }],
         }]
     }
-    path = tmp_path / "tables.json"
-    path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
-    compiled = ContextCompiler().compile_template_inputs(path)
-    model = compiled["contexts"][0]
-    assert model.name == "dwd_cell_day"
-    assert model.sections["important_fields"][0]["column_name"] == "cell_id"
-    assert model.section_status["dimensions"] == "DERIVED"
-    assert model.sections["classification.layer"] == "SDL"
-    assert model.sections["classification.layer_raw"] == "DWD"
-    assert model.sections["topic_domain"] == "性能"
-    assert model.sections["topic"] == "无线覆盖"
-    assert model.section_status["classification.layer"] == "DERIVED"
-    source_ids = {
-        row["source_id"]
-        for row in DataContextTools(from_compiled(compiled).retrieval).data_source(
-            model.path, "classification.layer"
-        )
-    }
-    assert source_ids == {"template:tables", "modeling-standard:3.1"}
-    assert not compiled["quality_issues"]

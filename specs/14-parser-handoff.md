@@ -14,6 +14,13 @@ The machine-valid union contract is `contracts/template-input.schema.json`.
 Files whose names contain `Schema` document shapes only; they are not facts and are
 not interpreted as instructions.
 
+An optional `delivery-manifest.json`, validated by
+`contracts/template-delivery-manifest.schema.json`, declares the batch ID, exact file
+inventory, SHA-256 fingerprints and coverage scope. Without that manifest the batch is
+valid but remains `PARTIAL`. `COMPLETE` is accepted only when the producer explicitly
+sets `inventory_authoritative=true` and every declared file, kind and fingerprint
+matches the delivered directory.
+
 ## Producer responsibility
 
 The parser team owns:
@@ -42,6 +49,42 @@ python scripts/build_template_inputs.py \
   --input parser-delivery-directory \
   --out generated
 ```
+
+Validate the delivery without publishing a snapshot first:
+
+```bash
+uv run --isolated --extra dev python scripts/validate_template_delivery.py \
+  --input parser-delivery-directory \
+  --report delivery-validation.json
+```
+
+The report conforms to `contracts/template-delivery-report.schema.json` and records
+file/kind/Fragment counts, Evidence completeness and inventory/fingerprint checks.
+
+Minimal manifest shape:
+
+```json
+{
+  "schema_version": "1.0",
+  "batch_id": "parser-batch-2026-09-04-001",
+  "coverage_declaration": {
+    "status": "PARTIAL",
+    "scope": "pilot APP and model inventory",
+    "reason": "Only the agreed pilot systems are included.",
+    "inventory_authoritative": false
+  },
+  "files": [
+    {
+      "path": "tables.json",
+      "kind": "asset_catalog",
+      "sha256": "<64 lowercase hexadecimal characters>"
+    }
+  ]
+}
+```
+
+`inventory_authoritative` describes whether the producer owns a complete inventory
+for the declared scope; it does not mean that a partial batch becomes globally complete.
 
 `load_template_inputs()` performs the schema gate, identifies the matching delivery
 shape, and converts it into evidence-bearing internal `ContextFragment` IR. Fragment

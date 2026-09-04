@@ -70,6 +70,21 @@ section-level Fusion, Rich Context Page materialization, indexes, graph and read
 retrieval remain downstream responsibilities. Unknown references remain unresolved
 and missing input remains explicit.
 
+For a real parser batch, validate the directory before publication:
+
+```bash
+uv run --isolated --extra dev python scripts/validate_template_delivery.py \
+  --input parser-delivery-directory \
+  --report delivery-validation.json
+```
+
+The optional `delivery-manifest.json` lists the batch ID, coverage scope, exact JSON
+file inventory, detected kind and SHA-256 fingerprint. A batch without this manifest
+remains `PARTIAL`; `COMPLETE` requires `inventory_authoritative=true` and an exact
+inventory match. Validation output follows
+`contracts/template-delivery-report.schema.json` and is persisted as
+`delivery-report.json` in the immutable snapshot.
+
 `ContextCompiler.compile_fragments()` and `scripts/build_fragments.py` remain internal
 and backward-compatible entrypoints. They are not part of the parser team's delivery
 contract.

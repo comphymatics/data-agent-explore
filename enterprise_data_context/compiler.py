@@ -43,16 +43,13 @@ class ContextCompiler:
 
     def compile_template_inputs(self, path):
         """Compile the external parser's agreed Template JSON delivery."""
-        from .template_input import load_template_inputs
+        from .delivery import validate_template_delivery
 
-        batch = load_template_inputs(path)
+        batch = validate_template_delivery(path)
         compiled = self.compile_fragments(batch["fragments"], sources=batch["sources"])
         compiled["template_input_files"] = batch["files"]
-        compiled["coverage_declaration"] = {
-            "status": "PARTIAL",
-            "scope": "template-input",
-            "reason": "Template deliveries are partial unless an authoritative inventory declares completeness.",
-        }
+        compiled["coverage_declaration"] = batch["coverage_declaration"]
+        compiled["delivery_report"] = batch["delivery_report"]
         return compiled
 
     def compile_fragments(self, fragments, documents=None, sources=None):

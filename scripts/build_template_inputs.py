@@ -12,4 +12,8 @@ args = parser.parse_args()
 
 compiled = ContextCompiler().compile_template_inputs(args.input)
 manifest = save_compiled(compiled, args.out)
-print(json.dumps({**manifest, "template_input_files": compiled["template_input_files"]}, ensure_ascii=False, indent=2))
+print(json.dumps({
+    **manifest,
+    "template_input_files": compiled["template_input_files"],
+    "delivery_report": compiled["delivery_report"],
+}, ensure_ascii=False, indent=2))

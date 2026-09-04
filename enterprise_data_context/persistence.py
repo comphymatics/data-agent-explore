@@ -51,6 +51,7 @@ def save_compiled(compiled, out_dir):
         compiled["contexts"], hierarchy
     )
     inference_runs = list(compiled.get("inference_runs", []))
+    delivery_report = compiled.get("delivery_report")
     coverage_declaration = dict(compiled.get("coverage_declaration") or {
         "status": "UNKNOWN",
         "scope": "unspecified",
@@ -65,6 +66,7 @@ def save_compiled(compiled, out_dir):
         "pages": [asdict(x) for x in compiled["pages"]],
         "source_fingerprints": compiled.get("source_fingerprints", {}),
         "coverage_declaration": coverage_declaration,
+        "delivery_report": delivery_report,
     }
     content_hash = sha256(
         json.dumps(canonical_payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
@@ -86,6 +88,8 @@ def save_compiled(compiled, out_dir):
             _write_json(version_dir / "pages" / f"{safe(page.canonical_id)}.json", asdict(page))
         _write_json(version_dir / "quality.json", compiled["quality_issues"])
         _write_json(version_dir / "association-report.json", associations)
+        if delivery_report:
+            _write_json(version_dir / "delivery-report.json", delivery_report)
         if inference_runs:
             _write_json(version_dir / "inference-runs.json", inference_runs)
 
@@ -156,6 +160,11 @@ def load_compiled(in_dir, index_version=None):
         if (snapshot / "inference-runs.json").exists()
         else []
     )
+    delivery_report = (
+        _read_json(snapshot / "delivery-report.json")
+        if (snapshot / "delivery-report.json").exists()
+        else None
+    )
     manifest = _read_json(snapshot / "manifest.json") if (snapshot / "manifest.json").exists() else {}
 
     page_index = PageIndex()
@@ -180,6 +189,7 @@ def load_compiled(in_dir, index_version=None):
         "hierarchy": hierarchy,
         "association_report": saved_association or association_report(contexts, hierarchy),
         "inference_runs": inference_runs,
+        "delivery_report": delivery_report,
         "backrefs": build_backrefs(contexts),
         "quality_issues": quality,
         "source_fingerprints": manifest.get("source_fingerprints", {}),
