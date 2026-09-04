@@ -86,7 +86,9 @@ class ExploreAgent:
         expansions={}
         paths=[h["path"] for h in hits]
 
-        expansion_request=list(dict.fromkeys(expand+["candidates","conflicts"]))
+        expansion_request=list(dict.fromkeys(
+            expand+["hierarchy","related","candidates","conflicts"]
+        ))
         if expansion_request and paths:
             expansions=self.tools.data_expand(
                 paths,expansion_request,top_k=policy.expand_top_k
@@ -121,12 +123,43 @@ class ExploreAgent:
             "metrics":[context_ref(h) for h in hits if h["context_type"]=="metric"],
             "dimensions":[context_ref(h) for h in hits if h["context_type"]=="dimension"],
         }
+        analysis_paths={
+            h["path"] for h in hits
+            if h["context_type"] in {
+                "scenario", "analysis-purpose", "topic",
+                "business-object", "metric", "dimension",
+            }
+        }
+        analysis["hierarchy"]={
+            path:value.get("hierarchy")
+            for path,value in expansions.items()
+            if path in analysis_paths and value.get("hierarchy")
+        }
+        analysis["relations"]={
+            path:value.get("related")
+            for path,value in expansions.items()
+            if path in analysis_paths and value.get("related")
+        }
         data={
             "logical_models":[context_ref(h) for h in hits if h["context_type"]=="logical-model"],
             "physical_models":[context_ref(h) for h in hits if h["context_type"]=="physical-model"],
             "important_fields":{p:v.get("fields") for p,v in expansions.items() if v.get("fields")},
             "grain":{p:v.get("grain") for p,v in expansions.items() if v.get("grain")},
             "lineage":{p:v.get("lineage") for p,v in expansions.items() if v.get("lineage")},
+        }
+        model_paths={
+            h["path"] for h in hits
+            if h["context_type"] in {"logical-model","physical-model"}
+        }
+        data["hierarchy"]={
+            path:value.get("hierarchy")
+            for path,value in expansions.items()
+            if path in model_paths and value.get("hierarchy")
+        }
+        data["relations"]={
+            path:value.get("related")
+            for path,value in expansions.items()
+            if path in model_paths and value.get("related")
         }
         bm={p:v.get("business_mapping") for p,v in expansions.items() if v.get("business_mapping")}
         conflicts=[]; candidates=[]; constraints=[]

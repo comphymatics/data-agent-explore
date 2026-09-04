@@ -1,0 +1,16 @@
+{
+  "enabled": false,
+  "provider": "openai-compatible",
+  "base_url": "https://api.siliconflow.cn/v1",
+  "model": "deepseek-ai/DeepSeek-V4-Flash",
+  "api_key_env": "DATA_CONTEXT_LLM_API_KEY",
+  "timeout_seconds": 60,
+  "max_retries": 2,
+  "max_output_tokens": 2000,
+  "temperature": 0,
+  "max_sources": 50,
+  "candidate_limit_per_type": 12,
+  "max_input_characters": 60000,
+  "minimum_confidence": 0.5,
+  "prompt_version": "scenario-model-candidate-v1"
+}

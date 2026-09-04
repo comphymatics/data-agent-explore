@@ -12,6 +12,7 @@ deterministic Context Engine and does not answer user questions.
 ## Core rules
 
 - Graph for machines; Pages for LLMs.
+- Hierarchies for governed browse/facet organization; typed references for facts.
 - Parser-first, LLM-assisted, Agent-evolved.
 - Source materials are allowed to be incomplete.
 - Absence of evidence is never evidence of absence.
@@ -145,6 +146,88 @@ result = runtime.retrieval.data_search(
     scope={"layer": "SDL", "topic_domain": "业务", "topic": "VoLTE"},
 )
 ```
+
+### Semantic hierarchy and cross-document associations
+
+`SemanticOrganizationBuilder` derives two complementary runtime views after
+Canonical Resolution, section-level Fusion and typed-reference resolution:
+
+- a `HierarchyIndex` for scenario parent/child navigation and governed
+  `Layer -> Domain -> Topic/Subobject -> Model` breadcrumbs;
+- the existing Backend Graph for confirmed typed references only.
+
+APP `feature_name` and modeling `analysis_type` are both scenario entry points but
+retain distinct `scenario.kind` values. Their `app_name` and `analysis_name` parents
+retain distinct `semantic_role` values, so source containers are not confused with
+governed modeling Topics. Unknown classification values and semantic matches remain
+candidates and never create formal hierarchy nodes or graph edges.
+
+The immutable snapshot persists `association-report.json`, including reference
+counts by status/relation, confirmed cross-source edges, graph-orphan Contexts and
+hierarchy size. Multiline identities are reported for Parser review instead of being
+silently rewritten.
+
+Hierarchy and confirmed neighbors are available without adding tools:
+
+```python
+search = runtime.retrieval.data_search(
+    "高铁场景",
+    scope={"scenario_kind": "APP_FEATURE"},
+)
+path = search["contexts"][0]["path"]
+view = runtime.retrieval.data_expand(
+    [path], ["hierarchy", "parents", "children", "related"],
+)
+```
+
+Virtual governed-classification paths such as `hierarchy://models/ODI` can be read
+and expanded through the same `data_read` and `data_expand` operations. See
+`specs/17-semantic-organization.md` for the relation vocabulary, promotion gates and
+acceptance rules.
+
+### Offline semantic visualization
+
+Build the latest Template snapshot and generate the single-file hierarchy +
+association browser:
+
+```bash
+uv run --isolated --extra dev python scripts/build_template_inputs.py \
+  --input source-materials/templates --out generated
+uv run --isolated --extra dev python scripts/generate_semantic_context_visualization.py \
+  --snapshot generated --output docs/architecture/template-semantic-browser.html
+open docs/architecture/template-semantic-browser.html
+```
+
+The browser uses a bounded one-hop graph around the selected Rich Context Page.
+It does not expose node-by-node graph traversal to the Explore Agent. The left
+panel is a browse projection (scenario, model layer/domain/topic and semantic
+asset type), while the right panel preserves references, Evidence, candidates,
+conflicts and quality warnings from the immutable snapshot.
+
+### Governed LLM semantic candidates
+
+The optional offline inference stage proposes missing relations from APP Features and
+modeling analyses to metrics, SID business objects, logical models and physical models.
+It reads bounded Rich Page evidence packs and always emits `CANDIDATE` references;
+exact target resolution does not promote an LLM proposal to a confirmed Graph edge.
+
+Copy and review `config/llm-inference.example.json`, keep the API key only in the named
+environment variable, then run:
+
+```bash
+export DATA_CONTEXT_LLM_API_KEY='...'
+uv run --isolated --extra dev python scripts/build_semantic_candidates.py \
+  --snapshot generated \
+  --config config/llm-inference.json \
+  --out generated/inference/latest \
+  --enriched-out generated-candidates
+```
+
+The command writes a schema-validated `inference-report.json` and internal
+`candidate-fragments.jsonl`. `--enriched-out` is optional and publishes a separate
+immutable candidate snapshot; it never mutates the base snapshot. See
+`specs/18-governed-llm-inference.md` for target constraints, Evidence requirements,
+coverage semantics and review rules.
 
 ## Main runtime API
 

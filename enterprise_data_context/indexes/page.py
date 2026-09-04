@@ -2,7 +2,10 @@ import re, math
 from collections import defaultdict, Counter
 from enterprise_data_context.models import SearchHit
 
-FACET_ALIASES={"classification.layer":"layer","domain":"topic_domain"}
+FACET_ALIASES={
+    "classification.layer":"layer", "domain":"topic_domain",
+    "scenario.kind":"scenario_kind",
+}
 CLASSIFICATION_FILTERS={"layer","topic_domain","topic"}
 
 def toks(s):

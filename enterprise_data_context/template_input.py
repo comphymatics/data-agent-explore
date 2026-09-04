@@ -116,7 +116,11 @@ def _from_apps(payload, source_id, path):
         scenario_names = [_name(x, "feature_name", f"{app_ptr}/features/{fi}", path) for fi, x in enumerate(features)]
         out += _context_fragments(
             source_id, path, "topic", app_name, app_ptr, "presales_usecases",
-            sections={"scenarios": scenario_names},
+            sections={
+                "semantic_role": "application",
+                "application": app_name,
+                "scenarios": scenario_names,
+            },
         )
         for fi, feature in enumerate(features):
             feature = _object(feature, f"{app_ptr}/features/{fi}", path)
@@ -129,6 +133,10 @@ def _from_apps(payload, source_id, path):
             refs = [_ref("part_of", app_name, "topic", source_id, path, ptr)]
             refs += [_ref("uses_metric", metric, "metric", source_id, path, f"{ptr}/feature_description/metric_name") for metric in metric_names]
             sections = {
+                "semantic_role": "app-feature",
+                "scenario.kind": "APP_FEATURE",
+                "scenario.parent_name": app_name,
+                "application": app_name,
                 "summary": feature.get("feature_summary"),
                 "customer_value": feature.get("customer_value"),
                 "metrics": metric_names,
@@ -301,7 +309,13 @@ def _from_modeling(payload, source_id, path):
         group_name = _name(group, "analysis_name", gptr, path)
         summaries = _list(group, "analysis_summaries", path, gptr)
         purpose_names = [_name(x, "analysis_type", f"{gptr}/analysis_summaries/{si}", path) for si, x in enumerate(summaries)]
-        out += _context_fragments(source_id, path, "topic", group_name, gptr, "modeling_documents", sections={"analysis_purposes": purpose_names})
+        out += _context_fragments(
+            source_id, path, "topic", group_name, gptr, "modeling_documents",
+            sections={
+                "semantic_role": "analysis-group",
+                "analysis_purposes": purpose_names,
+            },
+        )
         for si, summary in enumerate(summaries):
             sptr = f"{gptr}/analysis_summaries/{si}"
             summary = _object(summary, sptr, path)
@@ -334,7 +348,14 @@ def _from_modeling(payload, source_id, path):
             refs += [_ref("uses_metric", name, "metric", source_id, path, sptr) for name in metrics]
             out += _context_fragments(
                 source_id, path, "analysis-purpose", purpose_name, sptr, "modeling_documents",
-                sections={"summary": summary.get("description"), "metrics": list(dict.fromkeys(metrics)), "metric_catalog": metric_rows},
+                sections={
+                    "semantic_role": "modeling-analysis",
+                    "scenario.kind": "MODELING_ANALYSIS",
+                    "scenario.parent_name": group_name,
+                    "summary": summary.get("description"),
+                    "metrics": list(dict.fromkeys(metrics)),
+                    "metric_catalog": metric_rows,
+                },
                 references=refs, features={"topic": group_name},
             )
     return out

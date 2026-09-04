@@ -13,6 +13,7 @@ from .indexes.element import ElementIndex
 from .graph.backend import BackendGraph
 from .quality import validate_contexts
 from .classification import normalize_context_classification
+from .organization import SemanticOrganizationBuilder
 
 class ContextCompiler:
     def __init__(self,semantic_provider=None):
@@ -21,6 +22,7 @@ class ContextCompiler:
         self.semantic=SemanticExtractor(semantic_provider)
         self.mapper=BusinessSemanticMapper()
         self.materializer=PageMaterializer()
+        self.organization=SemanticOrganizationBuilder()
 
     def compile(self,sources):
         """Compatibility entrypoint: parse registered sources, then compile downstream."""
@@ -46,6 +48,11 @@ class ContextCompiler:
         batch = load_template_inputs(path)
         compiled = self.compile_fragments(batch["fragments"], sources=batch["sources"])
         compiled["template_input_files"] = batch["files"]
+        compiled["coverage_declaration"] = {
+            "status": "PARTIAL",
+            "scope": "template-input",
+            "reason": "Template deliveries are partial unless an authoritative inventory declares completeness.",
+        }
         return compiled
 
     def compile_fragments(self, fragments, documents=None, sources=None):
@@ -88,15 +95,27 @@ class ContextCompiler:
                 "lineage":bool(c.sections.get("lineage.upstream") or c.sections.get("lineage.downstream")),
             }
 
-        pages=[self.materializer.materialize(c) for c in contexts.values()]
+        organization=self.organization.build(list(contexts.values()))
+        hierarchy=organization["hierarchy"]
+        pages=[
+            self.materializer.materialize(c,hierarchy=hierarchy.describe(c.path))
+            for c in contexts.values()
+        ]
         pidx=PageIndex(); eidx=ElementIndex()
         for p in pages: pidx.add(p); eidx.add(p)
         graph=BackendGraph().project(list(contexts.values()))
         return {
             "documents":documents,"fragments":fragments,"contexts":list(contexts.values()),"pages":pages,
             "page_index":pidx,"element_index":eidx,"graph":graph,
+            "hierarchy":hierarchy,
+            "association_report":organization["association_report"],
             "backrefs":build_backrefs(list(contexts.values())),
             "quality_issues":validate_contexts(list(contexts.values())),
+            "coverage_declaration": {
+                "status": "UNKNOWN",
+                "scope": "unspecified",
+                "reason": "No authoritative source inventory declared completeness.",
+            },
             "source_fingerprints":{
                 s["id"]: s.get("fingerprint") for s in (sources or []) if s.get("id")
             },

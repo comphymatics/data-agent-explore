@@ -6,11 +6,13 @@ Focused expansion retrieves fields, formulas, joins, lineage, constraints, evide
 For requirement research and model design, asset selection is environment-first:
 
 1. search and expand MetaOne through the Environment Binding adapter;
-2. classify each requirement as found, partial, confirmed missing, unsupported,
+2. use HierarchyIndex for governed scenario/model breadcrumbs and browse expansion;
+3. use Backend Graph only for confirmed direct relations, backrefs, lineage and impact;
+4. classify each requirement as found, partial, confirmed missing, unsupported,
    unavailable or truncated;
-3. enrich returned environment assets with reference scenarios, business objects, SID
+5. enrich returned environment assets with reference scenarios, business objects, SID
    and modeling semantics;
-4. use reference assets as alternatives only after confirmed environment absence, and
+6. use reference assets as alternatives only after confirmed environment absence, and
    label them `REFERENCE_ONLY` rather than available assets.
 
 See `15-dual-layer-knowledge.md`. Environment failures never become negative facts.

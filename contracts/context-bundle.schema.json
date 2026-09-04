@@ -53,8 +53,20 @@
         "additionalProperties": false
       }
     },
-    "analysis_context": {"type": "object"},
-    "data_context": {"type": "object"},
+    "analysis_context": {
+      "type": "object",
+      "properties": {
+        "hierarchy": {"$ref": "#/$defs/viewsByPath"},
+        "relations": {"$ref": "#/$defs/viewsByPath"}
+      }
+    },
+    "data_context": {
+      "type": "object",
+      "properties": {
+        "hierarchy": {"$ref": "#/$defs/viewsByPath"},
+        "relations": {"$ref": "#/$defs/viewsByPath"}
+      }
+    },
     "business_mapping": {"type": "object"},
     "constraints": {"type": "array"},
     "environment": {"type": "object"},
@@ -113,6 +125,12 @@
       "required": ["index_version", "seen_context_ids", "coverage", "rounds", "used_tokens", "last_intent", "stop_reason"]
     },
     "stop_reason": {"type": ["string", "null"]}
+  },
+  "$defs": {
+    "viewsByPath": {
+      "type": "object",
+      "additionalProperties": {"type": "object"}
+    }
   },
   "additionalProperties": false
 }

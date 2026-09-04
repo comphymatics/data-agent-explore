@@ -192,7 +192,8 @@ but it is not yet the target dual-layer implementation:
 - the Binding Overlay supports exact deterministic bindings and guarded reference-only
   candidates, but field-level section authority and cross-layer conflict policies remain
   incomplete;
-- semantic inference, review/confirmation workflow and overlay caching are not yet
+- governed offline semantic inference now produces bounded, Evidence-backed
+  `CANDIDATE` relations; human review/confirmation and overlay caching are not yet
   implemented.
 
 These are implementation GAPs, not reasons to expose raw MetaOne MCP responses to the
@@ -217,7 +218,8 @@ Agent. They should be addressed inside the adapter and orchestration layers.
 ### Phase C — governed semantic derivation
 
 - add deterministic SID/modeling-rule mappings first;
-- add semantic inference only into candidate bindings;
+- add semantic inference only into candidate bindings (implemented for the Reference
+  Context snapshot through `build_semantic_candidates.py`);
 - introduce review/confirmation workflow and Golden Dataset cases;
 - cache overlays without contaminating either source layer.
 
@@ -243,4 +245,4 @@ Not yet implemented:
 - live MetaOne transport/authentication configuration and contract calibration;
 - bounded read/expand orchestration and pagination continuation inside Explore;
 - complete field-level authority/conflict handling;
-- SID/modeling semantic candidate derivation, review workflow and overlay cache.
+- production LLM/provider calibration, human review workflow and overlay cache.

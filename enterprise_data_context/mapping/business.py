@@ -1,6 +1,8 @@
 from __future__ import annotations
 import re
 
+from enterprise_data_context.models import TypedReference
+
 DEFAULT_FIELD_OBJECT_RULES = [
     (r"\b(cell[_ ]?id|cgi|ecgi|eci)\b", "Cell"),
     (r"\b(imsi|msisdn|subscriber[_ ]?id)\b", "Subscriber"),
@@ -57,7 +59,36 @@ class BusinessSemanticMapper:
                         "source_type": "deterministic_rule", "evidence": payload_evidence,
                     })
                     break
+        self._add_object_references(ctx)
         return ctx
+
+    @staticmethod
+    def _add_object_references(ctx):
+        for section, relation in (
+            ("primary_objects", "maps_to_business_object"),
+            ("related_objects", "relates_to_business_object"),
+        ):
+            values = ctx.sections.get(section, []) or []
+            if not isinstance(values, list):
+                values = [values]
+            status = ctx.section_status.get(section, "EXPLICIT")
+            for value in values:
+                target = str(value or "").strip()
+                if not target or any(
+                    reference.relation == relation
+                    and reference.target_type == "business-object"
+                    and reference.raw_target == target
+                    for reference in ctx.references
+                ):
+                    continue
+                ctx.references.append(TypedReference(
+                    relation=relation,
+                    raw_target=target,
+                    target_type="business-object",
+                    status="CANDIDATE" if status in {"INFERRED", "CANDIDATE"} else "UNRESOLVED",
+                    confidence=1.0 if status == "EXPLICIT" else 0.8,
+                    evidence=list(ctx.evidence.get(section, [])),
+                ))
 
     @staticmethod
     def _input_evidence(fragments):

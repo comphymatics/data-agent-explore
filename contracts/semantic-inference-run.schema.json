@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://data-agent.local/contracts/semantic-inference-run.schema.json",
+  "title": "Governed Semantic Inference Run",
+  "type": "object",
+  "required": [
+    "schema_version", "run_id", "base_index_version", "created_at", "status",
+    "assertion_status", "provider", "policy", "source_count", "proposal_count",
+    "rejection_count", "error_count", "proposals", "rejections", "errors"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "run_id": {"type": "string", "pattern": "^semantic-inference-[a-f0-9]{16}$"},
+    "base_index_version": {"type": ["string", "null"]},
+    "created_at": {"type": "string", "format": "date-time"},
+    "status": {"enum": ["SUCCEEDED", "PARTIAL", "FAILED"]},
+    "assertion_status": {"const": "CANDIDATE"},
+    "provider": {
+      "type": "object",
+      "required": ["kind", "model", "prompt_version"],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "model": {"type": "string", "minLength": 1},
+        "prompt_version": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "required": ["bounded_rich_page_input", "candidate_only", "requires_review", "candidate_limit_per_type", "max_input_characters", "minimum_confidence", "base_coverage_status"],
+      "properties": {
+        "bounded_rich_page_input": {"const": true},
+        "candidate_only": {"const": true},
+        "requires_review": {"const": true},
+        "candidate_limit_per_type": {"type": "integer", "minimum": 1, "maximum": 50},
+        "max_input_characters": {"type": "integer", "minimum": 4000},
+        "minimum_confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "base_coverage_status": {"enum": ["COMPLETE", "PARTIAL", "UNKNOWN"]}
+      },
+      "additionalProperties": false
+    },
+    "source_count": {"type": "integer", "minimum": 0},
+    "proposal_count": {"type": "integer", "minimum": 0},
+    "rejection_count": {"type": "integer", "minimum": 0},
+    "error_count": {"type": "integer", "minimum": 0},
+    "proposals": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/proposal"}
+    },
+    "rejections": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/rejection"}
+    },
+    "errors": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/error"}
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "proposal": {
+      "type": "object",
+      "required": [
+        "proposal_id", "run_id", "source_path", "source_name", "relation",
+        "target_path", "target_name", "target_type", "confidence", "rationale",
+        "evidence_paths", "status"
+      ],
+      "properties": {
+        "proposal_id": {"type": "string", "minLength": 1},
+        "run_id": {"type": "string", "minLength": 1},
+        "source_path": {"type": "string", "minLength": 1},
+        "source_name": {"type": "string", "minLength": 1},
+        "relation": {
+          "enum": ["uses_metric", "analyzes_business_object", "supported_by_logical_model", "supported_by_physical_model"]
+        },
+        "target_path": {"type": "string", "minLength": 1},
+        "target_name": {"type": "string", "minLength": 1},
+        "target_type": {"enum": ["metric", "business-object", "logical-model", "physical-model"]},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "rationale": {"type": "string", "minLength": 1},
+        "evidence_paths": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "status": {"const": "CANDIDATE"}
+      },
+      "additionalProperties": false
+    },
+    "rejection": {
+      "type": "object",
+      "required": ["source_path", "target_path", "relation", "reason"],
+      "properties": {
+        "source_path": {"type": "string"},
+        "target_path": {"type": ["string", "null"]},
+        "relation": {"type": ["string", "null"]},
+        "reason": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "error": {
+      "type": "object",
+      "required": ["source_path", "code", "message"],
+      "properties": {
+        "source_path": {"type": "string"},
+        "code": {"type": "string", "minLength": 1},
+        "message": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    }
+  }
+}

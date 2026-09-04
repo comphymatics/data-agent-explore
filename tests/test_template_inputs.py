@@ -33,6 +33,7 @@ def test_agreed_parser_output_examples_match_machine_contract():
 @pytest.mark.skipif(not HAS_TEMPLATE_DATA, reason="local parser-output examples are not checked in")
 def test_template_directory_compiles_to_governed_pages_and_indexes():
     compiled = ContextCompiler().compile_template_inputs(TEMPLATES)
+    assert compiled["coverage_declaration"]["status"] == "PARTIAL"
     assert {row["kind"] for row in compiled["template_input_files"]} == {
         "presales_usecases", "kpi_kqi", "asset_catalog", "modeling_documents", "sid_standard",
     }
@@ -46,6 +47,8 @@ def test_template_directory_compiles_to_governed_pages_and_indexes():
     assert by_name["Cell BE"].sections["semantic_reference.sid_domain"] == "Resource Domain"
     assert "topic_domain" not in by_name["Cell BE"].sections
     assert by_name["LTE FDD/TDD 高铁专题"].sections["customer_value"]
+    assert by_name["SmartCare Suite APP售前说明书--高铁专题"].sections["semantic_role"] == "application"
+    assert by_name["LTE FDD/TDD 高铁专题"].sections["scenario.kind"] == "APP_FEATURE"
 
     purpose = by_name["建模-网络性能监控（CS）"]
     confirmed = [ref for ref in purpose.references if ref.status == "CONFIRMED"]
@@ -69,6 +72,13 @@ def test_template_directory_compiles_to_governed_pages_and_indexes():
     assert "stat_date" not in tools.data_read(model.path, "L1")["content"]
     assert tools.data_source(model.path, "important_fields")[0]["section"].startswith("/tables/0")
     assert model.section_status.get("metrics", "DERIVED") == "DERIVED"
+    report = compiled["association_report"]
+    assert report["references_by_status"] == {"CONFIRMED": 49, "UNRESOLVED": 339}
+    assert report["cross_source_confirmed_count"] == 0
+    assert report["hierarchy_node_count"] > len(compiled["contexts"])
+    assert {issue["code"] for issue in compiled["quality_issues"]} >= {
+        "suspicious_multiline_identity",
+    }
 
 
 @pytest.mark.skipif(not HAS_TEMPLATE_DATA, reason="local parser-output examples are not checked in")

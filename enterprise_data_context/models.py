@@ -111,6 +111,7 @@ class ContextPage:
     section_status: dict[str, ProvenanceStatus] = field(default_factory=dict)
     candidates: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
     conflicts: list[dict[str, Any]] = field(default_factory=list)
+    hierarchy: dict[str, Any] = field(default_factory=dict)
 
 @dataclass
 class SearchHit:

@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://data-agent.local/contracts/association-report.schema.json",
+  "title": "Semantic Association Coverage Report",
+  "type": "object",
+  "required": [
+    "context_count",
+    "reference_count",
+    "references_by_status",
+    "references_by_relation",
+    "cross_source_confirmed_count",
+    "cross_source_confirmed",
+    "orphan_context_count",
+    "orphan_contexts",
+    "hierarchy_node_count",
+    "hierarchy_edge_count"
+  ],
+  "properties": {
+    "context_count": {"type": "integer", "minimum": 0},
+    "reference_count": {"type": "integer", "minimum": 0},
+    "references_by_status": {
+      "type": "object",
+      "additionalProperties": {"type": "integer", "minimum": 0}
+    },
+    "references_by_relation": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {"type": "integer", "minimum": 0}
+      }
+    },
+    "cross_source_confirmed_count": {"type": "integer", "minimum": 0},
+    "cross_source_confirmed": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source", "relation", "target", "source_ids", "target_source_ids"],
+        "properties": {
+          "source": {"type": "string"},
+          "relation": {"type": "string"},
+          "target": {"type": "string"},
+          "source_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+          "target_source_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+        },
+        "additionalProperties": false
+      }
+    },
+    "orphan_context_count": {"type": "integer", "minimum": 0},
+    "orphan_contexts": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "hierarchy_node_count": {"type": "integer", "minimum": 0},
+    "hierarchy_edge_count": {"type": "integer", "minimum": 0}
+  },
+  "additionalProperties": false
+}

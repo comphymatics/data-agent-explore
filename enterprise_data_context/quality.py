@@ -7,6 +7,13 @@ def validate_contexts(contexts):
     ids={}
     aliases={}
     for c in contexts:
+        if "\n" in c.name or "\r" in c.name or len(c.name) > 160:
+            issues.append({
+                "severity":"warning",
+                "code":"suspicious_multiline_identity",
+                "context":c.path,
+                "message":"canonical identity appears to include explanatory text",
+            })
         if c.identity_status in {"INFERRED","CANDIDATE"}:
             issues.append({
                 "severity":"warning","code":"candidate_context_not_indexed","context":c.path

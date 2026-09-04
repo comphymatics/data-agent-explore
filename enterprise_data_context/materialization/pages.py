@@ -1,6 +1,8 @@
 from enterprise_data_context.models import ContextPage
 
 ORDER = [
+    ("semantic_role","Semantic Role"),("scenario.kind","Scenario Kind"),
+    ("scenario.parent_name","Parent Scenario Group"),("application","Application"),
     ("classification.layer","Layer"),("topic_domain","Topic Domain"),("topic","Topic"),
     ("primary_objects","Primary Business Objects"),("related_objects","Related Business Objects"),
     ("grain","Grain"),("dimensions","Dimensions"),("metrics","Metrics"),
@@ -17,7 +19,8 @@ def fmt(v):
     return str(v)
 
 class PageMaterializer:
-    def materialize(self, ctx):
+    def materialize(self, ctx, hierarchy=None):
+        hierarchy=hierarchy or {}
         summary = ctx.sections.get("summary") or f"{ctx.name} ({ctx.context_type})"
         l0 = str(summary)[:700]
         lines=[f"# {ctx.name}","",str(summary)]
@@ -28,10 +31,15 @@ class PageMaterializer:
         confirmed=[r for r in ctx.references if r.status=="CONFIRMED" and r.target_path]
         if confirmed:
             lines += ["","## References"] + [f"- {r.relation}: {r.target_path}" for r in confirmed]
+        breadcrumb=hierarchy.get("breadcrumb",[])
+        if len(breadcrumb)>1:
+            lines += ["","## Hierarchy", " > ".join(row["name"] for row in breadcrumb)]
         facet_sections={
             "layer":"classification.layer", "topic_domain":"topic_domain", "topic":"topic",
             "grain":"grain", "primary_objects":"primary_objects",
             "sid_domain":"semantic_reference.sid_domain",
+            "semantic_role":"semantic_role", "scenario_kind":"scenario.kind",
+            "application":"application",
         }
         facets={facet:ctx.sections.get(section) for facet,section in facet_sections.items() if ctx.sections.get(section)}
         return ContextPage(
@@ -60,4 +68,5 @@ class PageMaterializer:
             section_status=dict(ctx.section_status),
             candidates={k:list(v) for k,v in ctx.candidate_sections.items()},
             conflicts=list(ctx.conflicts),
+            hierarchy=hierarchy,
         )

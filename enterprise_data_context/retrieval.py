@@ -5,6 +5,7 @@ import re
 from collections import Counter
 
 from enterprise_data_context.models import SearchHit
+from enterprise_data_context.indexes.hierarchy import HierarchyIndex
 
 
 class ContextRetrievalService:
@@ -14,6 +15,8 @@ class ContextRetrievalService:
         self.contexts={c.path:c for c in compiled["contexts"]}
         self.pidx=compiled["page_index"]; self.eidx=compiled["element_index"]
         self.graph=compiled["graph"]; self.backrefs=compiled["backrefs"]
+        self.hierarchy=compiled.get("hierarchy") or HierarchyIndex().project(compiled["contexts"])
+        self.association_report=dict(compiled.get("association_report",{}))
         self.index_version=compiled.get("index_version")
         self.quality_issues=list(compiled.get("quality_issues",[]))
 
@@ -153,6 +156,13 @@ class ContextRetrievalService:
                     novel_candidate_count/candidate_count if candidate_count else 0.0
                 ),
             },
+            "association_summary":{
+                key:self.association_report.get(key)
+                for key in (
+                    "reference_count", "references_by_status",
+                    "cross_source_confirmed_count", "orphan_context_count",
+                )
+            },
         }
 
     def _serialize_hit(self,hit,read_content,remaining_tokens):
@@ -177,9 +187,16 @@ class ContextRetrievalService:
 
     def data_read(self,path,level="L1",sections=None):
         if path not in self.pages:
+            if self.hierarchy.has(path):
+                return {
+                    "path":path,
+                    "level":"HIERARCHY",
+                    "content":self.hierarchy.describe(path),
+                }
             raise KeyError(f"unknown context path: {path}")
         p=self.pages[path]
-        if level.upper()=="L0": return {"path":path,"level":"L0","content":p.l0}
+        if level.upper()=="L0":
+            return {"path":path,"level":"L0","content":p.l0,"hierarchy":p.hierarchy}
         if level.upper()=="L2":
             data=p.l2 if not sections else {k:v for k,v in p.l2.items() if k in sections}
             return {
@@ -188,20 +205,24 @@ class ContextRetrievalService:
                 "references":p.references,
                 "candidates":p.candidates,
                 "conflicts":p.conflicts,
+                "hierarchy":p.hierarchy,
             }
         return {
             "path":path,"level":"L1","content":p.l1,"coverage":p.coverage,
             "references":p.references,
             "candidate_count":sum(len(x) for x in p.candidates.values()),
             "conflict_count":len(p.conflicts),
+            "hierarchy":p.hierarchy,
         }
 
     def data_expand(self,paths,expand,top_k=20):
         out={}
         for path in paths:
-            if path not in self.pages:
+            if path not in self.pages and not self.hierarchy.has(path):
                 raise KeyError(f"unknown context path: {path}")
-            page=self.pages[path]; item=self.eidx.expand(path,expand)
+            page=self.pages.get(path)
+            item=self.eidx.expand(path,expand) if page else {}
+            hierarchy=self.hierarchy.describe(path)
             for what in expand:
                 if what=="backrefs": item[what]=self.backrefs.get(path,[])[:top_k]
                 elif what=="lineage":
@@ -210,17 +231,26 @@ class ContextRetrievalService:
                         "incoming":self.graph.neighbors(path,"in")[:top_k],
                     }
                 elif what=="impact": item[what]=self.graph.impact(path)[:top_k]
+                elif what=="related":
+                    item[what]={
+                        "outgoing":self.graph.neighbors(path,"out")[:top_k],
+                        "incoming":self.graph.neighbors(path,"in")[:top_k],
+                    }
+                elif what=="parents": item[what]=hierarchy.get("parents",[])[:top_k]
+                elif what=="children": item[what]=hierarchy.get("children",[])[:top_k]
+                elif what=="hierarchy": item[what]=hierarchy
+                elif what=="association_report": item[what]=dict(self.association_report)
                 elif what=="business_mapping":
                     mapping={
                         k:page.l2.get(k)
                         for k in ("primary_objects","related_objects","object_attributes","topic_domain","topic")
-                        if page.l2.get(k) not in (None,"",[],{})
+                        if page and page.l2.get(k) not in (None,"",[],{})
                     }
                     if mapping:
                         item[what]=mapping
-                elif what=="candidates": item[what]=page.candidates
-                elif what=="conflicts": item[what]=page.conflicts
-                elif what=="evidence": item[what]=self.data_source(path)
+                elif what=="candidates": item[what]=page.candidates if page else {}
+                elif what=="conflicts": item[what]=page.conflicts if page else []
+                elif what=="evidence": item[what]=self.data_source(path) if page else []
             out[path]=item
         return out
 

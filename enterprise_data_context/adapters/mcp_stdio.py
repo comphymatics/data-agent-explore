@@ -39,6 +39,9 @@ TOOL_DEFINITIONS = [
                         "technology": {"type": "string"},
                         "scenario": {"type": "string"},
                         "analysis_purpose": {"type": "string"},
+                        "semantic_role": {"type": "string"},
+                        "scenario_kind": {"enum": ["APP_FEATURE", "MODELING_ANALYSIS"]},
+                        "application": {"type": "string"},
                         "symbol": {"type": "string"},
                     },
                     "additionalProperties": False,
@@ -58,7 +61,10 @@ TOOL_DEFINITIONS = [
     {
         "name": "data_read",
         "title": "Read a Rich Context Page",
-        "description": "Read one context page at L0, L1, or selected L2 sections.",
+        "description": (
+            "Read one context page at L0, L1, or selected L2 sections. A hierarchy:// "
+            "path returns the derived classification node and its browse context."
+        ),
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -73,7 +79,10 @@ TOOL_DEFINITIONS = [
     {
         "name": "data_expand",
         "title": "Expand focused context sections",
-        "description": "Expand fields, grain, lineage, mappings, candidates, conflicts, or evidence.",
+        "description": (
+            "Expand fields, grain, lineage, mappings, hierarchy, parents, children, related "
+            "confirmed edges, candidates, conflicts, evidence, or the association report."
+        ),
         "inputSchema": {
             "type": "object",
             "properties": {

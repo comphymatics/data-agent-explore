@@ -48,6 +48,27 @@ class MergeEngine:
             return
 
         if frag.section_type == "identity":
+            ctx.section_status["identity"] = self._combined_status(
+                ctx.section_status.get("identity"), frag.status
+            )
+            existing = ctx.evidence.setdefault("identity", [])
+            known = {
+                (
+                    item.source.source_id, item.source.path, item.source.sheet,
+                    item.source.section, item.source.table, item.source.row,
+                    item.source.column, item.source.cell, item.note,
+                )
+                for item in existing
+            }
+            for item in frag.evidence:
+                key = (
+                    item.source.source_id, item.source.path, item.source.sheet,
+                    item.source.section, item.source.table, item.source.row,
+                    item.source.column, item.source.cell, item.note,
+                )
+                if key not in known:
+                    known.add(key)
+                    existing.append(item)
             return
         if frag.section_type == "references":
             ctx.references.extend(frag.references)

@@ -6,6 +6,15 @@ class ReferenceResolver:
         for ref in ctx.references:
             if ref.status == "CONFIRMED" and ref.target_path:
                 continue
+            if ref.status == "CANDIDATE":
+                # Candidate provenance is a hard boundary. We may bind it to an
+                # existing canonical target for review, but exact name resolution
+                # must never promote an LLM/similarity proposal to a fact.
+                if ref.target_type and not ref.target_path:
+                    target = self.registry.lookup(ref.target_type, ref.raw_target)
+                    if target and target.identity_status in {"EXPLICIT", "DERIVED"}:
+                        ref.target_path = target.path
+                continue
             if ref.target_type:
                 target = self.registry.lookup(ref.target_type, ref.raw_target)
                 if target and target.identity_status in {"EXPLICIT", "DERIVED"}:

@@ -205,6 +205,9 @@ cython_debug/
 # Temporary file for partial code execution
 tempCodeRunnerFile.py
 
+# Local LLM runtime configuration (copy from the tracked example).
+/config/llm-inference.json
+
 # Ruff stuff:
 .ruff_cache/
 
