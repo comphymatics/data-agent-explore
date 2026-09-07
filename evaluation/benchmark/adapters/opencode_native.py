@@ -8,7 +8,8 @@ import time
 from ..raw_corpus import verify
 from ..result_contract import BuildResult, QueryResult, ENTITY_TYPES
 from ..usage import tokens, tool_counts, nonnegative
-from .native_driver import invoke
+from .native_driver import invoke, isolated_command
+from ..output_contract import descriptor, empty_output, set_output
 
 
 def parse_events(text):
@@ -63,7 +64,7 @@ class OpenCodeNativeAdapter:
         self.corpus=corpus_path; self.context=run_context
         started=time.monotonic()
         command=self.config.get("command","opencode")
-        version=subprocess.run([command,"--version"],capture_output=True,text=True,timeout=15,check=True).stdout.strip()
+        version=subprocess.run(isolated_command([command,"--version"],run_context.workspace,self.config.get("execution_prefix")),capture_output=True,text=True,timeout=15,check=True).stdout.strip()
         self.version=version
         return BuildResult(self.name,"OK",0,0,0,build_time_ms=int(1000*(time.monotonic()-started)),
             metadata={"cold_build":True,"reused_snapshot":False,"version":version,"raw_workspace":corpus_path,
@@ -90,17 +91,20 @@ class OpenCodeNativeAdapter:
         return ("Use OpenCode's built-in explore subagent to explore ONLY the original enterprise documents "
                 "in the current directory. Native tools may read/convert Word and Excel as needed. "
                 "Do not inspect parent directories or unrelated workspaces. Answer the user's exact question. "
-                "Return the discovered semantic entities, with document-native names, as JSON keyed by "
-                +", ".join(ENTITY_TYPES)+". Omit irrelevant entities. Do not invent IDs or missing facts. "
-                "The final response must be JSON; no evidence-ID markers are requested.\nQuery: "+query)
+                "Return the discovered semantic entities with document-native names using exactly this public JSON schema: "
+                +json.dumps(empty_output())+". Contract: "+json.dumps(descriptor())+
+                ". Omit irrelevant entities. Do not invent IDs, relations or missing facts. "
+                "If the documents do not establish an answer, return empty arrays. "
+                "The final response must be JSON.\nQuery: "+query)
 
     def query(self,case,budget,run_context):
         started=time.monotonic(); env=self.environment(budget,run_context)
         command=self.config.get("command","opencode")
         failure=None
         try:
-            result=subprocess.run([command,"run","--pure","--format","json","--model",run_context.model["model"],
-                "--agent","plan","--dir",self.corpus,self.prompt(case.query)],cwd=self.corpus,env=env,
+            argv=[command,"run","--pure","--format","json","--model",run_context.model["model"],
+                "--agent","plan","--dir",self.corpus,self.prompt(case.query)]
+            result=subprocess.run(isolated_command(argv,run_context.workspace,self.config.get("execution_prefix")),cwd=self.corpus,env=env,
                 capture_output=True,text=True,timeout=budget.timeout_seconds,check=False)
             stdout=result.stdout
             if result.returncode: failure="OpenCode exited "+str(result.returncode)
@@ -118,7 +122,7 @@ class OpenCodeNativeAdapter:
                 complete=False; break
             seen.add(sid)
             try:
-                exported=subprocess.run([command,"export",sid],cwd=self.corpus,env=env,capture_output=True,text=True,timeout=30,check=True)
+                exported=subprocess.run(isolated_command([command,"export",sid],run_context.workspace,self.config.get("execution_prefix")),cwd=self.corpus,env=env,capture_output=True,text=True,timeout=30,check=True)
                 payload=json.loads(exported.stdout[exported.stdout.index("{"):])
                 rows,tools,children,ok=exported_calls(payload)
                 calls+=rows; trace+=tools; sessions+=children; complete &= ok
@@ -148,7 +152,7 @@ class OpenCodeNativeAdapter:
                     "protocol":"raw-e2e-driver/v1","phase":"query_usage",
                     "session_ids":sorted(seen),"run_id":run_context.run_id,
                     "case_id":case.case_id,"repeat":run_context.repeat,
-                    "workspace":run_context.workspace},run_context.workspace,30)
+                    "workspace":run_context.workspace},run_context.workspace,30,self.config.get("execution_prefix"))
                 ledger=usage_receipt.get("llm_calls",[])
                 covered=set(usage_receipt.get("covered_session_ids",[]))
                 ledger_ids={c.get("call_id") for c in ledger}
@@ -163,15 +167,23 @@ class OpenCodeNativeAdapter:
                 if usage[2] is not None: calls=ledger
             except (ValueError,RuntimeError,KeyError,TypeError,subprocess.SubprocessError,OSError) as exc:
                 usage_error=type(exc).__name__+": "+str(exc)
-        return QueryResult(self.name,case.case_id,"INVALID" if failure else "OK",raw,*usage,
+        result=QueryResult(self.name,case.case_id,"INVALID" if failure else "OK",raw,*usage,
             tool_calls=counts["total"] if counts else None,retrieval_rounds=counts["retrieval"] if counts else None,
             latency_ms=int(1000*(time.monotonic()-started)),trace=trace,
             metadata={"error":failure,"events":events,"session_exports":exports,"llm_calls":calls,
                       "usage_complete":usage[2] is not None,"observed_session_tokens":observed_usage,
                       "usage_receipt":usage_receipt,"usage_error":usage_error,
                       "usage_scope":"process ledger" if usage[2] is not None else "session exports only; background calls unverified",
-                      "tool_counts":counts,"effective_model":run_context.model,
-                      "observed_models":sorted({str(c.get("provider"))+"/"+str(c.get("model")) for c in calls})})
+                      "tool_counts":counts,"effective_model":usage_receipt.get("effective_model") if usage_receipt else None,
+                      "requested_model":run_context.model,
+                      "model_settings_verified":bool(usage_receipt and usage_receipt.get("model_settings_verified") is True),
+                      "observed_models":sorted({str(c.get("provider"))+"/"+str(c.get("model")) for c in calls}),
+                      "delivered_context_measurement":{"reason":"native session export does not isolate final answer-stage injected context"}})
+        if (usage_receipt and nonnegative(usage_receipt.get("delivered_context_tokens"))
+                and usage_receipt.get("delivered_context_measurement",{}).get("method")):
+            result.delivered_context_tokens=usage_receipt["delivered_context_tokens"]
+            result.metadata["delivered_context_measurement"]=usage_receipt["delivered_context_measurement"]
+        return set_output(result)
 
     def cleanup(self):
         pass

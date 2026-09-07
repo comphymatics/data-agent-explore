@@ -5,7 +5,11 @@ from typing import Any, Protocol
 SYSTEMS = ("llm_wiki", "opencode_native", "opencode_openviking", "data_explore")
 ENTITY_TYPES = ("scenarios", "purposes", "metrics", "dimensions", "business_objects",
                 "logical_models", "physical_models", "fields")
-CATEGORIES = ("Q1", "Q2", "Q3", "Q4", "Q5", "Q6")
+CATEGORIES = ("metric_to_model", "purpose_to_data", "model_to_analysis", "model_to_business",
+              "field_discovery", "lineage_impact", "negative")
+RELATION_TYPES = ("supported_by", "requires_metric", "requires_dimension", "belongs_to_object",
+                  "implemented_by", "upstream", "downstream")
+OUTPUT_SCHEMA = "data-explore-eval-result/v1"
 
 
 @dataclass(frozen=True)
@@ -16,9 +20,10 @@ class BenchmarkCase:
 
 @dataclass(frozen=True)
 class QueryBudget:
+    """Native context budget is adapter-specific, never a shared hard limit."""
     max_output_tokens: int = 2048
     timeout_seconds: int = 300
-    context_tokens: int = 8000
+    native_context_budget: int = 8000
 
 
 @dataclass(frozen=True)
@@ -36,9 +41,9 @@ class RunContext:
 class BuildResult:
     system: str
     status: str
-    build_tokens_input: int | None = None
-    build_tokens_output: int | None = None
-    build_tokens_total: int | None = None
+    build_llm_input_tokens: int | None = None
+    build_llm_output_tokens: int | None = None
+    build_llm_total_tokens: int | None = None
     build_time_ms: int = 0
     storage_bytes: int | None = None
     metadata: dict = field(default_factory=dict)
@@ -51,14 +56,16 @@ class QueryResult:
     case_id: str
     status: str
     raw_output: Any = None
-    query_tokens_input: int | None = None
-    query_tokens_output: int | None = None
-    query_tokens_total: int | None = None
+    query_llm_input_tokens: int | None = None
+    query_llm_output_tokens: int | None = None
+    query_llm_total_tokens: int | None = None
     tool_calls: int | None = None
     retrieval_rounds: int | None = None
     latency_ms: int = 0
     trace: list = field(default_factory=list)
     metadata: dict = field(default_factory=dict)
+    delivered_context_tokens: int | None = None
+    output: dict | None = None
 
 
 class BenchmarkAdapter(Protocol):

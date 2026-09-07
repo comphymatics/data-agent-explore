@@ -1,4 +1,4 @@
-"""One real raw-to-Explore pipeline, six fixture cases, three repeats; no competitor simulation."""
+"""One raw-to-Explore pipeline, seven synthetic cases, three repeats; never a Pilot."""
 import argparse
 from pathlib import Path
 import sys

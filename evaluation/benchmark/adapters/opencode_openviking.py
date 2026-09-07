@@ -47,10 +47,15 @@ class OpenCodeOpenVikingAdapter(OpenCodeNativeAdapter):
                 calls.append({"call_id":"ingest:"+entry["path"],"input_tokens":usage["input"],"output_tokens":usage["output"]})
         verify(corpus_path,run_context.corpus_fingerprint)
         self.mcp={"openviking":{"type":"remote","url":base.rstrip("/")+"/mcp","enabled":True,"oauth":False,"headers":headers}}
-        build.build_tokens_input,build.build_tokens_output,build.build_tokens_total=tokens(calls,complete)
+        build.build_llm_input_tokens,build.build_llm_output_tokens,build.build_llm_total_tokens=tokens(calls,complete)
         build.build_time_ms=int(1000*(time.monotonic()-started)); build.trace=trace
         build.metadata.update(target_uri=self.target,native_ingestion=True,usage_complete=complete,
             llm_calls=calls,openviking_model=config.get("model"),openviking_version=config.get("version"))
+        observed=[event["response"].get("effective_model") for event in trace]
+        build.metadata["build_effective_model"]=observed[0] if observed else None
+        build.metadata["build_model_settings_verified"]=bool(observed) and all(
+            event["response"].get("model_settings_verified") is True and profile==observed[0]
+            for event,profile in zip(trace,observed))
         return build
 
     def prompt(self,query):
@@ -80,6 +85,6 @@ class OpenCodeOpenVikingAdapter(OpenCodeNativeAdapter):
                 service_calls.append({"call_id":"viking:"+event["call_id"],"input_tokens":usage["input"],"output_tokens":usage["output"]})
             except (ValueError,TypeError,KeyError): complete=False
         usage=tokens([*result.metadata.get("llm_calls",[]),*service_calls],result.metadata.get("usage_complete",False) and complete)
-        result.query_tokens_input,result.query_tokens_output,result.query_tokens_total=usage
+        result.query_llm_input_tokens,result.query_llm_output_tokens,result.query_llm_total_tokens=usage
         result.metadata.update(openviking_llm_calls=service_calls,openviking_usage_complete=complete,usage_complete=usage[2] is not None)
         return result

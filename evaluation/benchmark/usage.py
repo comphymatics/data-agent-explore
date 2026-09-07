@@ -11,7 +11,7 @@ def tokens(calls, complete):
     seen={}; input_total=output_total=0
     for call in calls:
         key=call.get("call_id")
-        if not key or not all(nonnegative(call.get(k)) for k in ("input_tokens","output_tokens")):
+        if not isinstance(key,str) or not key or not all(nonnegative(call.get(k)) for k in ("input_tokens","output_tokens")):
             return (None,None,None)
         if key in seen:
             if seen[key]!=call:
@@ -43,3 +43,8 @@ def tool_counts(trace):
         elif "read" in name:
             counts["read"]+=1; counts["retrieval"]+=1
     return counts
+
+
+def coherent_usage(value, prefix):
+    values=[getattr(value,f"{prefix}_llm_{part}_tokens") for part in ("input","output","total")]
+    return all(nonnegative(v) for v in values) and values[0]+values[1]==values[2]

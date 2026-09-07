@@ -7,7 +7,8 @@
     "native_model_constraint": false
   },
   "hardware_class": "record-CPU-RAM-GPU-and-server-class",
-  "query_budget": {"timeout_seconds": 300, "context_tokens": 8000},
+  "isolation_command": ["/absolute/path/to/native-workspace-isolation-launcher"],
+  "query_budget": {"timeout_seconds": 300, "native_context_budget": 8000},
   "systems": {
     "llm_wiki": {
       "command": ["/absolute/path/to/selected-wiki-native-driver"],

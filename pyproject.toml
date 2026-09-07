@@ -18,6 +18,7 @@ dev = ["pytest>=8.0"]
 dense = ["fastembed==0.8.0"]
 
 [project.scripts]
+evaluation = "evaluation.scripts.run_e2e_benchmark:main"
 data-context-mcp = "enterprise_data_context.adapters.mcp_stdio:main"
 
 [tool.setuptools.packages.find]

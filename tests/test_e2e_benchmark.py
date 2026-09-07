@@ -20,6 +20,8 @@ from evaluation.benchmark.adapters.llm_wiki import LLMWikiAdapter
 from evaluation.benchmark.adapters.opencode_native import exported_calls, OpenCodeNativeAdapter
 from evaluation.benchmark.adapters.opencode_openviking import OpenCodeOpenVikingAdapter
 from evaluation.fixtures.raw_smoke import create_raw
+from evaluation.benchmark.output_contract import empty_output
+from evaluation.benchmark.result_contract import CATEGORIES
 
 ROOT=Path(__file__).resolve().parents[1]/"evaluation"
 MODEL={"model":"provider/model","version":"fixed-v1","temperature":0,"max_output":256,"native_model_constraint":False}
@@ -96,12 +98,12 @@ def test_native_wiki_requires_real_ingestion_receipt_and_never_gets_gold(tmp_pat
         if payload["phase"]=="prepare":
             return {"status":"OK","consumed_files":inventory(raw),"stages":["llm_wiki_native_ingestion","wiki_index"],
                     "usage_complete":True,"llm_calls":[{"call_id":"ingest","input_tokens":100,"output_tokens":20}]}
-        return {"status":"OK","raw_output":{"metrics":["RSRP"]},"usage_complete":True,
+        return {"status":"OK","raw_output":{**empty_output(),"metrics":["RSRP"]},"usage_complete":True,
                 "llm_calls":[{"call_id":"query","input_tokens":10,"output_tokens":2}],"tools_complete":True,"trace":[],"retrieval_rounds":1}
     monkeypatch.setattr("evaluation.benchmark.adapters.native_driver.invoke",driver)
     adapter=LLMWikiAdapter({"command":["native-wiki"]})
-    assert adapter.prepare(str(raw),context).build_tokens_total==120
-    assert adapter.query(BenchmarkCase("q","RSRP?"),QueryBudget(),context).query_tokens_total==12
+    assert adapter.prepare(str(raw),context).build_llm_total_tokens==120
+    assert adapter.query(BenchmarkCase("q","RSRP?"),QueryBudget(),context).query_llm_total_tokens==12
     assert set(received[1]["case"])=={"case_id","query"}
     assert "aliases" not in str(received) and "gold" not in str(received)
 
@@ -111,7 +113,7 @@ def test_openviking_search_only_is_not_a_complete_agent_result(monkeypatch):
     adapter=OpenCodeOpenVikingAdapter({}); adapter.target="viking://resources/test"
     result=adapter.query(BenchmarkCase("q","RSRP"),QueryBudget(),None)
     assert result.status=="INVALID"
-    assert result.query_tokens_total is None
+    assert result.query_llm_total_tokens is None
 
 
 def test_actual_raw_parser_template_compiler_explore_smoke_and_reports(tmp_path):
@@ -121,8 +123,8 @@ def test_actual_raw_parser_template_compiler_explore_smoke_and_reports(tmp_path)
     assert not result["manifest"]["headline_eligible"]
     assert result["statistics"]["data_explore"]["invalid_run_rate"]==0
     details=[json.loads(line) for line in (out/"run_detail.jsonl").read_text().splitlines()]
-    assert len(details)==18 and {r["category"] for r in details}=={"Q1","Q2","Q3","Q4","Q5","Q6"}
-    assert all(r["result"]["query_tokens_total"]==0 for r in details)
+    assert len(details)==21 and {r["category"] for r in details}==set(CATEGORIES)
+    assert all(r["result"]["query_llm_total_tokens"]==0 for r in details)
     assert all(r["result"]["tool_calls"]==r["result"]["metadata"]["tool_counts"]["total"] for r in details)
     assert all("input" in event and "output" in event for r in details
                for event in r["result"]["trace"] if event["tool"].startswith("data_"))
@@ -138,7 +140,7 @@ def test_reused_snapshot_is_fingerprinted_and_never_reparses_or_accepts_tamperin
     context=RunContext("r",0,str(workspace),fingerprint(inventory(raw)),MODEL,"test",True)
     first=DataExploreAdapter(cfg); cold=first.prepare(str(raw),context)
     second=DataExploreAdapter(cfg); warm=second.prepare(str(raw),context)
-    assert cold.metadata["cold_build"] and warm.metadata["reused_snapshot"] and warm.build_tokens_total==0
+    assert cold.metadata["cold_build"] and warm.metadata["reused_snapshot"] and warm.build_llm_total_tokens==0
     assert cold.metadata["snapshot_version"]==warm.metadata["snapshot_version"]
     target=next((tmp_path/"cache").rglob("quality.json")); target.write_text("[] ")
     with pytest.raises(ValueError,match="content changed"): DataExploreAdapter(cfg).prepare(str(raw),context)
@@ -167,7 +169,7 @@ def test_four_system_runner_keeps_identical_raw_and_private_scoring_inputs(tmp_p
             def query(self,case,budget,context):
                 assert set(asdict(case))=={"case_id","query"}
                 queries.append((self.name,asdict(case),asdict(budget)))
-                return QueryResult(self.name,case.case_id,"OK",{"metrics":["RSRP"]},1,1,2,0,0)
+                return QueryResult(self.name,case.case_id,"OK",{**empty_output(),"metrics":["RSRP"]},1,1,2,0,0)
             def cleanup(self): pass
         monkeypatch.setitem(ADAPTERS,system,Probe)
     result=run(corpus_path=raw,cases_path=ROOT/"cases/cases.yaml",aliases_path=ROOT/"cases/aliases.yaml",
@@ -185,12 +187,12 @@ def test_unavailable_system_is_retained_and_cost_remains_unknown(tmp_path):
     result=run(corpus_path=raw,cases_path=ROOT/"cases/cases.yaml",aliases_path=ROOT/"cases/aliases.yaml",
         config=config(),output=tmp_path/"report",systems=["llm_wiki"],smoke=True,progress=None)
     aggregate=result["statistics"]["llm_wiki"]
-    assert aggregate["runs"]==18 and aggregate["invalid_run_rate"]==1
+    assert aggregate["runs"]==21 and aggregate["invalid_run_rate"]==1
     assert aggregate["micro"]["recall"]==0
-    assert aggregate["query_tokens_total"]["mean"] is None
+    assert aggregate["query_llm_total_tokens"]["mean"] is None
     assert not result["manifest"]["token_usage_complete"]
     amort=list(csv.DictReader((tmp_path/"report/amortized_cost.csv").open()))
-    assert all(r["AverageTokensPerQuery"]=="" for r in amort)
+    assert all(r["AverageLLMTokensPerQuery"]=="" for r in amort)
 
 
 def test_micro_scoring_does_not_macro_average_different_gold_sizes():
@@ -215,13 +217,13 @@ def test_opencode_recurses_children_but_requires_process_ledger_for_total_cost(t
         calls.append(argv)
         if "--version" in argv: output="1.17.8"
         elif "export" in argv: output=json.dumps(exports[argv[-1]])
-        else: output=json.dumps({"type":"text","sessionID":"parent","part":{"text":'{"metrics":["RSRP"]}'}})
+        else: output=json.dumps({"type":"text","sessionID":"parent","part":{"text":json.dumps({**empty_output(),"metrics":["RSRP"]})}})
         return SimpleNamespace(stdout=output,stderr="",returncode=0)
     monkeypatch.setattr("evaluation.benchmark.adapters.opencode_native.subprocess.run",execute)
     adapter=OpenCodeNativeAdapter({}); adapter.prepare(str(raw),context)
     first=adapter.query(BenchmarkCase("q","Find RSRP"),QueryBudget(),context)
     assert first.status=="OK" and first.tool_calls==2
-    assert first.query_tokens_total is None and first.metadata["observed_session_tokens"]==(28,6,34)
+    assert first.query_llm_total_tokens is None and first.metadata["observed_session_tokens"]==(28,6,34)
     assert {c[-1] for c in calls if "export" in c}=={"parent","child"}
     def usage_driver(command,payload,*args):
         assert payload["session_ids"]==["child","parent"]
@@ -230,7 +232,7 @@ def test_opencode_recurses_children_but_requires_process_ledger_for_total_cost(t
     monkeypatch.setattr("evaluation.benchmark.adapters.opencode_native.invoke",usage_driver)
     adapter.config["usage_command"]=["provider-ledger"]
     second=adapter.query(BenchmarkCase("q","Find RSRP"),QueryBudget(),context)
-    assert second.query_tokens_total==51 and second.metadata["usage_complete"]
+    assert second.query_llm_total_tokens==51 and second.metadata["usage_complete"]
 
 
 def test_openviking_ingests_raw_bytes_and_rejects_queued_or_partial_receipts(tmp_path,monkeypatch):
@@ -251,7 +253,7 @@ def test_openviking_ingests_raw_bytes_and_rejects_queued_or_partial_receipts(tmp
     monkeypatch.setattr("evaluation.benchmark.adapters.opencode_openviking.request_json",http)
     adapter=OpenCodeOpenVikingAdapter({"openviking":{"base_url":"http://fixture.invalid"}})
     build=adapter.prepare(str(raw),context)
-    assert build.build_tokens_total==24 and len(requests)==4
+    assert build.build_llm_total_tokens==24 and len(requests)==4
     assert adapter.mcp["openviking"]["url"]=="http://fixture.invalid/mcp"
     for result in ({"status":"accepted"},{"status":"error"},
                    {"status":"success","root_uri":adapter.target,"meta":{"failed_files":["models.docx"]}},

@@ -2,9 +2,14 @@
 cases:
   - case_id: smoke_q1
     query: RSRP 有哪些模型可以提供？同时列出这些模型对应的逻辑模型。
-    category: Q1
+    category: metric_to_model
     review_status: FIXTURE
-    difficulty: {source_span: cross_document}
+    source_span: cross_document
+    difficulty: medium
+    tags: [synthetic]
+    expected_empty: false
+    relations:
+      - {source: 'metric:rsrp', relation: supported_by, target: 'physical-model:lte-periodic-mr'}
     source_documents: [models.docx, dictionary.xlsx]
     cross_document_rationale: Excel links the metric to a physical table; Word supplies the logical model mapping.
     gold:
@@ -13,9 +18,13 @@ cases:
     optional: [metric:rsrp]
   - case_id: smoke_q2
     query: 地铁弱覆盖分析需要哪些数据？包括指标、模型和字段。
-    category: Q2
+    category: purpose_to_data
     review_status: FIXTURE
-    difficulty: {source_span: cross_document}
+    source_span: cross_document
+    difficulty: medium
+    tags: [synthetic]
+    expected_empty: false
+    relations: null
     source_documents: [models.docx, dictionary.xlsx]
     cross_document_rationale: Word defines the analysis dependency; Excel supplies metric and field inventory for the referenced model.
     gold:
@@ -25,25 +34,50 @@ cases:
     optional: [purpose:metro-weak-coverage, dimension:cell]
   - case_id: smoke_q3
     query: LTE_PERIODIC_MR 可以支持哪些分析？
-    category: Q3
+    category: model_to_analysis
     review_status: FIXTURE
-    difficulty: {source_span: single_document}
+    source_span: single_document
+    difficulty: medium
+    tags: [synthetic]
+    expected_empty: false
+    relations: null
     source_documents: [models.docx]
     gold: {purposes: [purpose:metro-weak-coverage]}
     optional: [physical-model:lte-periodic-mr, metric:rsrp]
   - case_id: smoke_q4
     query: LTE_PERIODIC_MR 对应哪些业务对象？
-    category: Q4
+    category: model_to_business
     review_status: FIXTURE
-    difficulty: {source_span: single_document}
+    source_span: single_document
+    difficulty: medium
+    tags: [synthetic]
+    expected_empty: false
+    relations: null
     source_documents: [models.docx]
     gold: {business_objects: [business-object:cell]}
     optional: [physical-model:lte-periodic-mr]
+  - case_id: smoke_negative
+    query: 当前资料是否定义了 VoNR 掉话分析物理模型？无法确定时返回空集合。
+    category: negative
+    review_status: FIXTURE
+    source_span: cross_document
+    difficulty: hard
+    tags: [synthetic, missing]
+    expected_empty: true
+    source_documents: [models.docx, dictionary.xlsx]
+    cross_document_rationale: Review the full model inventory and field dictionary together before declaring material-scoped insufficiency.
+    empty_rationale: The complete synthetic fixture defines two LTE tables and no VoNR drop-call model; this makes no claim about a live environment.
+    gold: {}
+    relations: []
   - case_id: smoke_q5
     query: LTE_PERIODIC_MR 的字段有哪些？
-    category: Q5
+    category: field_discovery
     review_status: FIXTURE
-    difficulty: {source_span: single_document}
+    source_span: single_document
+    difficulty: medium
+    tags: [synthetic]
+    expected_empty: false
+    relations: null
     source_documents: [dictionary.xlsx]
     gold:
       physical_models: [physical-model:lte-periodic-mr]
@@ -51,9 +85,13 @@ cases:
     optional: [metric:rsrp, dimension:cell]
   - case_id: smoke_q6
     query: 修改 LTE_PERIODIC_MR 的 CELL_ID 可能影响哪些下游模型？
-    category: Q6
+    category: lineage_impact
     review_status: FIXTURE
-    difficulty: {source_span: single_document}
+    source_span: single_document
+    difficulty: medium
+    tags: [synthetic]
+    expected_empty: false
+    relations: null
     source_documents: [models.docx]
     gold: {physical_models: [physical-model:cell-hourly]}
     optional: [physical-model:lte-periodic-mr]

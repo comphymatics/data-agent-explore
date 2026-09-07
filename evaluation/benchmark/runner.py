@@ -1,3 +1,4 @@
+# LEGACY / NON-HEADLINE EVALUATION — official entry: python -m evaluation
 from __future__ import annotations
 
 import hashlib

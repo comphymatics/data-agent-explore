@@ -9,10 +9,12 @@ from enterprise_data_context.compiler import ContextCompiler
 from enterprise_data_context.persistence import save_compiled
 from enterprise_data_context.runtime import load_runtime
 from explore_agent import ExploreAgent
+from explore_agent.telemetry import estimate
 from ..raw_corpus import inventory, verify
 from ..result_contract import BuildResult, QueryResult
 from ..usage import tokens, tool_counts
 from .native_driver import invoke
+from ..output_contract import bundle_output, set_output
 
 
 class RecordingTools:
@@ -73,7 +75,7 @@ class DataExploreAdapter:
         if self.config.get("smoke_parser") and not run_context.smoke:
             raise ValueError("synthetic parser cannot run a formal benchmark")
         version=compiler_version()
-        key=hashlib.sha256(json.dumps([run_context.corpus_fingerprint,parser_version,version,
+        key=hashlib.sha256(json.dumps(["build-llm-contract/v2",run_context.corpus_fingerprint,parser_version,version,
             self.config.get("parser_command")],sort_keys=True).encode()).hexdigest()
         cache=Path(self.config.get("cache_dir",Path(run_context.workspace)/"build"))/key
         receipt_path=cache/"build-receipt.json"
@@ -95,7 +97,7 @@ class DataExploreAdapter:
                 "protocol":"raw-e2e-driver/v1","phase":"parse","corpus_path":corpus_path,
                 "output_dir":str(delivery),"files":inventory(corpus_path),
                 "corpus_fingerprint":run_context.corpus_fingerprint},run_context.workspace,
-                self.config.get("build_timeout_seconds",1800))
+                self.config.get("build_timeout_seconds",1800),self.config.get("execution_prefix"))
             if native.get("status")!="OK" or native.get("parser_version")!=parser_version or native.get("consumed_files")!=inventory(corpus_path):
                 raise ValueError("parser did not produce a complete, versioned raw-input receipt")
             # The existing Compiler remains the only Template contract consumer.
@@ -106,7 +108,7 @@ class DataExploreAdapter:
             receipt={"corpus_fingerprint":run_context.corpus_fingerprint,"parser_version":parser_version,
                      "compiler_version":version,"snapshot_version":snapshot,"parser_receipt":native,
                      "snapshot_fingerprint":artifact_fingerprint(cache/"snapshot"),
-                     "original_build_tokens":usage[2]}
+                     "original_build_llm_tokens":usage[2]}
             receipt_path=cache/"build-receipt.json"
             receipt_path.write_text(json.dumps(receipt,ensure_ascii=False,indent=2))
             self.runtime=load_runtime(cache/"snapshot",index_version=snapshot)
@@ -114,7 +116,9 @@ class DataExploreAdapter:
         return BuildResult(self.name,"OK",*usage,build_time_ms=int(1000*(time.monotonic()-started)),
             storage_bytes=sum(p.stat().st_size for p in cache.rglob("*") if p.is_file()),
             metadata={**receipt,"cold_build":not reused,"reused_snapshot":reused,"encoder_version":getattr(self.runtime.retrieval.pidx.encoder,"version","unknown"),
-                      "build_tokens_accounting":"this invocation; original_build_tokens retained for warm-cache comparisons",
+                      "build_effective_model":receipt.get("parser_receipt",{}).get("effective_model"),
+                      "build_model_settings_verified":receipt.get("parser_receipt",{}).get("model_settings_verified",False),
+                      "build_tokens_accounting":"this invocation; original_build_llm_tokens retained for warm-cache comparisons",
                       "effective_model":{"model":None,"version":None,"temperature":None,"max_output":None,
                                          "native_model_constraint":True,"reason":"current deterministic Explore; Router/Reasoner unchanged"}},
             trace=receipt.get("parser_receipt",{}).get("trace",[]))
@@ -126,7 +130,7 @@ class DataExploreAdapter:
         agent=ExploreAgent(self.runtime.retrieval)
         recording=RecordingTools(agent.tools)
         agent.tools=recording
-        bundle=agent.explore(case.query,token_budget=budget.context_tokens)
+        bundle=agent.explore(case.query,token_budget=budget.native_context_budget)
         # Preserve native output. The scorer performs the same entity normalization for all systems.
         raw=asdict(bundle)
         telemetry=bundle.telemetry
@@ -135,12 +139,20 @@ class DataExploreAdapter:
             trace.append({"kind":"tool_call","call_id":"environment-resolve","tool":"environment_resolve","native":bundle.environment})
         counts=tool_counts(trace)
         # No LLM provider is installed into this adapter. Context payload estimates are not LLM usage.
-        return QueryResult(self.name,case.case_id,"OK",raw,0,0,0,
+        result=QueryResult(self.name,case.case_id,"OK",raw,0,0,0,
             tool_calls=telemetry["total_tool_calls"],retrieval_rounds=telemetry.get("tool_calls"),
             latency_ms=int(1000*(time.monotonic()-started)),trace=trace,
             metadata={"usage_complete":True,"llm_calls":[],"native_telemetry":telemetry,"tool_counts":counts,
                       "context_payload_tokens_estimated":telemetry["tool_tokens_estimated"],
-                      "model_constraint":"deterministic core; no benchmark-specific reasoner"})
+                      "model_constraint":"deterministic core; no benchmark-specific reasoner",
+                      "model_settings_verified":True,
+                      "delivered_context_measurement":{"method":"native Context Bundle estimate", "estimated":True},
+                      "effective_model":{"model":None,"version":None,"temperature":None,"max_output":None,
+                                         "native_model_constraint":True,"reason":"deterministic Explore, no query LLM"}},
+            delivered_context_tokens=estimate(raw))
+        set_output(result,bundle_output(raw))
+        result.latency_ms=int(1000*(time.monotonic()-started))
+        return result
 
     def cleanup(self):
         self.runtime=None

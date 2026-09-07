@@ -14,9 +14,12 @@ class NormalizedExploreResult:
     entities: dict = field(default_factory=lambda:{k:set() for k in ENTITY_TYPES})
     unknown: set = field(default_factory=set)
     mentions: list = field(default_factory=list)
+    relations: set = field(default_factory=set)
+    unknown_relations: set = field(default_factory=set)
 
     def to_dict(self):
-        return {"entities":{k:sorted(v) for k,v in self.entities.items()},"unknown":sorted(self.unknown),"mentions":self.mentions}
+        return {"entities":{k:sorted(v) for k,v in self.entities.items()},"unknown":sorted(self.unknown),"mentions":self.mentions,
+                "relations":[list(r) for r in sorted(self.relations)], "unknown_relations":sorted(self.unknown_relations)}
 
 
 def normalize(output, registry):
@@ -68,6 +71,15 @@ def normalize(output, registry):
                 line=re.sub(r"^\s*(?:[-*]|\d+[.)])\s*","",line).strip()
                 if line: add(line)
     visit(output)
+    if isinstance(output,dict):
+        for edge in output.get("relations",[]):
+            source=edge.get("source",{}); target=edge.get("target",{})
+            source_id=registry.resolve(source.get("name"),source.get("type"))
+            target_id=registry.resolve(target.get("name"),target.get("type"))
+            if source_id and target_id:
+                result.relations.add((source_id,edge["relation"],target_id))
+            else:
+                result.unknown_relations.add(json.dumps(edge,sort_keys=True,ensure_ascii=False))
     if isinstance(output,dict) and output and not result.mentions and not any(k in output for k in [*ENTITY_TYPES,"entities","primary_contexts","results","answer"]):
         result.unknown.add("unrecognized-output:"+json.dumps(output,sort_keys=True))
     return result
