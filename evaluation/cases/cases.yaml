@@ -1,0 +1,59 @@
+# These are human-readable synthetic oracles, not APPROVED enterprise Gold.
+cases:
+  - case_id: smoke_q1
+    query: RSRP 有哪些模型可以提供？同时列出这些模型对应的逻辑模型。
+    category: Q1
+    review_status: FIXTURE
+    difficulty: {source_span: cross_document}
+    source_documents: [models.docx, dictionary.xlsx]
+    cross_document_rationale: Excel links the metric to a physical table; Word supplies the logical model mapping.
+    gold:
+      physical_models: [physical-model:lte-periodic-mr]
+      logical_models: [logical-model:lte-mr]
+    optional: [metric:rsrp]
+  - case_id: smoke_q2
+    query: 地铁弱覆盖分析需要哪些数据？包括指标、模型和字段。
+    category: Q2
+    review_status: FIXTURE
+    difficulty: {source_span: cross_document}
+    source_documents: [models.docx, dictionary.xlsx]
+    cross_document_rationale: Word defines the analysis dependency; Excel supplies metric and field inventory for the referenced model.
+    gold:
+      metrics: [metric:rsrp]
+      physical_models: [physical-model:lte-periodic-mr]
+      fields: [field:lte-periodic-mr.cell-id, field:lte-periodic-mr.rsrp-value]
+    optional: [purpose:metro-weak-coverage, dimension:cell]
+  - case_id: smoke_q3
+    query: LTE_PERIODIC_MR 可以支持哪些分析？
+    category: Q3
+    review_status: FIXTURE
+    difficulty: {source_span: single_document}
+    source_documents: [models.docx]
+    gold: {purposes: [purpose:metro-weak-coverage]}
+    optional: [physical-model:lte-periodic-mr, metric:rsrp]
+  - case_id: smoke_q4
+    query: LTE_PERIODIC_MR 对应哪些业务对象？
+    category: Q4
+    review_status: FIXTURE
+    difficulty: {source_span: single_document}
+    source_documents: [models.docx]
+    gold: {business_objects: [business-object:cell]}
+    optional: [physical-model:lte-periodic-mr]
+  - case_id: smoke_q5
+    query: LTE_PERIODIC_MR 的字段有哪些？
+    category: Q5
+    review_status: FIXTURE
+    difficulty: {source_span: single_document}
+    source_documents: [dictionary.xlsx]
+    gold:
+      physical_models: [physical-model:lte-periodic-mr]
+      fields: [field:lte-periodic-mr.cell-id, field:lte-periodic-mr.rsrp-value]
+    optional: [metric:rsrp, dimension:cell]
+  - case_id: smoke_q6
+    query: 修改 LTE_PERIODIC_MR 的 CELL_ID 可能影响哪些下游模型？
+    category: Q6
+    review_status: FIXTURE
+    difficulty: {source_span: single_document}
+    source_documents: [models.docx]
+    gold: {physical_models: [physical-model:cell-hourly]}
+    optional: [physical-model:lte-periodic-mr]

@@ -1,0 +1,39 @@
+{
+  "model": {
+    "model": "provider/exact-backbone-model",
+    "version": "pin-deployment-or-model-revision",
+    "temperature": 0,
+    "max_output": 2048,
+    "native_model_constraint": false
+  },
+  "hardware_class": "record-CPU-RAM-GPU-and-server-class",
+  "query_budget": {"timeout_seconds": 300, "context_tokens": 8000},
+  "systems": {
+    "llm_wiki": {
+      "command": ["/absolute/path/to/selected-wiki-native-driver"],
+      "build_timeout_seconds": 1800
+    },
+    "opencode_native": {
+      "command": "opencode",
+      "usage_command": ["/absolute/path/to/process-llm-usage-driver"]
+    },
+    "opencode_openviking": {
+      "command": "opencode",
+      "usage_command": ["/absolute/path/to/process-llm-usage-driver"],
+      "openviking": {
+        "base_url": "http://127.0.0.1:1933",
+        "version": "pin-server-version",
+        "model": {"model": "record-ingestion-and-rerank-model", "version": "pin-model-version", "temperature": 0, "max_output": 2048, "native_model_constraint": true},
+        "api_key_env": "OPENVIKING_API_KEY",
+        "timeout_seconds": 300
+      }
+    },
+    "data_explore": {
+      "parser_command": ["/absolute/path/to/domain-parser-driver"],
+      "parser_version": "pin-domain-parser-version",
+      "cache_dir": "/absolute/path/to/private/data-explore-build-cache",
+      "reuse_snapshot": false,
+      "build_timeout_seconds": 1800
+    }
+  }
+}

@@ -1,289 +1,103 @@
-# 企业数据上下文评测集构建指南
+# 四方案企业原始文档 E2E 评测
 
-本目录是交给可访问真实业务资料的 Code Agent 的实施包。目标是构建一套可复现、可审计、不会把候选知识升级为事实的企业数据上下文评测集，用于比较：
+本目录主评测比较 **LLM Wiki、OpenCode Native Explore、OpenCode + OpenViking、
+Data Explore** 面对同一份 frozen raw Word/Excel 企业资料的完整数据探索效果。
+主指标为实体 Recall / Precision / F1、完整 Query Tokens、Build Tokens 和 Tool Calls。
+Evidence Retrieval 与 CodeGraph 不进入本轮四方案正式排行榜。
 
-- OpenCode Explore；
-- OpenViking；
-- CodeGraph（企业适配模式，必须标记为 `ADAPTED`）；
-- 本仓库的 Enterprise Data Context + Explore Agent；
-- 本方案的 Page-only、Flat baseline 等消融变体。
+## 输入和系统边界
 
-OpenCode Explore 与 OpenViking 的可运行双系统适配、语料导入、断点续跑和报告流程见
-[`COMPARISON.md`](COMPARISON.md)。
+四个 Adapter 从相同原始文件字节开始。框架冻结相对路径、大小和 SHA-256，为每个
+系统建立只包含原始文件的私有副本，并在构建/查询前后核对指纹。
 
-真实 `source-materials/templates` 到 Evidence 候选、Case 候选和人工审批的自动构造方法见
-[`AUTO_CASE_CONSTRUCTION.md`](AUTO_CASE_CONSTRUCTION.md)。
+| System | 完整路径 |
+|---|---|
+| LLM Wiki | Raw → 所选 Wiki 项目的 native ingestion → Wiki/context/index → native query |
+| OpenCode Native | Raw workspace → OpenCode primary → 原生 explore 子任务 → search/read/reason → result |
+| OpenCode + OpenViking | Raw → OpenViking native ingestion → OpenCode explore 使用该 namespace 的 MCP retrieval → result |
+| Data Explore | Raw → 外部 Domain Deterministic Parser → 私有 Template JSON → 原有 Compiler → Context/Hybrid → 原有 Explore → Bundle |
 
-主指标只有三个：
+Template JSON 是 Data Explore 内部产物。Raw 入口拒绝 JSON、YAML、程序文件与符号链接；
+不能把 `source-materials/templates`、已有 Context 或 Gold 当作 raw corpus。
+其他企业格式允许 `.doc/.docx/.xls/.xlsx/.pdf/.md/.txt/.csv`；实际格式支持由各方案
+的 native ingestion 决定，不支持的文件不能静默跳过。
 
-1. Evidence Recall@Budget；
-2. Evidence Precision@Budget；
-3. Query Tokens。
+## 完整 smoke
 
-## 1. 架构与数据边界
-
-本仓库的正式运行边界是外部解析器按 `source-materials/templates/` 五类结构发布的 Template JSON 目录。`ContextFragment` 是消费侧内部 IR，不是外部交付件。评测集构建环境可以读取真实 Word、Excel、数据字典、指标文档和模型设计资料，但不得把原始资料复制到本仓库。
-
-真实环境负责产出：
-
-```text
-真实业务资料
-  -> 确定性结构解析
-  -> 原子 Evidence 记录
-  -> Gold 评测案例
-  -> 模型设计 Oracle（仅模型设计案例）
-  -> 可选：符合 template-input.schema.json 的五类 Template JSON 目录
+```sh
+uv run --isolated --extra dev python -m evaluation.scripts.run_e2e_smoke \
+  --output /tmp/data-explore-e2e-smoke
 ```
 
-本仓库负责：
+脚本创建合成 Word/Excel，经测试专用的受限确定性表格 parser 生成合法 Template
+JSON，调用生产 Compiler/Explore，执行 Q1–Q6 各三次并生成报表。这是完整执行链路
+测试，**不是生产 Domain Parser 或四个真实系统的实验**。未解析的叙述关系保留为
+漏召回，不会为了 smoke 得分修改生产 Context、检索逻辑或单独调整本方案 Gold。
 
-```text
-JSON Schema 校验
-  -> 引用完整性校验
-  -> Gold 泄漏隔离
-  -> 数据集冻结
-  -> 各方案 Adapter 和评测运行
+## 正式运行
+
+准备独立 raw 目录、评分器私有 Gold/Alias，人工审核案例并设为 `APPROVED`。
+不要自动审批仓库中的合成 FIXTURE。复制 `benchmark/e2e.config.example.json`，填写
+固定 backbone/version/temperature、预算与硬件，配置 Wiki native driver、OpenCode、
+OpenViking 服务及正式 Parser。被测账户/容器只应访问 raw 和本系统产物；关闭全局
+额外 MCP、共享记忆、Gold/Alias 目录。OpenCode 额外工具会关闭并检查实际 trace。
+
+```sh
+uv run --isolated --extra dev --extra dense python -m evaluation.scripts.run_e2e_benchmark \
+  --corpus /secure/benchmark/raw \
+  --cases /secure/scorer/cases.yaml \
+  --aliases /secure/scorer/aliases.yaml \
+  --config /secure/benchmark/e2e.config.json \
+  --output /secure/benchmark/runs/run-001 \
+  --repeats 3
 ```
 
-禁止事项：
-
-- 不得把 Markdown 说明文档自动当作业务事实，除非数据集负责人明确将其登记为权威源。
-- 不得根据“常识”补齐资料中不存在的指标、字段、Join 或加工规则。
-- `INFERRED`、`CANDIDATE` 不得进入 `required_evidence`。
-- 不得让被测系统读取 `cases.jsonl` 中的 Gold 字段或 `design-oracles.jsonl`。
-- 不得为 CodeGraph、OpenViking 或本方案编造其余方案得不到的额外业务关系。
-- 不得在提交、日志、示例或错误信息中输出敏感原文、账号、密钥或客户标识。
-
-## 2. 需要的真实输入
-
-最低输入包括：
-
-1. 数据字典：模型、表、字段、类型、主键、粒度、来源、刷新周期；
-2. 指标文档：定义、公式、维度、过滤条件、统计粒度、权威版本；
-3. 应用场景：业务目标、典型问题、分析对象、所需指标；
-4. 映射资料：场景 -> 指标 -> 对象 -> 逻辑模型 -> 物理模型 -> 表 -> 字段；
-5. 当前环境资产：实际部署的数据源、模型、表和版本；
-6. 已评审模型设计：目标 Schema、Source-to-Target、Join、SQL 或加工逻辑。
-
-先登记权威顺序。例如：已发布指标标准 > 已评审模型设计 > 当前资产目录 > 项目说明 > LLM/人工候选。权威策略必须写入 `dataset-manifest.json`，不能在标注过程中临时改变。
-
-## 3. 评测集组成
-
-一个完整数据集目录如下：
-
-```text
-secure-eval-dataset/
-├── dataset-manifest.json
-├── evidence.jsonl
-├── cases.jsonl
-└── design-oracles.jsonl
-```
-
-- `evidence.jsonl`：原子事实与精确来源位置；
-- `cases.jsonl`：查询、预算和 Gold Evidence 集；
-- `design-oracles.jsonl`：隐藏的专家模型设计，只供标注和审计；
-- `dataset-manifest.json`：版本、来源快照、权威策略和文件声明。
-
-对应契约位于 `evaluation/contracts/`。`evaluation/examples/` 只包含合成数据，不得替换为真实资料后提交到非安全仓库。
-
-## 4. Evidence 构建规则
-
-### 4.1 原子化
-
-一个 Evidence 只表达一个可判定事实。例如：
-
-- `metric:rsrp --provided_by--> physical-model:mr-cell-hour`；
-- `field:avg_rsrp --belongs_to--> table:mr_cell_hour`；
-- `target-model:nr-cell-hour --grain--> stat_hour + cell_id`。
-
-同一段原文包含多个事实时，应拆成多个 Evidence 记录，但可以共享相同来源位置和内容哈希。
-
-### 4.2 稳定标识
-
-`evidence_id` 在同一数据集版本内必须唯一且稳定。推荐：
-
-```text
-ev-<source-id>-<section-or-sheet>-<semantic-slug>-<short-hash>
-```
-
-不要使用数组序号作为稳定 ID。
-
-### 4.3 来源位置
-
-至少提供：
-
-- `source_id`；
-- `source_version`；
-- 脱敏后的相对路径或逻辑 URI；
-- Word 的 section/paragraph，Excel 的 sheet/table/row/column/cell，SQL/文本的行号；
-- `content_hash`；
-- 最短但足以支持事实的 `excerpt`。
-
-### 4.4 状态
-
-- `EXPLICIT`：来源直接陈述；
-- `DERIVED`：可由多个明确事实确定性推导，必须列出 `derived_from`；
-- `INFERRED`：推测；
-- `CANDIDATE`：待评审候选。
-
-只有 `EXPLICIT` 和证据链完整的 `DERIVED` 可以进入案例的 `required_evidence`。候选可以保留在 Evidence 集中，用于验证系统是否错误提升候选，但不能作为 Gold 必需事实。
-
-## 5. 两类评测案例
-
-### 5.1 需求调研 `requirement_research`
-
-正式集建议 120 个基础案例：
-
-| 子类 | 数量 | 内容 |
-|---|---:|---|
-| `single_layer` | 35 | 场景、指标、对象、逻辑模型、物理模型、表、字段各 5 题 |
-| `adjacent_mapping` | 30 | 六种相邻或反向映射各 5 题 |
-| `multi_layer` | 35 | 覆盖 3 到 7 层的真实需求调研 |
-| `environment_gap_conflict` | 20 | 当前环境、部分缺失、完全无答案、多源冲突 |
-
-层级标签统一使用：
-
-```text
-scenario, metric, business_object, logical_model, physical_model,
-table, field, dimension, grain, lineage, processing_logic,
-environment_asset
-```
-
-### 5.2 模型设计准备 `model_design_preparation`
-
-正式集建议 80 个基础案例：
-
-| 子类 | 数量 | 内容 |
-|---|---:|---|
-| `schema_context` | 20 | 粒度、键、维度、度量、类型、分区、命名规范 |
-| `processing_context` | 20 | 来源、字段映射、Join、公式、过滤、聚合、时间、去重 |
-| `full_design_context` | 20 | 完整目标模型所需 Context Bundle |
-| `reuse_and_change` | 10 | 复用、扩展、合并、影响分析 |
-| `insufficient_context` | 10 | 来源粒度不足、关键映射缺失、规则冲突 |
-
-Explore 的 Gold 是“完成设计必须召回的证据”，不是最终 Schema 文本。每个模型设计案例必须有一个隐藏 Oracle，记录专家认可的目标粒度、字段类别、来源、Join 和加工步骤。Oracle 只用于反向确定 `required_evidence`，不得作为输入交给被测系统。
-
-## 6. Gold Evidence 集合
-
-每个案例包含：
-
-- `required_evidence`：完成任务不可缺少，Recall 的分母；
-- `allowed_relevant_evidence`：有帮助但非最低必需，不应被 Precision 当作噪声；
-- `forbidden_evidence`：已知错误、过期、冲突中被否决或候选事实；
-- `expected_missing`：资料确实缺少的上下文类别；
-- `expected_conflicts`：必须披露的冲突组。
-
-主指标：
-
-```text
-Evidence Recall@Budget
-= 命中的 required_evidence / required_evidence 总数
-
-Evidence Precision@Budget
-= 命中的 required_evidence 或 allowed_relevant_evidence / 返回 Evidence 总数
-```
-
-负样本没有 `required_evidence`：正确返回空 Evidence 时 Precision 记为 1；返回伪相关 Evidence 时 Precision 记为 0；负样本不参与 Recall 平均。
-
-## 7. 预算与难度
-
-| 难度 | 典型范围 | `context_token_budget` |
-|---|---|---:|
-| `S` | 单层、精确实体 | 2048 |
-| `M` | 相邻关系、Schema/加工局部问题 | 4096 |
-| `L` | 多层调研、完整模型设计 | 8192 |
-
-同一案例的所有被测方案必须使用相同预算。Query Tokens 统计查询阶段所有 LLM input/output tokens，加上最终交付给上层 Agent 的上下文 Token。索引构建 Token 单独记录，不进入主排名。
-
-## 8. 构建流程
-
-### 阶段 0：冻结输入
-
-1. 为所有原始资料分配 `source_id` 和 `source_version`；
-2. 计算文件哈希；
-3. 只读挂载原始资料；
-4. 建立脱敏路径映射；
-5. 在 manifest 中写明权威策略和来源快照。
-
-### 阶段 1：构建 Evidence
-
-1. Word/Excel 结构解析必须确定性执行；
-2. 提取原子事实和精确位置；
-3. 建立实体、关系、公式、字段和加工规则 Evidence；
-4. LLM 只可提出候选，不可自动审批；
-5. 两名业务评审者确认 Gold，冲突交第三人裁决；
-6. 只有 `review_status=APPROVED` 的事实可进入 `required_evidence`。
-
-### 阶段 2：构建案例
-
-1. 先选择真实用户任务，再编写查询；
-2. 为每题确定层级、难度、预算和环境范围；
-3. 标注 required/allowed/forbidden Evidence；
-4. 模型设计题建立独立 Oracle；
-5. 查询至少有一个业务表达版本，避免全是精确编码搜索；
-6. 同一业务事实的改写问题作为 `query_variants`，不要重复计为多个独立基础案例。
-
-### 阶段 3：防止 Gold 泄漏
-
-运行时只向被测系统提供：
-
-```text
-query + environment_scope + context_token_budget
-```
-
-禁止提供：
-
-```text
-required_evidence
-allowed_relevant_evidence
-forbidden_evidence
-expected_missing
-expected_conflicts
-design_oracle
-review_notes
-```
-
-### 阶段 4：验证和冻结
-
-在本仓库或安全环境运行：
-
-```bash
-uv run --isolated --extra dev python evaluation/scripts/validate_dataset.py \
-  --dataset-dir /secure/path/to/secure-eval-dataset
-```
-
-校验通过后冻结数据集版本，不允许原地修改。任何 Gold 修改都发布新版本并记录变更原因。
-
-## 9. Pilot 与验收
-
-第一轮 Pilot 使用 60 个基础案例：
-
-- 需求调研 36：单层 12、相邻 8、多层 10、环境/缺失/冲突 6；
-- 模型设计 24：Schema 6、加工逻辑 6、完整设计 6、复用变更 3、上下文不足 3。
-
-数据集发布前必须满足：
-
-- Schema 校验 100% 通过；
-- Evidence ID、Case ID 唯一；
-- 所有 Evidence 引用可解析；
-- required/allowed/forbidden 不重叠；
-- 正例至少有一个 required Evidence；
-- 模型设计题恰好有一个 Oracle；
-- 所有 required/allowed Evidence 均为 `APPROVED`；
-- `CANDIDATE/INFERRED` 不进入 required Evidence；
-- 原始敏感资料未写入非安全仓库；
-- 至少一名数据领域专家完成最终签署。
-
-## 10. 交付物
-
-真实环境最终只需交付以下脱敏或受控文件：
-
-1. 数据集 manifest；
-2. Evidence JSONL；
-3. Cases JSONL；
-4. Design Oracle JSONL；
-5. 可选 Template JSON 交付目录；
-6. 校验日志；
-7. 来源、版本、权威策略和评审记录摘要。
-
-如果真实资料不能离开受控环境，评测运行器也应部署在受控环境，只带回聚合指标和脱敏错误摘要。
+正式运行强制四系统和至少三次重复。依赖不可用、用量不完整或执行失败均显式记录，
+CLI 非零退出，不会把一次 HTTP search 或 mock 当作成功。`--smoke --systems data_explore`
+允许局部诊断，但不获得正式 headline 资格。输出目录必须为空，避免混合不同实验。
+
+## Gold 和归一化
+
+`cases/cases.yaml` 展示 Q1–Q6；`cases/aliases.yaml` 是 scorer-only 稳定 ID Registry。
+八类实体为 scenarios、purposes、metrics、dimensions、business_objects、logical_models、
+physical_models、fields。Required/optional/forbidden 互不重叠；跨文档案例必须指定
+至少两个原始文件并说明单篇文档为什么不够。
+
+Adapter 的 `BenchmarkCase` 只有 case_id/query，不包含 Gold、Alias、答案类型或来源。
+统一 normalizer 支持类型化 JSON、实体列表、Context Bundle、逐行实体名。未知实体、
+歧义 Alias 保留并影响 Precision；不在任意段落中只搜索已知 Gold 词而忽略幻觉。
+建议 native query 返回清晰实体列表；原始答案和规范化明细同时保留。
+
+总体 Recall = 正确 required ID 数 / required ID 总数；Precision = 正确 required/optional
+ID 数 / 全部返回实体数（含未知/禁止实体）；F1 为调和平均。按 Canonical ID 去重。
+分类型、单篇/跨文档、每题重复统计单独输出。失效运行不从样本中消失，须同时查看 invalid rate。
+
+## 成本口径
+
+- 累加所有 LLM 调用的 input/output/total，包括子孙 Agent、reasoning、cache 输入、
+  ingestion、query-time rerank/understanding/summarization；按唯一 call ID 去重。
+- 不完整 usage 为 null，不是 0；不能用最终回答长度替代总 Token。
+- OpenCode session export 只证明已观测主/子任务用量；正式总成本还需配置
+  `usage_command` 收集进程级全量 ledger（含后台标题/摘要），协议见设计文档。
+- Data Explore adapter 调用原有确定性 Explore，没有新 LLM，实际 query LLM tokens 为 0；
+  Context payload 估算 Token 独立保留，native model constraint 在 manifest 中显式记录。
+- Build/Query 分开；记录 cold/reused、parser/compiler/snapshot 版本和指纹。
+  摊销为 Build/N + AvgQuery，N=1/10/100/1000，另列冷构建等价成本。
+- Tool Calls 包含原生子任务，分列 search/read/retrieval/expand；延迟单位毫秒。
+  确定性解析和本地 embedding CPU 时间计入延迟，不伪造 LLM Token。
+
+## 报表
+
+| 文件 | 内容 |
+|---|---|
+| `leaderboard.csv` | 状态、micro Recall/Precision/F1、平均/总 Query Tokens、Build Tokens、工具数、延迟、invalid rate |
+| `category_breakdown.csv` | Q1–Q6 正确率、Token 和 invalid rate |
+| `source_span_breakdown.csv` | Single / cross-document Recall/F1 |
+| `run_detail.jsonl` | 每次 query/repeat 的 raw output、native trace、Token ledger、normalized IDs 和评分 |
+| `amortized_cost.csv` | N=1/10/100/1000 的本次与冷构建等价 Token |
+| `statistics.json` | 系统/每题 mean/std/min/max、重复波动、分类型 Recall、遥测分母 |
+| `run_manifest.json` | Raw 指纹、隐藏集哈希、构建回执、模型差异、版本、预算和正式结果资格 |
+
+实现、native driver 协议和验收映射见 [EVALUATION_DESIGN.md](EVALUATION_DESIGN.md)。
+历史入口：[Evidence 构造](LEGACY_EVIDENCE_EVALUATION.md)、
+[旧 OpenCode/HTTP Search 对比](COMPARISON.md)、[底层 Retrieval Golden](retrieval_golden/README.md)。

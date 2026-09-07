@@ -1,5 +1,8 @@
 # OpenCode Explore 与 OpenViking 同步对比测评
 
+> 历史 Evidence-only 比较器。新的四方案 Raw E2E 入口见 [README.md](README.md)。
+> 此处 OpenViking HTTP Search 的结果不等于 OpenCode + OpenViking Agent。
+
 本实现测的是企业数据上下文的“召回是否准确、成本是多少”，不是回答文案质量。两套系统接收同一份脱离 Gold 的 Evidence 语料、同一查询和同一 `context_token_budget`，输出统一为 Evidence ID 集合。
 
 ## 1. 为什么这样接入

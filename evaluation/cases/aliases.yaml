@@ -1,0 +1,32 @@
+# SCORER ONLY. Synthetic IDs; never copied to any system workspace.
+entities:
+  - canonical_id: metric:rsrp
+    type: metrics
+    aliases: [RSRP, Reference Signal Received Power]
+  - canonical_id: physical-model:lte-periodic-mr
+    type: physical_models
+    aliases: [LTE_PERIODIC_MR, LTE Periodic MR]
+  - canonical_id: physical-model:cell-hourly
+    type: physical_models
+    aliases: [CELL_HOURLY]
+  - canonical_id: logical-model:lte-mr
+    type: logical_models
+    aliases: [LTE_MR_LOGICAL]
+  - canonical_id: business-object:cell
+    type: business_objects
+    aliases: [Cell, 小区]
+  - canonical_id: dimension:cell
+    type: dimensions
+    aliases: [Cell, 小区]
+  - canonical_id: purpose:metro-weak-coverage
+    type: purposes
+    aliases: [地铁弱覆盖分析]
+  - canonical_id: field:lte-periodic-mr.cell-id
+    type: fields
+    aliases: [LTE_PERIODIC_MR.CELL_ID]
+  - canonical_id: field:lte-periodic-mr.rsrp-value
+    type: fields
+    aliases: [LTE_PERIODIC_MR.RSRP_VALUE]
+  - canonical_id: field:cell-hourly.cell-id
+    type: fields
+    aliases: [CELL_HOURLY.CELL_ID]

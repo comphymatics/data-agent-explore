@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from ..models import RetrievalResult
+from ..result_contract import BenchmarkAdapter, BenchmarkCase, BuildResult, QueryResult, RunContext, QueryBudget
 
 
 MARKED_EVIDENCE_RE = re.compile(r"EVIDENCE_ID\s*:\s*`?(ev-[a-z0-9][a-z0-9._-]*)`?", re.IGNORECASE)
