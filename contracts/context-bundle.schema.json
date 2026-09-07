@@ -144,7 +144,8 @@
           "layer",
           "status",
           "evidence",
-          "reason"
+          "reason",
+          "context_refs"
         ],
         "properties": {
           "id": {
@@ -168,7 +169,10 @@
               "grain",
               "lineage",
               "formula",
-              "constraints"
+              "constraints",
+              "attributes",
+              "counters",
+              "join_keys"
             ]
           },
           "layer": {
@@ -182,7 +186,8 @@
               "SATISFIED",
               "PARTIAL",
               "MISSING",
-              "UNKNOWN"
+              "UNKNOWN",
+              "NOT_APPLICABLE"
             ]
           },
           "evidence": {
@@ -194,11 +199,13 @@
           "reason": {
             "type": "string"
           },
+          "context_refs": {"type":"array","minItems":1,"items":{"type":"string","minLength":1}},
           "selector": {
             "type": "string",
             "minLength": 1
           }
         },
+        "allOf": [{"if":{"properties":{"status":{"not":{"const":"UNKNOWN"}}}},"then":{"properties":{"evidence":{"minItems":1}}}}],
         "additionalProperties": false
       }
     },
@@ -281,6 +288,7 @@
         "structural_relations"
       ],
       "properties": {
+        "binding_policy_version": {"const":"identity-binding/v3"},
         "environment_facts": {
           "type": "array",
           "items": {
@@ -417,7 +425,8 @@
               "layer",
               "status",
               "evidence",
-              "reason"
+              "reason",
+              "context_refs"
             ],
             "properties": {
               "id": {
@@ -441,7 +450,10 @@
                   "grain",
                   "lineage",
                   "formula",
-                  "constraints"
+                  "constraints",
+                  "attributes",
+                  "counters",
+                  "join_keys"
                 ]
               },
               "layer": {
@@ -455,7 +467,8 @@
                   "SATISFIED",
                   "PARTIAL",
                   "MISSING",
-                  "UNKNOWN"
+                  "UNKNOWN",
+                  "NOT_APPLICABLE"
                 ]
               },
               "evidence": {
@@ -467,11 +480,13 @@
               "reason": {
                 "type": "string"
               },
+              "context_refs": {"type":"array","minItems":1,"items":{"type":"string","minLength":1}},
               "selector": {
                 "type": "string",
                 "minLength": 1
               }
             },
+            "allOf": [{"if":{"properties":{"status":{"not":{"const":"UNKNOWN"}}}},"then":{"properties":{"evidence":{"minItems":1}}}}],
             "additionalProperties": false
           }
         },

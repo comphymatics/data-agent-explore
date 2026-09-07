@@ -121,6 +121,8 @@ def test_identity_mapping_and_structure_are_separate():
     env.assets.append({"id":"env:field","type":"field"})
     env.relations=[{"source_id":"env:radio","target_id":model,"predicate":"MAPS_TO","assertion_status":"EXPLICIT","evidence":[{"ref":"map"}]},
                    {"source_id":"env:radio","target_id":"env:field","predicate":"HAS_COLUMN","assertion_status":"EXPLICIT","evidence":[{"ref":"field"}]}]
+    for relation in env.relations:
+        relation["evidence"][0].update(environment_id="env-golden",snapshot_token="snapshot-v1")
     overlay=build_binding_overlay(env,[{"path":model,"context_type":"physical-model","name":"Radio Model"}],reference_index_version="r1",required_coverage=[])
     assert len(overlay["identity_bindings"])==len(overlay["semantic_mappings"])==len(overlay["structural_relations"])==1
     assert not overlay["reference_only_assets"]
@@ -252,7 +254,7 @@ def test_two_hop_requirement_assembly_is_one_batched_tool_expansion():
     fragments=compiled["fragments"]+[ContextFragment("purpose","analysis-purpose","Coverage Research","summary","覆盖分析",evidence=ev,
         references=[TypedReference("uses_metric","RSRP","metric",evidence=ev)])]
     compiled=ContextCompiler().compile_fragments(fragments)
-    req=requirement("data://analysis-purposes/coverage-research","models",name="Coverage Research")
+    req=requirement("data://purposes/coverage-research","models",name="Coverage Research")
     bundle=ExploreAgent(from_compiled(compiled).retrieval).explore("Coverage Research 需要哪些数据？",top_k=1,requirements=[req],token_budget=5000)
     assert {h["name"] for h in bundle.primary_contexts}=={"Coverage Research","RSRP","Radio Model"}
     assert bundle.coverage[req["id"]]["status"]=="SATISFIED"

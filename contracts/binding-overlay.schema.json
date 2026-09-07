@@ -1,0 +1,38 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "title":"Typed online binding overlay",
+  "type":"object",
+  "required":["identity_bindings","semantic_mappings","structural_relations","reference_only_assets"],
+  "properties":{
+    "binding_policy_version":{"const":"identity-binding/v3"},
+    "identity_bindings":{"type":"array","items":{"$ref":"#/$defs/IdentityBinding"}},
+    "semantic_mappings":{"type":"array","items":{"$ref":"#/$defs/SemanticMapping"}},
+    "structural_relations":{"type":"array","items":{"$ref":"#/$defs/StructuralRelation"}},
+    "reference_only_assets":{"type":"array","items":{"type":"object","required":["knowledge_layer"],"properties":{"knowledge_layer":{"const":"REFERENCE"}}}}
+  },
+  "$defs":{
+    "IdentityBinding":{
+      "type":"object",
+      "required":["binding_kind","environment_asset_id","reference_path","environment_type","reference_type","assertion_status","environment_id","snapshot_token","reference_index_version","evidence","rule"],
+      "properties":{
+        "binding_kind":{"const":"IDENTITY"},"assertion_status":{"const":"EXPLICIT"},
+        "environment_asset_id":{"type":"string","minLength":1},"reference_path":{"type":"string","minLength":1},
+        "environment_type":{"type":"string","minLength":1},"reference_type":{"type":"string","minLength":1},
+        "environment_id":{"type":"string","minLength":1},"snapshot_token":{"type":"string","minLength":1},
+        "reference_index_version":{"type":["string","null"]},
+        "evidence":{"type":"array","minItems":1,"items":{"type":"object"}},
+        "rule":{"enum":["provider_explicit_crosswalk/v3","same_type_scoped_stable_id/v3","same_type_scoped_strong_key/v3"]}
+      }
+    },
+    "SemanticMapping":{
+      "type":"object","required":["binding_kind","source_id","target_id","predicate","assertion_status","evidence"],
+      "properties":{"binding_kind":{"const":"SEMANTIC_MAPPING"},"source_id":{"type":"string"},"target_id":{"type":"string"},
+        "predicate":{"enum":["MAPS_TO","SEMANTIC_MAPPING"]},"assertion_status":{"const":"EXPLICIT"},"evidence":{"type":"array","minItems":1}}
+    },
+    "StructuralRelation":{
+      "type":"object","required":["binding_kind","source_id","target_id","predicate","assertion_status","evidence"],
+      "properties":{"binding_kind":{"const":"STRUCTURAL_RELATION"},"source_id":{"type":"string"},"target_id":{"type":"string"},
+        "predicate":{"type":"string","not":{"enum":["MAPS_TO","SEMANTIC_MAPPING"]}},"assertion_status":{"const":"EXPLICIT"},"evidence":{"type":"array","minItems":1}}
+    }
+  }
+}

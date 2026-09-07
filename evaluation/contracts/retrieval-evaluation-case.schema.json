@@ -46,7 +46,11 @@
     "expected_elements": {
       "type": "array",
       "items": {
-        "type": "string"
+        "oneOf": [
+          {"type":"string"},
+          {"type":"object","required":["parent_path","kind","identifier"],"additionalProperties":false,
+           "properties":{"parent_path":{"type":"string"},"kind":{"enum":["Field","Attribute","Formula","Counter","JoinKey"]},"identifier":{"type":"string"}}}
+        ]
       },
       "uniqueItems": true
     },
@@ -66,7 +70,8 @@
           "SATISFIED",
           "PARTIAL",
           "MISSING",
-          "UNKNOWN"
+          "UNKNOWN",
+          "NOT_APPLICABLE"
         ]
       }
     },
@@ -87,6 +92,7 @@
     "explore_options": {
       "type": "object"
     },
+    "anchor_k": {"type":"integer","minimum":1},
     "max_tool_calls": {
       "type": [
         "integer",

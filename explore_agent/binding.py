@@ -35,7 +35,38 @@ ENVIRONMENT_BACKED_TYPES = {
     "logical-model",
     "physical-model",
     "field",
+    "business-attribute",
 }
+
+
+def snapshot_evidence(result, evidence):
+    caps = result.capabilities
+    return bool(caps and caps.environment_id and caps.snapshot_token and evidence and
+                all(isinstance(e,dict) and e.get("environment_id")==caps.environment_id and
+                    e.get("snapshot_token")==caps.snapshot_token for e in evidence))
+
+
+def identity_rule(asset, reference, result):
+    """Exact typed identities only. Names and physical-name hints are never keys."""
+    if (asset.get("type")!=reference["type"] or asset.get("assertion_status")!="EXPLICIT" or
+        not snapshot_evidence(result,asset.get("evidence"))):
+        return None
+    attrs=asset.get("attributes",{})
+    if attrs.get("reference_path")==reference["path"]:
+        return "provider_explicit_crosswalk/v3"
+    identity=reference.get("binding_identity") or {}
+    keys=identity.get("keys",{})
+    if identity.get("status")!="EXPLICIT" or not identity.get("evidence"):
+        return None
+    if (not keys.get("identity_namespace") or keys.get("identity_namespace")!=attrs.get("identity_namespace") or
+        keys.get("environment_id")!=result.capabilities.environment_id):
+        return None
+    for key in ("stable_id","strong_key"):
+        if isinstance(keys.get(key),str) and keys[key].strip() and keys[key]==attrs.get(key):
+            if key=="strong_key" and not re.fullmatch(r"[^.\s]+\.[^.\s]+(?:\.[^.\s]+)*",keys[key]):
+                continue
+            return "same_type_scoped_"+key+"/v3"
+    return None
 
 
 def environment_required(intent: str, query: str) -> bool:
@@ -59,6 +90,7 @@ def build_binding_overlay(
             "knowledge_layer": "REFERENCE",
             "assertion_status": "EXPLICIT",
             "reference_index_version": reference_index_version,
+            "binding_identity": hit.get("binding_identity"),
         }
         for hit in reference_hits
     ]
@@ -66,26 +98,25 @@ def build_binding_overlay(
     identity_bindings = []
     candidate_bindings = _exact_bindings(result.assets, reference_semantics)
     for asset in result.assets:
-        crosswalk = asset.get("attributes", {}).get("reference_path")
         for reference in reference_semantics:
-            if (crosswalk == reference["path"] and asset.get("type") == reference["type"] and
-                asset.get("assertion_status") == "EXPLICIT" and asset.get("evidence") and
-                result.capabilities and result.capabilities.environment_id and result.capabilities.snapshot_token and
-                any(e.get("environment_id")==result.capabilities.environment_id and
-                    e.get("snapshot_token")==result.capabilities.snapshot_token for e in asset["evidence"])):
+            rule=identity_rule(asset,reference,result)
+            if rule:
                 identity_bindings.append({
                     "environment_asset_id": asset["id"], "reference_path": reference["path"],
+                    "environment_type":asset["type"],"reference_type":reference["type"],
                     "binding_kind": "IDENTITY", "assertion_status": "EXPLICIT",
                     "environment_id": result.capabilities.environment_id,
                     "snapshot_token": result.capabilities.snapshot_token,
                     "reference_index_version": reference_index_version,
-                    "evidence": asset["evidence"], "rule": "provider_explicit_crosswalk/v2",
+                    "evidence": asset["evidence"], "rule": rule,
+                    "reference_evidence":(reference.get("binding_identity") or {}).get("evidence",[]),
                 })
     counts=Counter(row["reference_path"] for row in identity_bindings)
+    asset_counts=Counter(row["environment_asset_id"] for row in identity_bindings)
     for row in identity_bindings:
-        if counts[row["reference_path"]]>1:
+        if counts[row["reference_path"]]>1 or asset_counts[row["environment_asset_id"]]>1:
             candidate_bindings.append({**row,"assertion_status":"CANDIDATE","rule":"ambiguous_provider_crosswalk/v2"})
-    identity_bindings=[row for row in identity_bindings if counts[row["reference_path"]]==1]
+    identity_bindings=[row for row in identity_bindings if counts[row["reference_path"]]==1 and asset_counts[row["environment_asset_id"]]==1]
     bound = {row["reference_path"] for row in identity_bindings}
     candidate_bindings = [row for row in candidate_bindings if row["reference_path"] not in bound]
     reference_only_assets = [{**item, "availability_state": result.state.value,
@@ -96,7 +127,9 @@ def build_binding_overlay(
     semantic_mappings = []
     structural_relations = []
     for relation in result.relations:
-        if relation.get("assertion_status") != "EXPLICIT" or not relation.get("evidence"):
+        if relation.get("assertion_status") != "EXPLICIT" or not snapshot_evidence(result,relation.get("evidence")):
+            continue
+        if not isinstance(relation.get("predicate"),str) or not relation["predicate"].strip():
             continue
         if relation.get("source_id") not in asset_ids:
             continue
@@ -123,6 +156,7 @@ def build_binding_overlay(
             )
 
     return {
+        "binding_policy_version":"identity-binding/v3",
         "environment_facts": result.assets,
         "reference_semantics": reference_semantics,
         "confirmed_bindings": identity_bindings,

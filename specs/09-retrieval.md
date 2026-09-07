@@ -1,4 +1,4 @@
-# High-information Context Serving (v2)
+# High-information Context Serving (v3)
 
 The Serving projection preserves Template Contract, Canonical Context, Rich Context
 Page, and the four tools. Graph remains internal. Golden fixtures never enter the
@@ -8,11 +8,16 @@ already selected Pages.
 ## Hybrid Page Retrieval
 
 `PageIndex.search` fuses exact identifier/name/alias matches, BM25, cosine vector
-similarity and governed facets using weighted reciprocal rank fusion. The offline
-encoder is `local-concept-subword/v1`: versioned bilingual concept features plus
-hashed lexical features, **not a trained embedding model**. Inject an encoder
-with `version` and `encode(list[str]) -> list[list[float]]` to evaluate a trained
-embedding model. All vectors are rebuilt on index mutation/reload; malformed or
+similarity and governed facets using weighted reciprocal rank fusion (weights
+3/1/1/0.25, RRF constant 60). The default trained encoder is FastEmbed 0.8.0 with
+`sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`, installed through
+the `dense` extra. Its passage/query encoders run locally. Model name and package
+version appear in serving metadata; model caches are external to governed snapshots.
+`DATA_CONTEXT_DENSE_MODEL` selects a different supported model or `disabled`;
+`DATA_CONTEXT_DENSE_LOCAL_ONLY=1` forbids uncached model loading. The historical
+concept/hash encoder remains an explicit fixture ablation and is never labeled dense.
+Custom encoders implement `version`, `encode(list[str]) -> list[list[float]]` and
+optionally `encode_query(str) -> list[float]`. All vectors are rebuilt on index mutation/reload; malformed or
 failed encoding falls back to lexical retrieval with an explicit warning.
 
 `PageIndex(mode="baseline")` retains the old lexical candidate scorer for a
@@ -20,6 +25,9 @@ retrieval ablation. This ablation uses the new runtime, not the historical runti
 Candidates and inferred identities are excluded from every retrieval channel.
 Model layer/domain/topic constraints also apply during relation completion.
 An underscore inside a field identifier does not create a classification filter.
+An exact technical identifier cannot gain candidates from dense/facet similarity
+alone. `anchor_candidates` records the ranked initial Pages before hydration,
+diversity, seen-page and bundle limits; `anchor_context_ids` follows that ranking.
 
 `BundleAssembler` completes confirmed typed references and backrefs on the machine
 side: one hop normally, two for metric/model, requirements and impact intents,
@@ -32,10 +40,18 @@ L1-to-L0 token fallback control hydration. Hops never become LLM tool calls.
 
 `data_expand(paths, expand=["fields"], query="subscriber_key", top_k=20)` searches
 only governed elements of those Pages. Results have stable element IDs, parent
-path, section, offset, value, score, status and source evidence. Supported sections
+path, section, offset, value, score, status and source evidence. `kind` distinguishes
+Field, Attribute, Formula, Counter and JoinKey. `parent_context` contains the parent
+Page's path, name, type, L0 text and REFERENCE layer. `identifiers` and `match`
+distinguish exact identity matches from descriptive text. Supported sections
 include fields, counters, formula, grain, dimensions, metrics, joins, constraints
 and business mappings. Explicit and derived sections are searchable; candidate
-sections are not. `top_k` bounds returned lists; `section_totals` and `truncated`
+sections and nested candidate assertions are not. JSON property names are not
+searchable content. Aliases include fields, attributes, formulas, counters and
+join_keys; `elements` searches all element sections within the selected Pages.
+`ElementIndex.search` also supports machine-side whole-index queries with parent
+results; this does not add a fifth LLM tool or put field text in initial Page search.
+`top_k` bounds returned lists; `section_totals` and `truncated`
 make incomplete dictionaries visible. Query hits take priority over list order.
 
 `related`, `lineage`, `impact`, and `backrefs` return bounded rich context summaries

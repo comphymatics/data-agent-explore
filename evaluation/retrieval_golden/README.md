@@ -37,14 +37,15 @@ an explicit additional token allowance for its two model calls.
 For a real Golden set, construct `EvaluationCase` records with canonical expected
 paths, `expected_anchors`, a complete `relevant_contexts` precision oracle,
 `expected_coverage` keys `LAYER|entity_name|aspect` (or append `|selector`, or use a requirement ID), expected identity pairs,
-expected element IDs or exact leaf values, and `explore_options.requirements`.
+expected element IDs or exact identifiers (prefer `{parent_path, kind, identifier}`),
+`anchor_k`, and `explore_options.requirements`.
 Specify cost ceilings. Feed these to `evaluate` and `assert_golden_gate`; keep the
 existing evaluation evidence approval workflow for production data. Do not infer
 all relevant contexts from whatever the current retriever happened to return.
 
 Coverage output changed from booleans to requirement assessments. Existing
 `required_coverage` evaluation cases explicitly target the compatibility reference
-projection; new cases should compare the four states directly. Existing
+projection; new cases should compare the five states directly. Existing
 `EvaluationReport` positional fields remain usable.
 
 
@@ -54,3 +55,27 @@ Only synthetic evidence is transmitted. Inspect `semantic_calls.status` as well
 as quality scores: a deterministic fallback may pass a retrieval case while the
 model call times out or is rejected. `provider_tokens` is null when the endpoint
 does not report usage or the call times out; this is unknown usage, not zero.
+
+## Online correctness suite (v3)
+
+`correctness.py` adds typed Field/Attribute/Formula/Counter/JoinKey oracles,
+description/candidate false-positive checks, explicit path isolation, evidenced
+NOT_APPLICABLE and scoped MISSING, pre-hydration Anchor Recall@K, stable-ID and
+strong-key bindings, ambiguous bindings and stale snapshots. The runner keeps
+Router/Reasoner unchanged, with no semantic providers:
+
+```sh
+uv run --isolated --extra dev --extra dense python -m evaluation.scripts.run_retrieval_correctness \
+  --dense-model sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 --gate
+```
+
+The checked-in `correctness-report.json` records a real local trained-embedding
+run over synthetic data, including lexical ablation, all quality denominators,
+Anchor Recall at each configured K, and useful-contexts per 1,000 estimated tokens
+and per tool call. Anchor oracles score ranked seed Pages before hydration;
+element oracles require matching parent/kind/identifier and governed evidence.
+Token cost measures serialized retrieval payloads, not local embedding CPU time
+or monetary spend. MetaOne fixtures have exact call counters; this does not prove
+real MetaOne integration or production recall. The earlier reports remain historical
+evidence and are not overwritten by this runner. The multilingual suite is small;
+model/domain changes require another evaluation, not a promise of universal recall.

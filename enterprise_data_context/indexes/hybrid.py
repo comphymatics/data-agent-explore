@@ -17,6 +17,7 @@ CONCEPTS = (
 
 class LocalConceptEncoder:
     version = "local-concept-subword/v1"
+    channel = "vector"  # fixture ablation, never reported as trained dense
 
     def encode(self, texts):
         vectors = []
@@ -38,7 +39,9 @@ def cosine(a, b):
     if len(a) != len(b) or not a or not all(math.isfinite(x) for x in (*a, *b)):
         raise ValueError("encoder returned invalid or incompatible vectors")
     denom = math.sqrt(sum(x*x for x in a) * sum(x*x for x in b))
-    return sum(x*y for x, y in zip(a, b))/denom if denom else 0.0
+    if not denom:
+        raise ValueError("encoder returned a zero vector")
+    return sum(x*y for x, y in zip(a, b))/denom
 
 
 def hybrid_search(index, query, types=None, scope=None, top_k=8):
@@ -58,6 +61,19 @@ def hybrid_search(index, query, types=None, scope=None, top_k=8):
                if page.context_type in {"physical-model", "logical-model"}):
             continue
         eligible.append(path)
+    identifier=(scope or {}).get("symbol")
+    if not identifier and re.fullmatch(r"[A-Za-z][A-Za-z0-9]*(?:[_:.][A-Za-z0-9]+)+",query.strip()):
+        identifier=query.strip()
+    if identifier:
+        token=str(identifier).casefold()
+        # A named parent Page can contain a focused counter/field query whose symbol
+        # deliberately lives only in ElementIndex. Keep that explicit Page anchor.
+        def explicit_parent(path):
+            page=index.pages[path]
+            return any(key and re.search(r"(?<!\w)"+re.escape(str(key).casefold())+r"(?!\w)",query.casefold())
+                       for key in [page.name,*page.aliases])
+        eligible=[p for p in eligible if token in index.docs[p] or token in
+                  {str(k).casefold() for k in [index.pages[p].name,index.pages[p].canonical_id,*index.pages[p].aliases]} or explicit_parent(p)]
     n = max(1, len(index.docs))
     avgdl = sum(sum(tf.values()) for tf in index.docs.values()) / n or 1
     lexical, exact, facets, vectors = {}, {}, {}, {}
@@ -81,6 +97,8 @@ def hybrid_search(index, query, types=None, scope=None, top_k=8):
                            for k, v in (scope or {}).items())
     index.last_warnings = []
     try:
+        if not eligible:
+            return []
         generation=(index.generation,getattr(index.encoder,"version","custom"))
         if index.vector_generation != generation:
             paths = sorted(index.docs)
@@ -90,15 +108,17 @@ def hybrid_search(index, query, types=None, scope=None, top_k=8):
             for vector in encoded:
                 cosine(vector, vector)
             index.vectors = dict(zip(paths, encoded))
-            index.vector_generation = generation
-        query_vector = index.encoder.encode([query])[0]
+            index.vector_generation = (index.generation, getattr(index.encoder,"version","custom"))
+        query_vector = (index.encoder.encode_query(query) if hasattr(index.encoder,"encode_query")
+                        else index.encoder.encode([query])[0])
         vectors = {p: cosine(query_vector, index.vectors[p]) for p in eligible}
         vectors = {p: score for p, score in vectors.items() if score >= 0.25}
     except Exception as exc:
-        index.last_warnings = [{"code": "vector_retrieval_unavailable", "message": str(exc)}]
+        index.last_warnings = [{"code": "vector_retrieval_unavailable", "message": type(exc).__name__,
+                                "encoder": getattr(index.encoder,"version","custom")}]
     scores, reasons = defaultdict(float), defaultdict(list)
     for channel, values, weight in (("exact", exact, 3), ("bm25", lexical, 1),
-                                    ("vector", vectors, 1), ("facet", facets, 0.25)):
+                                    (getattr(index.encoder,"channel","dense"), vectors, 1), ("facet", facets, 0.25)):
         ranked = sorted((p for p, value in values.items() if value > 0), key=lambda p: (-values[p], p))
         for rank, path in enumerate(ranked, 1):
             scores[path] += weight/(60+rank)

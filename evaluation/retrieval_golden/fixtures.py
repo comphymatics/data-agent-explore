@@ -25,6 +25,9 @@ def corpus():
     add("Conflicted Model","physical-model","grain",["Cell"])
     add("Conflicted Model","physical-model","grain",["Subscriber"])
     compiled = ContextCompiler().compile_fragments(rows)
+    # Historical concept-vector ablation. Production defaults never use this fixture encoder.
+    from enterprise_data_context.indexes.hybrid import LocalConceptEncoder
+    compiled["page_index"].encoder = LocalConceptEncoder()
     for item in [*compiled["pages"], *compiled["contexts"]]:
         if item.name=="Conflicted Model":
             item.conflicts.append({"section":"grain","kept":["Cell"],"discarded":["Subscriber"],"reason":"fixture unresolved source disagreement"})
@@ -92,6 +95,7 @@ def cases():
             explore_options={"top_k": 1, "requirements": [requirement(model,"fields",name="Radio Model",selector="subscriber_key")]},
             max_tool_calls=3, max_token_cost=10000),
         EvaluationCase("entity-isolation", "Radio Model 与 Incomplete Model 的字段", expected_contexts=["Radio Model", "Incomplete Model"],
+            anchor_k=2,
             expected_anchors=["Radio Model", "Incomplete Model"], relevant_contexts=["Radio Model", "Incomplete Model"],
             expected_coverage={"REFERENCE|Radio Model|fields": "SATISFIED", "REFERENCE|Incomplete Model|fields": "UNKNOWN"},
             explore_options={"top_k": 2,"requirements": [requirement(model,"fields",name="Radio Model"), requirement(incomplete,"fields",name="Incomplete Model")]},

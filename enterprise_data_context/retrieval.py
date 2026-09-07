@@ -10,6 +10,7 @@ from collections import Counter
 from enterprise_data_context.serving import BundleAssembler, rich_relations, support_facts
 from enterprise_data_context.models import SearchHit
 from enterprise_data_context.indexes.hierarchy import HierarchyIndex
+from enterprise_data_context.indexes.element import ALIASES, SECTIONS
 
 
 class ContextRetrievalService:
@@ -101,8 +102,6 @@ class ContextRetrievalService:
             used_tokens += estimated_tokens
 
         pages=[self.pages[h.path] for h in hits]
-        keys=["business_meaning","purpose","business_object","metrics","dimensions","models","fields","grain","lineage"]
-        coverage={k:any(p.coverage.get(k,False) for p in pages) for k in keys}
         selected_path_set={p.path for p in pages}
         warnings=[
             issue for issue in self.quality_issues
@@ -116,9 +115,9 @@ class ContextRetrievalService:
             "query":query,
             "scope":scope or {},
             "contexts":serialized,
-            "coverage_hint":coverage,  # legacy hint only; never authoritative Coverage
-            "anchor_context_ids":[h.path for h in seed_hits if h.path in selected_path_set],
-            "retrieval_version":"page-serving/v2:"+self.pidx.mode+":"+getattr(self.pidx.encoder,"version","custom"),
+            "anchor_context_ids":[h.path for h in seed_hits[:top_k]],
+            "anchor_candidates":[{"path":h.path,"name":h.name,"rank":i+1} for i,h in enumerate(seed_hits[:top_k])],
+            "retrieval_version":"page-serving/v3:"+self.pidx.mode+":"+getattr(self.pidx.encoder,"version","custom"),
             "encoder_version":getattr(self.pidx.encoder,"version","custom"),
             "truncated":bool(truncation_reasons),
             "truncation_reasons":truncation_reasons,
@@ -153,16 +152,25 @@ class ContextRetrievalService:
         }
 
     def _serialize_hit(self,hit,read_content,remaining_tokens):
+        ctx=self.contexts[hit.path]
+        hints={k:v for k,v in ctx.identity_hints.items() if k in {
+            "stable_id","identity_namespace","environment_id","strong_key"}}
+        identity={"keys":hints,"status":ctx.identity_status,
+                  "evidence":[asdict(e) for e in ctx.evidence.get("identity",[])]} if hints else None
         if read_content is None:
             row=dict(hit.__dict__)
             row["support"] = support_facts(self.pages[hit.path],self.contexts[hit.path])
             row["knowledge_layer"] = "REFERENCE"
-            return row,_estimate_tokens(" ".join((hit.path,hit.name,hit.l0,hit.l1)))
+            if identity:
+                row["binding_identity"] = identity
+            return row,_estimate_tokens(json.dumps(row,ensure_ascii=False))
 
         base={
             "path":hit.path,"context_type":hit.context_type,"name":hit.name,
             "score":hit.score,"reasons":list(hit.reasons),
         }
+        if identity:
+            base["binding_identity"] = identity
         levels=("L1","L0") if read_content=="auto" else (read_content,)
         for level in levels:
             content=hit.l1 if level=="L1" else hit.l0
@@ -237,23 +245,24 @@ class ContextRetrievalService:
             if page:
                 section_totals={key:len(value) for key,value in self.eidx.by_page.get(path,{}).items() if isinstance(value,list)}
                 item["section_totals"]=section_totals
-                if any(section_totals.get("important_fields" if key=="fields" else key,0)>top_k for key in expand):
+                if any(section_totals.get(ALIASES.get(key,key),0)>top_k for key in expand):
                     item["truncated"]=True
-                requested=["important_fields" if x=="fields" else x for x in expand]
+                requested=list(SECTIONS) if "elements" in expand else [ALIASES.get(x,x) for x in expand]
                 if "business_mapping" in expand:
                     requested += ["primary_objects","related_objects","object_attributes"]
                 item["support"]=support_facts(page,self.contexts[path],sections=requested)
                 if query:
                     item["elements"]=self.eidx.search(query,[path],expand,top_k)
                     for requested_section in expand:
-                        stored="important_fields" if requested_section=="fields" else requested_section
+                        stored=ALIASES.get(requested_section,requested_section)
                         focused=[e["value"] for e in item["elements"] if e["section"]==stored]
                         if focused and isinstance(item.get(requested_section),list):
                             item[requested_section]=focused
                     for element in item["elements"]:
                         element["evidence"]=self.data_source(path,element["section"])
                 for proof in item.get("support",[]):
-                    if section_totals.get(proof["section"],0)>top_k:
+                    returned=next((v for k,v in item.items() if ALIASES.get(k,k)==proof["section"]),None)
+                    if section_totals.get(proof["section"],0)>top_k or (isinstance(returned,list) and len(returned)<section_totals.get(proof["section"],0)):
                         proof["truncated"]=True
             out[path]=item
         if token_budget is not None:
@@ -269,8 +278,8 @@ class ContextRetrievalService:
                         accepted["truncated"]=True
                 # A trimmed section cannot keep its support proof.
                 if "support" in accepted:
-                    accepted["support"]=[r for r in accepted["support"] if r["section"] in accepted or
-                        (r["section"]=="important_fields" and "fields" in accepted) or
+                    accepted["support"]=[r for r in accepted["support"] if r["section"] in {ALIASES.get(k,k) for k in accepted} or
+                        ("elements" in accepted and any(e["section"]==r["section"] for e in accepted["elements"])) or
                         (r["section"] in {"primary_objects","related_objects","object_attributes"} and "business_mapping" in accepted)]
                 out[path]=accepted
         return out

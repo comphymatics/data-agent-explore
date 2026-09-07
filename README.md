@@ -313,9 +313,9 @@ assert_golden_gate(report)
 
 ## High-information retrieval and Golden regression
 
-Serving v2 adds BM25/exact/vector RRF retrieval, a searchable Page-scoped Element
+Serving v3 adds BM25/exact/dense/facet RRF retrieval, a searchable Page-scoped Element
 Index, intent-aware machine relation completion, and requirement/entity Coverage
-(`SATISFIED`, `PARTIAL`, `MISSING`, `UNKNOWN`). Identity binding, semantic mapping
+(`SATISFIED`, `PARTIAL`, `MISSING`, `UNKNOWN`, `NOT_APPLICABLE`). Identity binding, semantic mapping
 and structural relations are separate. The four Context Tools remain unchanged
 in name. Reference assets retain `knowledge_layer: REFERENCE`.
 
@@ -341,5 +341,21 @@ uv run --isolated --extra dev python -m evaluation.scripts.run_retrieval_golden 
 
 See [Serving](specs/09-retrieval.md), [Runtime and Coverage](specs/10-explore-agent.md)
 and [regression scope and metrics](evaluation/retrieval_golden/README.md).
-The default local concept encoder is not a trained embedding model. The semantic
-router/reasoner are optional bounded providers with deterministic fallback.
+Install `uv sync --extra dense` to enable the default local trained multilingual
+encoder (`sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`). Set
+`DATA_CONTEXT_DENSE_MODEL` to override it, or `disabled` for a lexical-only deployment.
+Model files download on first use; page text stays local. After warming the model,
+`DATA_CONTEXT_DENSE_LOCAL_ONLY=1` requires cached model files. If dependencies or
+weights are unavailable, retrieval falls back with `vector_retrieval_unavailable`.
+The concept/hash encoder is now only an explicitly injected historical fixture.
+
+This round freezes Router/Reasoner and validates the lower retrieval layers:
+
+```sh
+uv run --isolated --extra dev --extra dense python -m evaluation.scripts.run_retrieval_correctness \
+  --dense-model sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 --gate
+```
+
+See the [correctness report](evaluation/retrieval_golden/correctness-report.json).
+It uses real local embeddings and synthetic source/MetaOne fixtures, not live
+environment evidence. No LLM provider participates in this suite.

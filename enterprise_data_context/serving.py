@@ -1,6 +1,8 @@
 """Machine-side intent policies and evidence-bearing Page projections."""
 from dataclasses import asdict
 from .indexes.page import CLASSIFICATION_FILTERS, FACET_ALIASES, facet_matches
+from .indexes.element import governed
+from .materialization.pages import ORDER
 
 RELATIONS = {
     "metric_to_models": {"supported_by", "uses_model", "uses_metric", "provides_metric", "implemented_by", "implements_logical_model"},
@@ -15,6 +17,7 @@ ASPECT_SECTIONS = {
     "metrics": ("metrics", "metric_catalog"), "dimensions": ("dimensions",),
     "fields": ("important_fields", "attributes"), "grain": ("grain",),
     "formula": ("formula",), "constraints": ("constraints",), "models": (), "lineage": (),
+    "attributes": ("attributes", "object_attributes"), "counters": ("metric_catalog",), "join_keys": ("joins",),
 }
 TYPE_ASPECTS = {"metric": "metrics", "dimension": "dimensions", "analysis-purpose": "purpose",
                 "physical-model": "models", "logical-model": "models", "business-object": "business_object"}
@@ -34,16 +37,16 @@ def relation_allowed(relation, intent):
 
 
 def support_facts(page, context, level="L1", sections=None):
-    visible = set(sections or page.l2)
+    visible = set(page.l2 if sections is None else sections)
     if level == "L0":
         visible &= {"summary", "identity"}
     # Field dictionaries are deliberately focused reads, not initial page documents.
     elif sections is None:
-        visible -= {"important_fields", "attributes", "record_sources", "metric_catalog"}
+        visible &= {"summary", *[key for key, _ in ORDER]}
     rows = []
     for aspect, keys in ASPECT_SECTIONS.items():
         for key in keys:
-            if key not in visible or page.l2.get(key) in (None, "", [], {}):
+            if key not in visible or governed(page.l2.get(key)) in (None, "", [], {}):
                 continue
             status = page.section_status.get(key, "EXPLICIT")
             evidence = [asdict(e) for e in context.evidence.get(key, [])]
@@ -51,7 +54,22 @@ def support_facts(page, context, level="L1", sections=None):
                 continue
             rows.append({"aspect": aspect, "section": key, "path": page.path,
                          "status": status, "evidence": evidence,
-                         "conflicted": any(c.get("section") == key for c in page.conflicts)})
+                         "conflicted": any(c.get("section") == key for c in page.conflicts),
+                         "truncated": governed(page.l2[key]) != page.l2[key]})
+            value = page.l2[key]
+            # Explicit applicability/absence assertions travel in their existing section.
+            # An empty section or an incompatible type alone is never such an assertion.
+            values=value if isinstance(value,list) else [value]
+            declarations=[v for v in values if isinstance(v,dict) and v.get("coverage_status") in {"NOT_APPLICABLE","MISSING"}]
+            if declarations:
+                base=rows.pop()
+                if len(declarations)<len(values):
+                    rows.append(base)
+                for declaration in declarations:
+                    rows.append({**base,"coverage_status":declaration["coverage_status"],
+                                 "authoritative":declaration.get("authoritative") is True,
+                                 "complete":declaration.get("complete") is True,
+                                 "selector":declaration.get("selector"),"declaration_reason":declaration.get("reason")})
     aspect = TYPE_ASPECTS.get(page.context_type)
     identity_evidence = context.evidence.get("identity") or next(iter(context.evidence.values()), [])
     if aspect and identity_evidence:

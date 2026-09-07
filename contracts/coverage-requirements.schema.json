@@ -36,7 +36,10 @@
           "grain",
           "lineage",
           "formula",
-          "constraints"
+          "constraints",
+          "attributes",
+          "counters",
+          "join_keys"
         ]
       },
       "layer": {

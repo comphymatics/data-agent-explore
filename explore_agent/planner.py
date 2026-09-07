@@ -12,7 +12,10 @@ REQUIREMENTS = {
 }
 
 EXPANSION = {
-    "fields": ["fields"],
+    "fields": ["fields", "attributes"],
+    "attributes": ["attributes", "object_attributes"],
+    "counters": ["counters"],
+    "join_keys": ["join_keys"],
     "grain": ["grain"],
     "lineage": ["lineage"],
     "business_object": ["business_mapping"],
@@ -73,7 +76,7 @@ class CoveragePlanner:
         else:
             required = REQUIREMENTS.get(policy_or_intent, REQUIREMENTS["generic"])
         if coverage and all(isinstance(row, dict) for row in coverage.values()):
-            missing = list(dict.fromkeys(row["aspect"] for row in coverage.values() if row["status"] != "SATISFIED"))
+            missing = list(dict.fromkeys(row["aspect"] for row in coverage.values() if row["status"] not in {"SATISFIED", "NOT_APPLICABLE"}))
         else:
             missing = [key for key in required if not coverage.get(key, False)]
         expand = []

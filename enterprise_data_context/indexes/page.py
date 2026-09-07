@@ -22,8 +22,8 @@ def toks(s):
 
 class PageIndex:
     def __init__(self, encoder=None, mode="hybrid"):
-        from .hybrid import LocalConceptEncoder
-        self.encoder = encoder or LocalConceptEncoder()
+        from .dense import configured_encoder
+        self.encoder = encoder if encoder is not None else configured_encoder()
         self.mode = mode
         self.generation = 0
         self.vector_generation = -1
@@ -98,4 +98,4 @@ class PageIndex:
 def facet_matches(actual, expected):
     values=actual if isinstance(actual,list) else [actual]
     target=str(expected or "").strip().casefold()
-    return any(str(value or "").strip().casefold()==target for value in values)
+    return bool(target) and any(str(value or "").strip().casefold()==target for value in values)

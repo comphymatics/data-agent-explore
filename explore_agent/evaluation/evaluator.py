@@ -16,7 +16,8 @@ class EvaluationCase:
     relevant_contexts: list[str] | None = None
     expected_coverage: dict[str, str] = field(default_factory=dict)  # layer|entity_name|aspect
     expected_bindings: list[list[str]] | None = None
-    expected_elements: list[str] = field(default_factory=list)
+    expected_elements: list[str | dict] = field(default_factory=list)
+    anchor_k: int = 1
     explore_options: dict = field(default_factory=dict)
     max_tool_calls: int | None = None
     max_token_cost: int | None = None
@@ -37,6 +38,8 @@ class EvaluationReport:
     tool_calls: float | None = None
     token_cost: float | None = None
     metric_sample_counts: dict = field(default_factory=dict)
+    anchor_recall_at_k: dict = field(default_factory=dict)
+    efficiency: dict = field(default_factory=dict)
 
 
 class GoldenGateError(ValueError):
@@ -50,6 +53,7 @@ def _ratio(numerator, denominator):
 def evaluate(agent, cases, progress=None):
     """Closed-world retrieval oracles stay in evaluation; unscored metrics remain null."""
     results = []
+    at_k = defaultdict(lambda: [0,0])
     totals = {key: [0, 0] for key in ("anchor_recall", "bundle_recall", "bundle_precision", "coverage_accuracy", "binding_precision", "focused_expansion_success")}
     for case in cases:
         bundle = agent.explore(case.query, **case.explore_options)
@@ -59,11 +63,16 @@ def evaluate(agent, cases, progress=None):
         actual = actual_paths | set(names.values())
         expected = set(case.expected_contexts)
         matched = expected & actual
-        anchors = set(bundle.anchor_context_ids)
-        anchor_names = {names[p] for p in anchors if p in names}
+        if case.anchor_k < 1:
+            raise ValueError("anchor_k must be positive")
+        anchor_rows = bundle.serving.get("anchor_candidates", [])[:case.anchor_k]
+        anchors = {r["path"] for r in anchor_rows}
+        anchor_names = {r["name"] for r in anchor_rows}
         values = {"bundle_recall": (len(matched), len(expected))}
         if case.expected_anchors:
             values["anchor_recall"] = (len(set(case.expected_anchors) & (anchors | anchor_names)), len(set(case.expected_anchors)))
+            at_k[str(case.anchor_k)][0] += values["anchor_recall"][0]
+            at_k[str(case.anchor_k)][1] += values["anchor_recall"][1]
         if case.relevant_contexts is not None:
             relevant = set(case.relevant_contexts)
             values["bundle_precision"] = (sum(h["path"] in relevant or h["name"] in relevant for h in hits), len(hits))
@@ -90,13 +99,15 @@ def evaluate(agent, cases, progress=None):
         expansion_ok = True
         if case.expected_elements:
             elements = [r for expanded in bundle.focused_expansion.values() for r in expanded.get("elements", [])]
-            def leaves(value):
-                if isinstance(value,dict):
-                    return [s for v in value.values() for s in leaves(v)]
-                if isinstance(value,list):
-                    return [s for v in value for s in leaves(v)]
-                return [str(value)]
-            found = [any(target == row["element_id"] or target in leaves(row["value"]) for row in elements) for target in case.expected_elements]
+            def element_matches(target, row):
+                if not row.get("evidence") or row.get("status") not in {"EXPLICIT","DERIVED"}:
+                    return False
+                if isinstance(target,dict):
+                    if row["path"]!=target["parent_path"] or row.get("kind")!=target["kind"]:
+                        return False
+                    target=target["identifier"]
+                return target==row["element_id"] or target in row.get("identifiers",[])
+            found = [any(element_matches(target,row) for row in elements) for target in case.expected_elements]
             expansion_ok = all(found)
             values["focused_expansion_success"] = (sum(found), len(found))
         metrics = {key: _ratio(*value) for key, value in values.items()}
@@ -104,8 +115,8 @@ def evaluate(agent, cases, progress=None):
             totals[key][0] += num; totals[key][1] += den
         tool_calls = bundle.telemetry.get("total_tool_calls")
         token_cost = bundle.telemetry.get("total_tokens_estimated")
-        cost_ok = ((case.max_tool_calls is None or tool_calls <= case.max_tool_calls) and
-                   (case.max_token_cost is None or token_cost <= case.max_token_cost))
+        cost_ok = ((case.max_tool_calls is None or tool_calls is not None and tool_calls <= case.max_tool_calls) and
+                   (case.max_token_cost is None or token_cost is not None and token_cost <= case.max_token_cost))
         precision_ok = metrics.get("bundle_precision") in (None, 1.0)
         passed = (matched == expected and all(checks) and binding_ok and expansion_ok and cost_ok and precision_ok and metrics.get("anchor_recall") in (None, 1.0))
         results.append({"case_id": case.case_id, "passed": passed, "metrics": metrics,
@@ -115,6 +126,8 @@ def evaluate(agent, cases, progress=None):
                         "bundle_missing_context": bundle.missing_context, "binding_ok": binding_ok,
                         "focused_expansion_ok": expansion_ok, "cost_ok": cost_ok,
                         "telemetry": bundle.telemetry})
+        results[-1]["anchor_k"]=case.anchor_k
+        results[-1]["anchor_candidates"]=anchor_rows
         if progress:
             progress(results[-1])
     ratios = {key: _ratio(*value) for key, value in totals.items()}
@@ -122,9 +135,14 @@ def evaluate(agent, cases, progress=None):
         context_recall=ratios["bundle_recall"] if ratios["bundle_recall"] is not None else 1.0,
         coverage_accuracy=ratios.pop("coverage_accuracy"),
         cases=results, **{k:v for k,v in ratios.items() if k != "coverage_accuracy"},
-        tool_calls=mean(r["tool_calls"] for r in results) if results else None,
-        token_cost=mean(r["token_cost"] for r in results) if results else None,
-        metric_sample_counts={key: den for key, (_, den) in totals.items()})
+        tool_calls=mean(r["tool_calls"] for r in results) if results and all(r["tool_calls"] is not None for r in results) else None,
+        token_cost=mean(r["token_cost"] for r in results) if results and all(r["token_cost"] is not None for r in results) else None,
+        metric_sample_counts={key: den for key, (_, den) in totals.items()},
+        anchor_recall_at_k={k:{"recall":_ratio(*v),"expected_anchors":v[1]} for k,v in at_k.items()},
+        efficiency={"relevant_contexts_per_1000_tokens":_ratio(1000*totals["bundle_recall"][0],sum(r["token_cost"] or 0 for r in results))
+                    if all(r["token_cost"] is not None for r in results) else None,
+                    "relevant_contexts_per_tool_call":_ratio(totals["bundle_recall"][0],sum(r["tool_calls"] or 0 for r in results))
+                    if all(r["tool_calls"] is not None for r in results) else None})
 
 
 def assert_golden_gate(report, min_context_recall=1.0, min_coverage_accuracy=1.0, *,

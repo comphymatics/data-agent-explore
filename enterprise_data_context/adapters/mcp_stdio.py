@@ -83,7 +83,9 @@ TOOL_DEFINITIONS = [
         "description": (
             "Expand fields, grain, lineage, mappings, hierarchy, parents, children, related "
             "rich relation summaries, candidates, conflicts, evidence, or the association report. "
-            "Optional query searches governed elements inside the selected pages."
+            "Optional query searches Field/Attribute/Formula/Counter/JoinKey elements inside "
+            "selected pages and returns their parent Rich Context Page and evidence. "
+            "Use fields, attributes, formula, counters, join_keys, or elements in expand."
         ),
         "inputSchema": {
             "type": "object",

@@ -196,7 +196,7 @@ class ExploreAgent:
         )
         candidates.extend(reference_only_candidates(binding_overlay))
         missing=list(dict.fromkeys(missing+binding_overlay["missing_context"]))
-        penalty=0.1*sum(r["status"]!="SATISFIED" for r in coverage.values())+0.03*len(conflicts)+0.02*len(candidates)
+        penalty=0.1*sum(r["status"] not in {"SATISFIED","NOT_APPLICABLE"} for r in coverage.values())+0.03*len(conflicts)+0.02*len(candidates)
         has_context=bool(hits or env_result.assets)
         confidence=max(0.2,1.0-penalty) if has_context else 0.0
 
@@ -254,7 +254,8 @@ class ExploreAgent:
         return ContextBundle(
             query={"original":query,"interpreted_intent":intent,"scope":scope},
             summary=summary,
-            serving={"retrieval_version":search.get("retrieval_version"),"encoder_version":search.get("encoder_version"),"coverage_version":"requirement-coverage/v2"},
+            serving={"retrieval_version":search.get("retrieval_version"),"encoder_version":search.get("encoder_version"),"coverage_version":"requirement-coverage/v3",
+                     "anchor_candidates":search.get("anchor_candidates",[]),"anchor_k":policy.top_k},
             coverage_summary=summarize_coverage(coverage),
             anchor_context_ids=search.get("anchor_context_ids",[]),
             focused_expansion=expansions,
