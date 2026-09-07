@@ -1,0 +1,40 @@
+# Candidate-envelope example only. Adapt selectors/locations to the INTERNAL Parser output.
+parser:
+  file_glob: '**/*.json'
+  entities:
+    - records: /entities/*
+      mapping:
+        id: /id
+        type: /type
+        name: /name
+        aliases: /aliases
+        source_documents: /source_documents
+        source_locations: /source_locations
+        facets:
+          technology: /technology
+          topic: /topic
+  relations:
+    - records: /relations/*
+      mapping:
+        source: /source
+        relation: /relation
+        target: /target
+        source_documents: /source_documents
+        source_locations: /source_locations
+source:
+  document_aliases: {}
+  raw_entities: []  # Configure independent raw rules, or inject a RawReader; empty is NOT full raw coverage.
+  raw_relations: []
+entity_mapping:
+  type_map: {}
+  identity_namespace: ''
+relation_mapping:
+  type_map: {}
+generation:
+  target_count: 60
+  max_cases_per_entity: 8
+  max_cases_per_document: 20
+  max_cases_per_topic: 15
+  max_cases_per_motif: 4
+  negative_candidates: []  # Supply explicit human review seeds; never infer absence from missing JSON.
+  query_templates: {}

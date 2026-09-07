@@ -82,5 +82,9 @@ def distribution(rows):
     warnings = [f"{cat}: {categories[cat]}/{target} recommended cases" for cat, target in PILOT_TARGETS.items() if categories[cat] < target]
     if ratio < .6: warnings.append(f"cross-document fraction {ratio:.1%} is below recommended 60%")
     return {"total": len(rows), "categories": {k: categories[k] for k in CATEGORIES},
+            "parser_supported_cases":sum(r.get("parser_supported") is True for r in rows),
+            "parser_blind_spot_cases":sum(r.get("parser_blind_spot") is True for r in rows),
+            "parser_provenance_unknown_cases":sum(not isinstance(r.get("parser_supported"),bool)
+                                                 or not isinstance(r.get("parser_blind_spot"),bool) for r in rows),
             "source_spans": dict(spans), "difficulties": dict(Counter(r["difficulty"] for r in rows)),
             "cross_document_fraction": ratio, "recommended_targets": PILOT_TARGETS, "warnings": warnings}

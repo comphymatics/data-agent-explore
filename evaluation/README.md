@@ -5,6 +5,10 @@
 OpenCode + OpenViking、Data Explore。生产 Compiler、检索、Coverage、Binding、
 Router/Reasoner 均不因评测改变。
 
+内部真实数据的 DRAFT 候选构造、审核队列与诊断工具见
+[Dataset Builder](dataset_builder/README.md)；人工批准和 Pilot 执行步骤见
+[内部适配指南](../INTERNAL_ADAPTATION_GUIDE.md)。Builder 的 Parser JSON 候选不是 Gold。
+
 ## 外部输入与隔离
 
 四系统从同一份 frozen Raw Word/Excel 原始字节启动，逐文件 SHA-256、大小和路径
