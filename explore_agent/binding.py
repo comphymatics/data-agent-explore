@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from collections import Counter
 from typing import Any
 
 from enterprise_data_context.environment import (
@@ -61,18 +62,49 @@ def build_binding_overlay(
         }
         for hit in reference_hits
     ]
-    reference_only_assets: list[dict[str, Any]] = []
-    if result.state is AvailabilityState.NOT_FOUND_CONFIRMED:
-        for item in reference_semantics:
-            if item["type"] in ENVIRONMENT_BACKED_TYPES:
-                reference_only_assets.append({
-                    **item,
-                    "assertion_status": "CANDIDATE",
-                    "availability_state": AvailabilityState.NOT_FOUND_CONFIRMED.value,
-                    "candidate_reason": "environment_absence_confirmed",
+    # Identity needs an explicit provider crosswalk, matching type and environment snapshot.
+    identity_bindings = []
+    candidate_bindings = _exact_bindings(result.assets, reference_semantics)
+    for asset in result.assets:
+        crosswalk = asset.get("attributes", {}).get("reference_path")
+        for reference in reference_semantics:
+            if (crosswalk == reference["path"] and asset.get("type") == reference["type"] and
+                asset.get("assertion_status") == "EXPLICIT" and asset.get("evidence") and
+                result.capabilities and result.capabilities.environment_id and result.capabilities.snapshot_token and
+                any(e.get("environment_id")==result.capabilities.environment_id and
+                    e.get("snapshot_token")==result.capabilities.snapshot_token for e in asset["evidence"])):
+                identity_bindings.append({
+                    "environment_asset_id": asset["id"], "reference_path": reference["path"],
+                    "binding_kind": "IDENTITY", "assertion_status": "EXPLICIT",
+                    "environment_id": result.capabilities.environment_id,
+                    "snapshot_token": result.capabilities.snapshot_token,
+                    "reference_index_version": reference_index_version,
+                    "evidence": asset["evidence"], "rule": "provider_explicit_crosswalk/v2",
                 })
-
-    derived_bindings = _exact_bindings(result.assets, reference_semantics)
+    counts=Counter(row["reference_path"] for row in identity_bindings)
+    for row in identity_bindings:
+        if counts[row["reference_path"]]>1:
+            candidate_bindings.append({**row,"assertion_status":"CANDIDATE","rule":"ambiguous_provider_crosswalk/v2"})
+    identity_bindings=[row for row in identity_bindings if counts[row["reference_path"]]==1]
+    bound = {row["reference_path"] for row in identity_bindings}
+    candidate_bindings = [row for row in candidate_bindings if row["reference_path"] not in bound]
+    reference_only_assets = [{**item, "availability_state": result.state.value,
+                              "candidate_reason": "environment_absence_confirmed" if result.state is AvailabilityState.NOT_FOUND_CONFIRMED else "environment_identity_unverified"}
+                             for item in reference_semantics if item["type"] in ENVIRONMENT_BACKED_TYPES and item["path"] not in bound]
+    asset_ids = {asset["id"] for asset in result.assets}
+    reference_paths = {item["path"] for item in reference_semantics}
+    semantic_mappings = []
+    structural_relations = []
+    for relation in result.relations:
+        if relation.get("assertion_status") != "EXPLICIT" or not relation.get("evidence"):
+            continue
+        if relation.get("source_id") not in asset_ids:
+            continue
+        if relation.get("predicate") in {"MAPS_TO", "SEMANTIC_MAPPING"}:
+            if relation.get("target_id") in reference_paths | asset_ids:
+                semantic_mappings.append({**relation, "binding_kind": "SEMANTIC_MAPPING"})
+        elif relation.get("target_id") in asset_ids:
+            structural_relations.append({**relation, "binding_kind": "STRUCTURAL_RELATION"})
     missing = []
     if result.required:
         if result.state in {
@@ -93,9 +125,12 @@ def build_binding_overlay(
     return {
         "environment_facts": result.assets,
         "reference_semantics": reference_semantics,
-        "confirmed_bindings": [],
-        "derived_bindings": derived_bindings,
-        "candidate_bindings": [],
+        "confirmed_bindings": identity_bindings,
+        "derived_bindings": [],
+        "candidate_bindings": candidate_bindings,
+        "identity_bindings": identity_bindings,
+        "semantic_mappings": semantic_mappings,
+        "structural_relations": structural_relations,
         "reference_only_assets": reference_only_assets,
         "conflicts": [],
         "missing_context": list(dict.fromkeys(missing)),
@@ -150,9 +185,10 @@ def _exact_bindings(
             bindings.append({
                 "environment_asset_id": asset["id"],
                 "reference_path": reference["path"],
-                "assertion_status": "DERIVED",
+                "assertion_status": "CANDIDATE",
+                "binding_kind": "SEMANTIC_MAPPING",
                 "knowledge_layer": "BINDING",
-                "rule": "exact_normalized_name_or_code/v1",
+                "rule": "name_or_code_candidate/v2",
                 "evidence": {
                     "environment": asset.get("evidence", []),
                     "reference_index_version": reference.get("reference_index_version"),

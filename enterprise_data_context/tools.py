@@ -20,6 +20,7 @@ class DataContextTools:
         seen_context_ids=None,
         read_content=None,
         max_per_type=None,
+        intent=None,
     ):
         return self.retrieval.data_search(
             query=query,
@@ -31,17 +32,18 @@ class DataContextTools:
             seen_context_ids=seen_context_ids,
             read_content=read_content,
             max_per_type=max_per_type,
+            intent=intent,
         )
 
     def data_read(self, path, level="L1", sections=None):
         return self.retrieval.data_read(path=path, level=level, sections=sections)
 
-    def data_expand(self, paths, expand, top_k=20):
+    def data_expand(self, paths, expand, top_k=20, query=None, intent=None, token_budget=None):
         if not isinstance(paths, list) or not paths:
             raise ValueError("paths must be a non-empty list")
         if not isinstance(expand, list) or not expand:
             raise ValueError("expand must be a non-empty list")
-        return self.retrieval.data_expand(paths=paths, expand=expand, top_k=top_k)
+        return self.retrieval.data_expand(paths=paths, expand=expand, top_k=top_k, query=query, intent=intent, token_budget=token_budget)
 
     def data_source(self, path, section=None):
         return self.retrieval.data_source(path=path, section=section)

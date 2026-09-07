@@ -133,7 +133,7 @@ class ContextBundle:
     business_mapping: dict[str, Any]
     constraints: list[Any]
     environment: dict[str, Any]
-    coverage: dict[str, bool]
+    coverage: dict[str, dict[str, Any]]
     missing_context: list[str]
     sources: list[dict[str, Any]]
     confidence: float
@@ -153,6 +153,12 @@ class ContextBundle:
     reference_index_version: str | None = None
     binding_policy_version: str | None = None
     binding_overlay: dict[str, Any] = field(default_factory=dict)
+    serving: dict[str, Any] = field(default_factory=dict)
+    coverage_summary: dict[str, bool] = field(default_factory=dict)
+    anchor_context_ids: list[str] = field(default_factory=list)
+    focused_expansion: dict[str, Any] = field(default_factory=dict)
+    telemetry: dict[str, Any] = field(default_factory=dict)
+    reasoning_observations: list[dict[str, Any]] = field(default_factory=list)
 
 def dump(obj):
     return asdict(obj)

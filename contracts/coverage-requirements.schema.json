@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Explore Coverage Requirements",
+  "type": "array",
+  "minItems": 1,
+  "maxItems": 64,
+  "items": {
+    "type": "object",
+    "required": [
+      "id",
+      "entity",
+      "aspect",
+      "layer"
+    ],
+    "properties": {
+      "id": {
+        "type": "string",
+        "minLength": 1
+      },
+      "entity": {
+        "type": "string",
+        "minLength": 1
+      },
+      "entity_name": {
+        "type": "string"
+      },
+      "aspect": {
+        "enum": [
+          "business_meaning",
+          "purpose",
+          "business_object",
+          "metrics",
+          "dimensions",
+          "models",
+          "fields",
+          "grain",
+          "lineage",
+          "formula",
+          "constraints"
+        ]
+      },
+      "layer": {
+        "enum": [
+          "REFERENCE",
+          "ENVIRONMENT"
+        ]
+      },
+      "selector": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "additionalProperties": false
+  }
+}

@@ -272,14 +272,15 @@ For multi-round exploration, pass the returned serializable state explicitly:
 ```python
 first = agent.explore("RSRP 有哪些现有模型可以提供？", token_budget=1600)
 second = agent.explore(
-    "继续补充尚未读取的模型上下文",
+    "RSRP 有哪些现有模型可以提供？",  # resume the same query/requirements
     token_budget=1600,
     state=first.exploration_state,
 )
 ```
 
-The state pins `IndexVersion`, carries coverage and seen Context IDs, and prevents
-silent cross-version replay. It is part of the Context Bundle contract in
+The state pins `IndexVersion`, serving version and query/requirements, carries
+entity-scoped coverage and seen Context IDs, and prevents cross-version replay.
+Coverage is reassessed on each run, including after an environment snapshot changes. It is part of the Context Bundle contract in
 `contracts/context-bundle.schema.json`; it does not depend on hidden Agent session memory.
 
 ## MCP stdio adapter
@@ -308,3 +309,37 @@ from explore_agent.evaluation import assert_golden_gate, evaluate
 report = evaluate(agent, cases)
 assert_golden_gate(report)
 ```
+
+
+## High-information retrieval and Golden regression
+
+Serving v2 adds BM25/exact/vector RRF retrieval, a searchable Page-scoped Element
+Index, intent-aware machine relation completion, and requirement/entity Coverage
+(`SATISFIED`, `PARTIAL`, `MISSING`, `UNKNOWN`). Identity binding, semantic mapping
+and structural relations are separate. The four Context Tools remain unchanged
+in name. Reference assets retain `knowledge_layer: REFERENCE`.
+
+```python
+from explore_agent.coverage import requirement
+bundle = agent.explore(
+    "Radio Model 的 subscriber_key 字段",
+    requirements=[requirement(
+        "data://physical-models/radio-model", "fields",
+        name="Radio Model", selector="subscriber_key",
+    )],
+)
+print(bundle.coverage)       # requirement records, not booleans
+print(bundle.telemetry)      # full tool response estimates and model usage
+```
+
+```sh
+uv run --isolated --extra dev python -m evaluation.scripts.run_retrieval_golden --gate
+# Optional real LLM run against synthetic data using an enabled local configuration:
+uv run --isolated --extra dev python -m evaluation.scripts.run_retrieval_golden \
+  --semantic-config config/llm-inference.json --output evaluation/retrieval_golden/report-live.json --gate
+```
+
+See [Serving](specs/09-retrieval.md), [Runtime and Coverage](specs/10-explore-agent.md)
+and [regression scope and metrics](evaluation/retrieval_golden/README.md).
+The default local concept encoder is not a trained embedding model. The semantic
+router/reasoner are optional bounded providers with deterministic fallback.

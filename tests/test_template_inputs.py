@@ -72,7 +72,9 @@ def test_template_directory_compiles_to_governed_pages_and_indexes():
     tools = DataContextTools(from_compiled(compiled).retrieval)
     assert tools.data_search("HTTPS握手成功率", top_k=1)["contexts"][0]["name"] == "HTTPS握手成功率"
     expanded = tools.data_expand([model.path], ["fields", "grain"])[model.path]
-    assert len(expanded["fields"]) == 159
+    assert len(expanded["fields"]) == 20
+    assert expanded["section_totals"]["important_fields"] == 159
+    assert expanded["truncated"] is True
     assert expanded["grain"] == ["d"]
     assert "stat_date" not in tools.data_read(model.path, "L1")["content"]
     assert tools.data_source(model.path, "important_fields")[0]["section"].startswith("/tables/0")

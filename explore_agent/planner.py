@@ -18,6 +18,8 @@ EXPANSION = {
     "business_object": ["business_mapping"],
     "dimensions": ["dimensions"],
     "metrics": ["metrics"],
+    "formula": ["formula"],
+    "constraints": ["constraints"],
 }
 
 
@@ -70,7 +72,10 @@ class CoveragePlanner:
             required = policy_or_intent.required_coverage
         else:
             required = REQUIREMENTS.get(policy_or_intent, REQUIREMENTS["generic"])
-        missing = [key for key in required if not coverage.get(key, False)]
+        if coverage and all(isinstance(row, dict) for row in coverage.values()):
+            missing = list(dict.fromkeys(row["aspect"] for row in coverage.values() if row["status"] != "SATISFIED"))
+        else:
+            missing = [key for key in required if not coverage.get(key, False)]
         expand = []
         for m in missing:
             expand += EXPANSION.get(m,[])

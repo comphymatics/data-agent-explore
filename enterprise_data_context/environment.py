@@ -8,7 +8,7 @@ from enum import Enum
 from typing import Any, Protocol
 
 
-BINDING_POLICY_VERSION = "environment-binding/v1"
+BINDING_POLICY_VERSION = "environment-binding/v2"
 
 
 class AvailabilityState(str, Enum):
@@ -51,11 +51,14 @@ class EnvironmentSearchPage:
     snapshot_token: str | None = None
     captured_at: str | None = None
 
+    requirement_coverage: list[dict[str, Any]] = field(default_factory=list)
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "state": self.state.value,
             "assets": self.assets,
             "coverage": self.coverage,
+            "requirement_coverage": self.requirement_coverage,
             "warnings": self.warnings,
             "cursor": self.cursor,
             "truncated": self.truncated,
@@ -116,6 +119,9 @@ class EnvironmentBindingResult:
     cursor: str | None = None
     truncated: bool = False
 
+    relations: list[dict[str, Any]] = field(default_factory=list)
+    requirement_coverage: list[dict[str, Any]] = field(default_factory=list)
+
     def to_dict(self) -> dict[str, Any]:
         capabilities = self.capabilities.to_dict() if self.capabilities else None
         return {
@@ -130,6 +136,8 @@ class EnvironmentBindingResult:
             "operations": capabilities.get("operations", []) if capabilities else [],
             "asset_types": capabilities.get("asset_types", []) if capabilities else [],
             "matched_assets": self.assets,
+            "relations": self.relations,
+            "requirement_coverage": self.requirement_coverage,
             "coverage": self.coverage,
             "warnings": self.warnings + (capabilities.get("warnings", []) if capabilities else []),
             "cursor": self.cursor,
@@ -226,6 +234,7 @@ class MetaOneMcpAdapter:
         provider: str = "metaone",
         max_results: int = 20,
     ):
+        self.tool_call_count = 0
         self.client = client
         self.environment_id = environment_id
         self.provider = provider
@@ -345,6 +354,9 @@ class MetaOneMcpAdapter:
                 "message": "An empty response without total/complete metadata cannot confirm absence.",
             })
 
+        if len(assets)>self.max_results:
+            assets=assets[:self.max_results]
+            truncated=True; complete=False; state=AvailabilityState.TRUNCATED
         inferred_coverage = {
             key: any(asset.get("type") in types for asset in assets)
             for key, types in self.COVERAGE_TYPES.items()
@@ -364,6 +376,7 @@ class MetaOneMcpAdapter:
             state=state,
             assets=assets,
             coverage=coverage,
+            requirement_coverage=[dict(row) for row in payload.get("requirement_coverage",[]) if isinstance(row,dict)],
             warnings=warnings,
             cursor=cursor,
             truncated=truncated,
@@ -406,6 +419,10 @@ class MetaOneMcpAdapter:
                 warnings=[_warning_for_exception(exc, "environment_read_failed")],
             )
         context = payload.get("context") if isinstance(payload.get("context"), dict) else payload
+        observed_snapshot=_first(payload,"snapshotToken","snapshot_token","datasetVersion","version") or _first(context,"snapshotToken","snapshot_token","datasetVersion","version")
+        if observed_snapshot and capabilities.snapshot_token and str(observed_snapshot)!=capabilities.snapshot_token:
+            return EnvironmentReadResult(state=AvailabilityState.TRUNCATED,truncated=True,
+                warnings=[{"code":"environment_snapshot_mismatch","message":"Read snapshot differs from the pinned search snapshot."}])
         raw_focus = context.get("focus") if isinstance(context.get("focus"), dict) else context.get("asset")
         if not isinstance(raw_focus, dict) and all(key in context for key in ("id", "type", "name")):
             raw_focus = context
@@ -475,6 +492,10 @@ class MetaOneMcpAdapter:
                 )
             values = _records(payload)
             capabilities = self.describe_capabilities()
+            observed_snapshot=_first(payload,"snapshotToken","snapshot_token","datasetVersion","version")
+            if observed_snapshot and capabilities.snapshot_token and str(observed_snapshot)!=capabilities.snapshot_token:
+                return EnvironmentExpansionResult(state=AvailabilityState.TRUNCATED,truncated=True,
+                    warnings=[{"code":"environment_snapshot_mismatch","message":"Expansion snapshot differs from the pinned search snapshot."}])
             normalized = [self._normalize_asset(value, capabilities) for value in values]
             assets = [value for value in normalized if value is not None]
             warnings = []
@@ -556,9 +577,33 @@ class MetaOneMcpAdapter:
                 snapshot_token=page.snapshot_token or capabilities.snapshot_token,
                 captured_at=page.captured_at or capabilities.captured_at,
             )
+        self._capabilities = capabilities
+        for asset in page.assets:
+            for evidence in asset.get("evidence",[]):
+                evidence["snapshot_token"]=capabilities.snapshot_token
+                evidence["captured_at"]=capabilities.captured_at
+        relations = []
+        if requirements.get("focused_expansion") and page.assets and ({"expand","read"} & set(capabilities.operations)):
+            relation_policy = {
+                "metric_to_models": ["USES", "PROVIDES", "MAPS_TO"],
+                "model_understanding": ["HAS_COLUMN", "HAS_ATTRIBUTE", "MAPS_TO"],
+                "impact_analysis": ["UPSTREAM_OF", "DOWNSTREAM_OF", "USES"],
+                "analysis_data_requirement": ["USES", "SUPPORTS_DIMENSION", "MAPS_TO"],
+            }
+            expanded = self.expand_assets([a["id"] for a in page.assets[:min(2,self.max_results)]],
+                relations=relation_policy.get(requirements.get("intent"), []), limit=self.max_results)
+            relations = expanded.relations
+            by_id = {a["id"]: a for a in page.assets}
+            for asset in expanded.assets:
+                by_id.setdefault(asset["id"], asset)
+            page.assets = list(by_id.values())[:self.max_results]
+            page.warnings += expanded.warnings
+            page.truncated = page.truncated or expanded.truncated or len(by_id) > self.max_results
         return EnvironmentBindingResult(
             required=bool(requirements.get("required", True)),
             state=page.state,
+            relations=relations,
+            requirement_coverage=page.requirement_coverage,
             capabilities=capabilities,
             assets=page.assets,
             coverage=page.coverage,
@@ -569,6 +614,7 @@ class MetaOneMcpAdapter:
 
     def _list_tools(self) -> list[dict[str, Any]]:
         if self._tools is None:
+            self.tool_call_count += 1
             values = self.client.list_tools()
             if not isinstance(values, list):
                 raise ValueError("MCP tools/list must return a list")
@@ -640,6 +686,7 @@ class MetaOneMcpAdapter:
         return dict(required_fallback or {})
 
     def _call(self, descriptor: dict[str, Any], arguments: dict[str, Any]) -> dict[str, Any]:
+        self.tool_call_count += 1
         raw = self.client.call_tool(str(descriptor["name"]), arguments)
         payload = _unwrap_mcp_result(raw)
         if not isinstance(payload, dict):
@@ -655,13 +702,15 @@ class MetaOneMcpAdapter:
         asset_id = _first(raw, "id", "assetId", "qualifiedName")
         name = _first(raw, "name", "displayName", "code")
         raw_type = _first(raw, "type", "assetType", "kind")
+        if raw.get("assertion_status",raw.get("assertionStatus","EXPLICIT")) != "EXPLICIT":
+            return None
         if not asset_id or not name or not raw_type:
             return None
         canonical_type = self.TYPE_MAP.get(str(raw_type).upper(), str(raw_type).lower().replace("_", "-"))
         known = {
             "id", "assetId", "qualifiedName", "name", "displayName", "code", "type",
             "assetType", "kind", "description", "aliases", "domain", "attributes",
-            "evidenceRefs", "evidence", "score", "matchedBy",
+            "evidenceRefs", "evidence", "score", "matchedBy", "nodes", "edges", "relations",
         }
         attributes = dict(raw.get("attributes") or {})
         attributes.update({key: value for key, value in raw.items() if key not in known})
@@ -694,7 +743,7 @@ class MetaOneMcpAdapter:
         raw: Any,
         capabilities: CapabilitySnapshot,
     ) -> dict[str, Any] | None:
-        if not isinstance(raw, dict):
+        if not isinstance(raw, dict) or raw.get("assertion_status",raw.get("assertionStatus","EXPLICIT"))!="EXPLICIT":
             return None
         source_id = _first(raw, "sourceId", "source_id", "fromId", "from")
         target_id = _first(raw, "targetId", "target_id", "toId", "to")

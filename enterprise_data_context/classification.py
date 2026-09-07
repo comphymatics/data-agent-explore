@@ -247,7 +247,7 @@ def _contains(text: str, value: str) -> bool:
     if not value:
         return False
     if re.fullmatch(r"[A-Za-z0-9 /_-]+", value):
-        return re.search(rf"(?<![A-Za-z0-9]){re.escape(value)}(?![A-Za-z0-9])", text, re.I) is not None
+        return re.search(rf"(?<![A-Za-z0-9_]){re.escape(value)}(?![A-Za-z0-9_])", text, re.I) is not None
     return value.casefold() in text.casefold()
 
 

@@ -1,0 +1,2893 @@
+{
+  "validation_scope": "synthetic fixtures; lexical ablation shares v2 runtime; MetaOne is a fixture; live LLM only in live_semantic",
+  "reports": {
+    "lexical_ablation": {
+      "total": 10,
+      "passed": 9,
+      "context_recall": 0.8461538461538461,
+      "coverage_accuracy": 1.0,
+      "cases": [
+        {
+          "case_id": "exact-anchor",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0
+          },
+          "tool_calls": 2,
+          "token_cost": 1733,
+          "matched_contexts": [
+            "RSRP",
+            "Radio Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "REFERENCE|RSRP|business_meaning": true
+          },
+          "bundle_missing_context": [],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 41,
+                "output_tokens_estimated": 975,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 45,
+                "output_tokens_estimated": 672,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 1733,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 0,
+            "environment_tool_calls_complete": true,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 71,
+                "output_tokens_estimated": 0
+              },
+              {
+                "task": "joint_reason",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 444,
+                "output_tokens_estimated": 0
+              }
+            ],
+            "total_tool_calls": 2,
+            "environment_tokens_estimated": 0,
+            "total_tokens_estimated": 1733
+          }
+        },
+        {
+          "case_id": "cross-language-semantic",
+          "passed": false,
+          "metrics": {
+            "bundle_recall": 0.0,
+            "anchor_recall": 0.0,
+            "bundle_precision": null,
+            "coverage_accuracy": null
+          },
+          "tool_calls": 1,
+          "token_cost": 264,
+          "matched_contexts": [],
+          "missing_expected_contexts": [
+            "RSRP",
+            "Radio Model"
+          ],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {},
+          "bundle_missing_context": [
+            "reference:04995c084330:business_meaning",
+            "business_meaning"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 1,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 39,
+                "output_tokens_estimated": 225,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 264,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 0,
+            "environment_tool_calls_complete": true,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 74,
+                "output_tokens_estimated": 0
+              },
+              {
+                "task": "joint_reason",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 66,
+                "output_tokens_estimated": 0
+              }
+            ],
+            "total_tool_calls": 1,
+            "environment_tokens_estimated": 0,
+            "total_tokens_estimated": 264
+          }
+        },
+        {
+          "case_id": "metric-model-relation",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0,
+            "binding_precision": 1.0
+          },
+          "tool_calls": 3,
+          "token_cost": 1930,
+          "matched_contexts": [
+            "RSRP",
+            "Radio Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "REFERENCE|RSRP|models": true,
+            "ENVIRONMENT|RSRP|models": true
+          },
+          "bundle_missing_context": [
+            "environment:3ef68204fd9f:metrics",
+            "environment_coverage:metrics",
+            "environment:3ef68204fd9f:models",
+            "environment_coverage:models"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 50,
+                "output_tokens_estimated": 980,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 57,
+                "output_tokens_estimated": 672,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 1759,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 78,
+                "output_tokens_estimated": 0
+              },
+              {
+                "task": "joint_reason",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 633,
+                "output_tokens_estimated": 0
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 171,
+            "total_tokens_estimated": 1930
+          }
+        },
+        {
+          "case_id": "focused-field",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0,
+            "focused_expansion_success": 1.0
+          },
+          "tool_calls": 3,
+          "token_cost": 1371,
+          "matched_contexts": [
+            "Radio Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "REFERENCE|Radio Model|fields": true
+          },
+          "bundle_missing_context": [],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 48,
+                "output_tokens_estimated": 671,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 48,
+                "output_tokens_estimated": 433,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 1200,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 79,
+                "output_tokens_estimated": 0
+              },
+              {
+                "task": "joint_reason",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 412,
+                "output_tokens_estimated": 0
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 171,
+            "total_tokens_estimated": 1371
+          }
+        },
+        {
+          "case_id": "entity-isolation",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0
+          },
+          "tool_calls": 3,
+          "token_cost": 1717,
+          "matched_contexts": [
+            "Incomplete Model",
+            "Radio Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "REFERENCE|Radio Model|fields": true,
+            "REFERENCE|Incomplete Model|fields": true
+          },
+          "bundle_missing_context": [
+            "reference:c6c9e081cd66:fields",
+            "fields"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 49,
+                "output_tokens_estimated": 966,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 65,
+                "output_tokens_estimated": 466,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 1546,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 80,
+                "output_tokens_estimated": 0
+              },
+              {
+                "task": "joint_reason",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 586,
+                "output_tokens_estimated": 0
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 171,
+            "total_tokens_estimated": 1717
+          }
+        },
+        {
+          "case_id": "name-is-not-identity",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": null,
+            "binding_precision": null
+          },
+          "tool_calls": 3,
+          "token_cost": 886,
+          "matched_contexts": [
+            "Same Name Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {},
+          "bundle_missing_context": [],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 43,
+                "output_tokens_estimated": 519,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 47,
+                "output_tokens_estimated": 119,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 728,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 77,
+                "output_tokens_estimated": 0
+              },
+              {
+                "task": "joint_reason",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 247,
+                "output_tokens_estimated": 0
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 158,
+            "total_tokens_estimated": 886
+          }
+        },
+        {
+          "case_id": "scoped-authoritative-absence",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0,
+            "binding_precision": null
+          },
+          "tool_calls": 3,
+          "token_cost": 848,
+          "matched_contexts": [
+            "Absent Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "ENVIRONMENT|Absent Model|models": true
+          },
+          "bundle_missing_context": [
+            "environment:5ad38304b535:models",
+            "environment_coverage:models",
+            "environment_assets"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 43,
+                "output_tokens_estimated": 511,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 46,
+                "output_tokens_estimated": 116,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 716,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 77,
+                "output_tokens_estimated": 0
+              },
+              {
+                "task": "joint_reason",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 183,
+                "output_tokens_estimated": 0
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 132,
+            "total_tokens_estimated": 848
+          }
+        },
+        {
+          "case_id": "unavailable-is-unknown",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0,
+            "binding_precision": null
+          },
+          "tool_calls": 3,
+          "token_cost": 808,
+          "matched_contexts": [
+            "Offline Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "ENVIRONMENT|Offline Model|models": true
+          },
+          "bundle_missing_context": [
+            "environment:8e2c7ac50813:models",
+            "environment_coverage:models",
+            "environment_availability"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 43,
+                "output_tokens_estimated": 514,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 46,
+                "output_tokens_estimated": 117,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 720,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 77,
+                "output_tokens_estimated": 0
+              },
+              {
+                "task": "joint_reason",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 184,
+                "output_tokens_estimated": 0
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 88,
+            "total_tokens_estimated": 808
+          }
+        },
+        {
+          "case_id": "conflict-is-partial",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0
+          },
+          "tool_calls": 3,
+          "token_cost": 1171,
+          "matched_contexts": [
+            "Conflicted Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "REFERENCE|Conflicted Model|grain": true
+          },
+          "bundle_missing_context": [
+            "reference:a6948296bf95:grain",
+            "grain"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 45,
+                "output_tokens_estimated": 637,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 51,
+                "output_tokens_estimated": 267,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 1000,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 76,
+                "output_tokens_estimated": 0
+              },
+              {
+                "task": "joint_reason",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 442,
+                "output_tokens_estimated": 0
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 171,
+            "total_tokens_estimated": 1171
+          }
+        },
+        {
+          "case_id": "candidate-excluded",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": null,
+            "bundle_precision": null,
+            "coverage_accuracy": null,
+            "binding_precision": null
+          },
+          "tool_calls": 1,
+          "token_cost": 281,
+          "matched_contexts": [],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {},
+          "bundle_missing_context": [
+            "reference:04995c084330:business_meaning",
+            "business_meaning"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 1,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 48,
+                "output_tokens_estimated": 233,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 281,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 0,
+            "environment_tool_calls_complete": true,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 75,
+                "output_tokens_estimated": 0
+              },
+              {
+                "task": "joint_reason",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 68,
+                "output_tokens_estimated": 0
+              }
+            ],
+            "total_tool_calls": 1,
+            "environment_tokens_estimated": 0,
+            "total_tokens_estimated": 281
+          }
+        }
+      ],
+      "anchor_recall": 0.9,
+      "bundle_recall": 0.8461538461538461,
+      "bundle_precision": 1.0,
+      "binding_precision": 1.0,
+      "focused_expansion_success": 1.0,
+      "tool_calls": 2.5,
+      "token_cost": 1100.9,
+      "metric_sample_counts": {
+        "anchor_recall": 10,
+        "bundle_recall": 13,
+        "bundle_precision": 11,
+        "coverage_accuracy": 9,
+        "binding_precision": 1,
+        "focused_expansion_success": 1
+      }
+    },
+    "hybrid": {
+      "total": 10,
+      "passed": 10,
+      "context_recall": 1.0,
+      "coverage_accuracy": 1.0,
+      "cases": [
+        {
+          "case_id": "exact-anchor",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0
+          },
+          "tool_calls": 2,
+          "token_cost": 1731,
+          "matched_contexts": [
+            "RSRP",
+            "Radio Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "REFERENCE|RSRP|business_meaning": true
+          },
+          "bundle_missing_context": [],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 41,
+                "output_tokens_estimated": 973,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 45,
+                "output_tokens_estimated": 672,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 1731,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 0,
+            "environment_tool_calls_complete": true,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 71,
+                "output_tokens_estimated": 0
+              },
+              {
+                "task": "joint_reason",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 444,
+                "output_tokens_estimated": 0
+              }
+            ],
+            "total_tool_calls": 2,
+            "environment_tokens_estimated": 0,
+            "total_tokens_estimated": 1731
+          }
+        },
+        {
+          "case_id": "cross-language-semantic",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": null
+          },
+          "tool_calls": 2,
+          "token_cost": 1728,
+          "matched_contexts": [
+            "RSRP",
+            "Radio Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {},
+          "bundle_missing_context": [],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 39,
+                "output_tokens_estimated": 969,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 48,
+                "output_tokens_estimated": 672,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 1728,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 0,
+            "environment_tool_calls_complete": true,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 74,
+                "output_tokens_estimated": 0
+              },
+              {
+                "task": "joint_reason",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 447,
+                "output_tokens_estimated": 0
+              }
+            ],
+            "total_tool_calls": 2,
+            "environment_tokens_estimated": 0,
+            "total_tokens_estimated": 1728
+          }
+        },
+        {
+          "case_id": "metric-model-relation",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0,
+            "binding_precision": 1.0
+          },
+          "tool_calls": 3,
+          "token_cost": 1931,
+          "matched_contexts": [
+            "RSRP",
+            "Radio Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "REFERENCE|RSRP|models": true,
+            "ENVIRONMENT|RSRP|models": true
+          },
+          "bundle_missing_context": [
+            "environment:3ef68204fd9f:metrics",
+            "environment_coverage:metrics",
+            "environment:3ef68204fd9f:models",
+            "environment_coverage:models"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 50,
+                "output_tokens_estimated": 981,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 57,
+                "output_tokens_estimated": 672,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 1760,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 78,
+                "output_tokens_estimated": 0
+              },
+              {
+                "task": "joint_reason",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 633,
+                "output_tokens_estimated": 0
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 171,
+            "total_tokens_estimated": 1931
+          }
+        },
+        {
+          "case_id": "focused-field",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0,
+            "focused_expansion_success": 1.0
+          },
+          "tool_calls": 3,
+          "token_cost": 1373,
+          "matched_contexts": [
+            "Radio Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "REFERENCE|Radio Model|fields": true
+          },
+          "bundle_missing_context": [],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 48,
+                "output_tokens_estimated": 673,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 48,
+                "output_tokens_estimated": 433,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 1202,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 79,
+                "output_tokens_estimated": 0
+              },
+              {
+                "task": "joint_reason",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 412,
+                "output_tokens_estimated": 0
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 171,
+            "total_tokens_estimated": 1373
+          }
+        },
+        {
+          "case_id": "entity-isolation",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0
+          },
+          "tool_calls": 3,
+          "token_cost": 1723,
+          "matched_contexts": [
+            "Incomplete Model",
+            "Radio Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "REFERENCE|Radio Model|fields": true,
+            "REFERENCE|Incomplete Model|fields": true
+          },
+          "bundle_missing_context": [
+            "reference:c6c9e081cd66:fields",
+            "fields"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 49,
+                "output_tokens_estimated": 972,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 65,
+                "output_tokens_estimated": 466,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 1552,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 80,
+                "output_tokens_estimated": 0
+              },
+              {
+                "task": "joint_reason",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 586,
+                "output_tokens_estimated": 0
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 171,
+            "total_tokens_estimated": 1723
+          }
+        },
+        {
+          "case_id": "name-is-not-identity",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": null,
+            "binding_precision": null
+          },
+          "tool_calls": 3,
+          "token_cost": 890,
+          "matched_contexts": [
+            "Same Name Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {},
+          "bundle_missing_context": [],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 43,
+                "output_tokens_estimated": 523,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 47,
+                "output_tokens_estimated": 119,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 732,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 77,
+                "output_tokens_estimated": 0
+              },
+              {
+                "task": "joint_reason",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 247,
+                "output_tokens_estimated": 0
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 158,
+            "total_tokens_estimated": 890
+          }
+        },
+        {
+          "case_id": "scoped-authoritative-absence",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0,
+            "binding_precision": null
+          },
+          "tool_calls": 3,
+          "token_cost": 852,
+          "matched_contexts": [
+            "Absent Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "ENVIRONMENT|Absent Model|models": true
+          },
+          "bundle_missing_context": [
+            "environment:5ad38304b535:models",
+            "environment_coverage:models",
+            "environment_assets"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 43,
+                "output_tokens_estimated": 515,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 46,
+                "output_tokens_estimated": 116,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 720,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 77,
+                "output_tokens_estimated": 0
+              },
+              {
+                "task": "joint_reason",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 183,
+                "output_tokens_estimated": 0
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 132,
+            "total_tokens_estimated": 852
+          }
+        },
+        {
+          "case_id": "unavailable-is-unknown",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0,
+            "binding_precision": null
+          },
+          "tool_calls": 3,
+          "token_cost": 812,
+          "matched_contexts": [
+            "Offline Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "ENVIRONMENT|Offline Model|models": true
+          },
+          "bundle_missing_context": [
+            "environment:8e2c7ac50813:models",
+            "environment_coverage:models",
+            "environment_availability"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 43,
+                "output_tokens_estimated": 518,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 46,
+                "output_tokens_estimated": 117,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 724,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 77,
+                "output_tokens_estimated": 0
+              },
+              {
+                "task": "joint_reason",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 184,
+                "output_tokens_estimated": 0
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 88,
+            "total_tokens_estimated": 812
+          }
+        },
+        {
+          "case_id": "conflict-is-partial",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0
+          },
+          "tool_calls": 3,
+          "token_cost": 1174,
+          "matched_contexts": [
+            "Conflicted Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "REFERENCE|Conflicted Model|grain": true
+          },
+          "bundle_missing_context": [
+            "reference:a6948296bf95:grain",
+            "grain"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 45,
+                "output_tokens_estimated": 640,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 51,
+                "output_tokens_estimated": 267,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 1003,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 76,
+                "output_tokens_estimated": 0
+              },
+              {
+                "task": "joint_reason",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 442,
+                "output_tokens_estimated": 0
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 171,
+            "total_tokens_estimated": 1174
+          }
+        },
+        {
+          "case_id": "candidate-excluded",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": null,
+            "bundle_precision": null,
+            "coverage_accuracy": null,
+            "binding_precision": null
+          },
+          "tool_calls": 1,
+          "token_cost": 281,
+          "matched_contexts": [],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {},
+          "bundle_missing_context": [
+            "reference:04995c084330:business_meaning",
+            "business_meaning"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 1,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 48,
+                "output_tokens_estimated": 233,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 281,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 0,
+            "environment_tool_calls_complete": true,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 75,
+                "output_tokens_estimated": 0
+              },
+              {
+                "task": "joint_reason",
+                "calls": 0,
+                "status": "DISABLED",
+                "provider_tokens": null,
+                "input_tokens_estimated": 68,
+                "output_tokens_estimated": 0
+              }
+            ],
+            "total_tool_calls": 1,
+            "environment_tokens_estimated": 0,
+            "total_tokens_estimated": 281
+          }
+        }
+      ],
+      "anchor_recall": 1.0,
+      "bundle_recall": 1.0,
+      "bundle_precision": 1.0,
+      "binding_precision": 1.0,
+      "focused_expansion_success": 1.0,
+      "tool_calls": 2.6,
+      "token_cost": 1249.5,
+      "metric_sample_counts": {
+        "anchor_recall": 10,
+        "bundle_recall": 13,
+        "bundle_precision": 13,
+        "coverage_accuracy": 9,
+        "binding_precision": 1,
+        "focused_expansion_success": 1
+      }
+    },
+    "bounded_fixture": {
+      "total": 10,
+      "passed": 10,
+      "context_recall": 1.0,
+      "coverage_accuracy": 1.0,
+      "cases": [
+        {
+          "case_id": "exact-anchor",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0
+          },
+          "tool_calls": 2,
+          "token_cost": 2326,
+          "matched_contexts": [
+            "RSRP",
+            "Radio Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "REFERENCE|RSRP|business_meaning": true
+          },
+          "bundle_missing_context": [],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 41,
+                "output_tokens_estimated": 973,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 45,
+                "output_tokens_estimated": 672,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 1731,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 0,
+            "environment_tool_calls_complete": true,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 60,
+                "input_tokens_estimated": 71,
+                "output_tokens_estimated": 22
+              },
+              {
+                "task": "joint_reason",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 120,
+                "input_tokens_estimated": 444,
+                "output_tokens_estimated": 58
+              }
+            ],
+            "total_tool_calls": 2,
+            "environment_tokens_estimated": 0,
+            "total_tokens_estimated": 2326
+          }
+        },
+        {
+          "case_id": "cross-language-semantic",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": null
+          },
+          "tool_calls": 2,
+          "token_cost": 2329,
+          "matched_contexts": [
+            "RSRP",
+            "Radio Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {},
+          "bundle_missing_context": [],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 39,
+                "output_tokens_estimated": 969,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 48,
+                "output_tokens_estimated": 672,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 1728,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 0,
+            "environment_tool_calls_complete": true,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 60,
+                "input_tokens_estimated": 74,
+                "output_tokens_estimated": 22
+              },
+              {
+                "task": "joint_reason",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 120,
+                "input_tokens_estimated": 447,
+                "output_tokens_estimated": 58
+              }
+            ],
+            "total_tool_calls": 2,
+            "environment_tokens_estimated": 0,
+            "total_tokens_estimated": 2329
+          }
+        },
+        {
+          "case_id": "metric-model-relation",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0,
+            "binding_precision": 1.0
+          },
+          "tool_calls": 3,
+          "token_cost": 2724,
+          "matched_contexts": [
+            "RSRP",
+            "Radio Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "REFERENCE|RSRP|models": true,
+            "ENVIRONMENT|RSRP|models": true
+          },
+          "bundle_missing_context": [
+            "environment:3ef68204fd9f:metrics",
+            "environment_coverage:metrics",
+            "environment:3ef68204fd9f:models",
+            "environment_coverage:models"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 50,
+                "output_tokens_estimated": 981,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 57,
+                "output_tokens_estimated": 672,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 1760,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 60,
+                "input_tokens_estimated": 78,
+                "output_tokens_estimated": 24
+              },
+              {
+                "task": "joint_reason",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 120,
+                "input_tokens_estimated": 633,
+                "output_tokens_estimated": 58
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 171,
+            "total_tokens_estimated": 2724
+          }
+        },
+        {
+          "case_id": "focused-field",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0,
+            "focused_expansion_success": 1.0
+          },
+          "tool_calls": 3,
+          "token_cost": 1941,
+          "matched_contexts": [
+            "Radio Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "REFERENCE|Radio Model|fields": true
+          },
+          "bundle_missing_context": [],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 48,
+                "output_tokens_estimated": 673,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 48,
+                "output_tokens_estimated": 433,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 1202,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 60,
+                "input_tokens_estimated": 79,
+                "output_tokens_estimated": 25
+              },
+              {
+                "task": "joint_reason",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 120,
+                "input_tokens_estimated": 412,
+                "output_tokens_estimated": 52
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 171,
+            "total_tokens_estimated": 1941
+          }
+        },
+        {
+          "case_id": "entity-isolation",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0
+          },
+          "tool_calls": 3,
+          "token_cost": 2454,
+          "matched_contexts": [
+            "Incomplete Model",
+            "Radio Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "REFERENCE|Radio Model|fields": true,
+            "REFERENCE|Incomplete Model|fields": true
+          },
+          "bundle_missing_context": [
+            "reference:c6c9e081cd66:fields",
+            "fields"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 49,
+                "output_tokens_estimated": 972,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 65,
+                "output_tokens_estimated": 466,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 1552,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 60,
+                "input_tokens_estimated": 80,
+                "output_tokens_estimated": 25
+              },
+              {
+                "task": "joint_reason",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 120,
+                "input_tokens_estimated": 586,
+                "output_tokens_estimated": 40
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 171,
+            "total_tokens_estimated": 2454
+          }
+        },
+        {
+          "case_id": "name-is-not-identity",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": null,
+            "binding_precision": null
+          },
+          "tool_calls": 3,
+          "token_cost": 1276,
+          "matched_contexts": [
+            "Same Name Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {},
+          "bundle_missing_context": [],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 43,
+                "output_tokens_estimated": 523,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 47,
+                "output_tokens_estimated": 119,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 732,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 60,
+                "input_tokens_estimated": 77,
+                "output_tokens_estimated": 22
+              },
+              {
+                "task": "joint_reason",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 120,
+                "input_tokens_estimated": 247,
+                "output_tokens_estimated": 40
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 158,
+            "total_tokens_estimated": 1276
+          }
+        },
+        {
+          "case_id": "scoped-authoritative-absence",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0,
+            "binding_precision": null
+          },
+          "tool_calls": 3,
+          "token_cost": 1173,
+          "matched_contexts": [
+            "Absent Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "ENVIRONMENT|Absent Model|models": true
+          },
+          "bundle_missing_context": [
+            "environment:5ad38304b535:models",
+            "environment_coverage:models",
+            "environment_assets"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 43,
+                "output_tokens_estimated": 515,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 46,
+                "output_tokens_estimated": 116,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 720,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 60,
+                "input_tokens_estimated": 77,
+                "output_tokens_estimated": 22
+              },
+              {
+                "task": "joint_reason",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 120,
+                "input_tokens_estimated": 183,
+                "output_tokens_estimated": 39
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 132,
+            "total_tokens_estimated": 1173
+          }
+        },
+        {
+          "case_id": "unavailable-is-unknown",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0,
+            "binding_precision": null
+          },
+          "tool_calls": 3,
+          "token_cost": 1135,
+          "matched_contexts": [
+            "Offline Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "ENVIRONMENT|Offline Model|models": true
+          },
+          "bundle_missing_context": [
+            "environment:8e2c7ac50813:models",
+            "environment_coverage:models",
+            "environment_availability"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 43,
+                "output_tokens_estimated": 518,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 46,
+                "output_tokens_estimated": 117,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 724,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 60,
+                "input_tokens_estimated": 77,
+                "output_tokens_estimated": 22
+              },
+              {
+                "task": "joint_reason",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 120,
+                "input_tokens_estimated": 184,
+                "output_tokens_estimated": 40
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 88,
+            "total_tokens_estimated": 1135
+          }
+        },
+        {
+          "case_id": "conflict-is-partial",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0
+          },
+          "tool_calls": 3,
+          "token_cost": 1763,
+          "matched_contexts": [
+            "Conflicted Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "REFERENCE|Conflicted Model|grain": true
+          },
+          "bundle_missing_context": [
+            "reference:a6948296bf95:grain",
+            "grain"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 45,
+                "output_tokens_estimated": 640,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 51,
+                "output_tokens_estimated": 267,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 1003,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 1,
+                "status": "REJECTED",
+                "provider_tokens": 60,
+                "input_tokens_estimated": 76,
+                "output_tokens_estimated": 22,
+                "reason": "semantic route cannot remove explicit intent requirements"
+              },
+              {
+                "task": "joint_reason",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 120,
+                "input_tokens_estimated": 442,
+                "output_tokens_estimated": 49
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 171,
+            "total_tokens_estimated": 1763
+          }
+        },
+        {
+          "case_id": "candidate-excluded",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": null,
+            "bundle_precision": null,
+            "coverage_accuracy": null,
+            "binding_precision": null
+          },
+          "tool_calls": 1,
+          "token_cost": 461,
+          "matched_contexts": [],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {},
+          "bundle_missing_context": [
+            "reference:04995c084330:business_meaning",
+            "business_meaning"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 1,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 48,
+                "output_tokens_estimated": 233,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 281,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 0,
+            "environment_tool_calls_complete": true,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 60,
+                "input_tokens_estimated": 75,
+                "output_tokens_estimated": 22
+              },
+              {
+                "task": "joint_reason",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 120,
+                "input_tokens_estimated": 68,
+                "output_tokens_estimated": 15
+              }
+            ],
+            "total_tool_calls": 1,
+            "environment_tokens_estimated": 0,
+            "total_tokens_estimated": 461
+          }
+        }
+      ],
+      "anchor_recall": 1.0,
+      "bundle_recall": 1.0,
+      "bundle_precision": 1.0,
+      "binding_precision": 1.0,
+      "focused_expansion_success": 1.0,
+      "tool_calls": 2.6,
+      "token_cost": 1758.2,
+      "metric_sample_counts": {
+        "anchor_recall": 10,
+        "bundle_recall": 13,
+        "bundle_precision": 13,
+        "coverage_accuracy": 9,
+        "binding_precision": 1,
+        "focused_expansion_success": 1
+      }
+    },
+    "live_semantic": {
+      "total": 10,
+      "passed": 8,
+      "context_recall": 1.0,
+      "coverage_accuracy": 1.0,
+      "cases": [
+        {
+          "case_id": "exact-anchor",
+          "passed": false,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0
+          },
+          "tool_calls": 3,
+          "token_cost": 2939,
+          "matched_contexts": [
+            "RSRP",
+            "Radio Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "REFERENCE|RSRP|business_meaning": true
+          },
+          "bundle_missing_context": [
+            "environment:3ef68204fd9f:metrics",
+            "environment_coverage:metrics",
+            "environment:3ef68204fd9f:models",
+            "environment_coverage:models"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": false,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 43,
+                "output_tokens_estimated": 973,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 50,
+                "output_tokens_estimated": 672,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 1738,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 873,
+                "input_tokens_estimated": 71,
+                "output_tokens_estimated": 83
+              },
+              {
+                "task": "joint_reason",
+                "calls": 1,
+                "status": "REJECTED",
+                "provider_tokens": 1484,
+                "input_tokens_estimated": 677,
+                "output_tokens_estimated": 199,
+                "reason": "ungrounded reasoning assertion"
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 171,
+            "total_tokens_estimated": 2939
+          }
+        },
+        {
+          "case_id": "cross-language-semantic",
+          "passed": false,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": null
+          },
+          "tool_calls": 3,
+          "token_cost": 2817,
+          "matched_contexts": [
+            "RSRP",
+            "Radio Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {},
+          "bundle_missing_context": [
+            "reference:6b9935dfa95b:metrics",
+            "metrics",
+            "environment:6b9935dfa95b:metrics",
+            "environment_coverage:metrics",
+            "reference:6b9935dfa95b:models",
+            "models",
+            "environment:6b9935dfa95b:models",
+            "environment_coverage:models"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": false,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 42,
+                "output_tokens_estimated": 969,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 53,
+                "output_tokens_estimated": 672,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 1736,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 950,
+                "input_tokens_estimated": 74,
+                "output_tokens_estimated": 83
+              },
+              {
+                "task": "joint_reason",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 1250,
+                "input_tokens_estimated": 636,
+                "output_tokens_estimated": 117
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 171,
+            "total_tokens_estimated": 2817
+          }
+        },
+        {
+          "case_id": "metric-model-relation",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0,
+            "binding_precision": 1.0
+          },
+          "tool_calls": 3,
+          "token_cost": 2835,
+          "matched_contexts": [
+            "RSRP",
+            "Radio Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "REFERENCE|RSRP|models": true,
+            "ENVIRONMENT|RSRP|models": true
+          },
+          "bundle_missing_context": [
+            "environment:3ef68204fd9f:metrics",
+            "environment_coverage:metrics",
+            "environment:3ef68204fd9f:models",
+            "environment_coverage:models"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 50,
+                "output_tokens_estimated": 981,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 57,
+                "output_tokens_estimated": 672,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 1760,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 267,
+                "input_tokens_estimated": 78,
+                "output_tokens_estimated": 78
+              },
+              {
+                "task": "joint_reason",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 1291,
+                "input_tokens_estimated": 633,
+                "output_tokens_estimated": 115
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 171,
+            "total_tokens_estimated": 2835
+          }
+        },
+        {
+          "case_id": "focused-field",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0,
+            "focused_expansion_success": 1.0
+          },
+          "tool_calls": 3,
+          "token_cost": 1948,
+          "matched_contexts": [
+            "Radio Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "REFERENCE|Radio Model|fields": true
+          },
+          "bundle_missing_context": [],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 48,
+                "output_tokens_estimated": 673,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 48,
+                "output_tokens_estimated": 433,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 1202,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 209,
+                "input_tokens_estimated": 79,
+                "output_tokens_estimated": 84
+              },
+              {
+                "task": "joint_reason",
+                "calls": 1,
+                "status": "TIMEOUT",
+                "provider_tokens": null,
+                "input_tokens_estimated": 412,
+                "output_tokens_estimated": 0
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 171,
+            "total_tokens_estimated": 1948
+          }
+        },
+        {
+          "case_id": "entity-isolation",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0
+          },
+          "tool_calls": 3,
+          "token_cost": 2582,
+          "matched_contexts": [
+            "Incomplete Model",
+            "Radio Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "REFERENCE|Radio Model|fields": true,
+            "REFERENCE|Incomplete Model|fields": true
+          },
+          "bundle_missing_context": [
+            "reference:c6c9e081cd66:fields",
+            "fields"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 49,
+                "output_tokens_estimated": 972,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 65,
+                "output_tokens_estimated": 466,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 1552,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 206,
+                "input_tokens_estimated": 80,
+                "output_tokens_estimated": 84
+              },
+              {
+                "task": "joint_reason",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 2009,
+                "input_tokens_estimated": 586,
+                "output_tokens_estimated": 109
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 171,
+            "total_tokens_estimated": 2582
+          }
+        },
+        {
+          "case_id": "name-is-not-identity",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": null,
+            "binding_precision": null
+          },
+          "tool_calls": 3,
+          "token_cost": 2200,
+          "matched_contexts": [
+            "Same Name Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {},
+          "bundle_missing_context": [
+            "reference:5f3f81f035b3:business_meaning",
+            "business_meaning",
+            "reference:5f3f81f035b3:business_object",
+            "business_object",
+            "reference:5f3f81f035b3:fields",
+            "fields",
+            "environment:5f3f81f035b3:fields",
+            "environment_coverage:fields",
+            "reference:5f3f81f035b3:grain",
+            "grain",
+            "environment:5f3f81f035b3:grain",
+            "environment_coverage:grain",
+            "reference:5f3f81f035b3:models",
+            "models",
+            "environment:5f3f81f035b3:models",
+            "environment_coverage:models",
+            "reference:5f3f81f035b3:purpose",
+            "purpose",
+            "reference:3703d5c13a30:business_object",
+            "reference:3703d5c13a30:fields",
+            "environment:3703d5c13a30:fields",
+            "reference:3703d5c13a30:grain",
+            "environment:3703d5c13a30:grain",
+            "reference:3703d5c13a30:purpose"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 46,
+                "output_tokens_estimated": 523,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 59,
+                "output_tokens_estimated": 119,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 747,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 309,
+                "input_tokens_estimated": 77,
+                "output_tokens_estimated": 88
+              },
+              {
+                "task": "joint_reason",
+                "calls": 1,
+                "status": "TIMEOUT",
+                "provider_tokens": null,
+                "input_tokens_estimated": 1130,
+                "output_tokens_estimated": 0
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 158,
+            "total_tokens_estimated": 2200
+          }
+        },
+        {
+          "case_id": "scoped-authoritative-absence",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0,
+            "binding_precision": null
+          },
+          "tool_calls": 3,
+          "token_cost": 1279,
+          "matched_contexts": [
+            "Absent Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "ENVIRONMENT|Absent Model|models": true
+          },
+          "bundle_missing_context": [
+            "environment:5ad38304b535:models",
+            "environment_coverage:models",
+            "environment_assets"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 43,
+                "output_tokens_estimated": 515,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 46,
+                "output_tokens_estimated": 116,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 720,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 204,
+                "input_tokens_estimated": 77,
+                "output_tokens_estimated": 82
+              },
+              {
+                "task": "joint_reason",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 456,
+                "input_tokens_estimated": 183,
+                "output_tokens_estimated": 85
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 132,
+            "total_tokens_estimated": 1279
+          }
+        },
+        {
+          "case_id": "unavailable-is-unknown",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0,
+            "binding_precision": null
+          },
+          "tool_calls": 3,
+          "token_cost": 1245,
+          "matched_contexts": [
+            "Offline Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "ENVIRONMENT|Offline Model|models": true
+          },
+          "bundle_missing_context": [
+            "environment:8e2c7ac50813:models",
+            "environment_coverage:models",
+            "environment_availability"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 46,
+                "output_tokens_estimated": 518,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 49,
+                "output_tokens_estimated": 117,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 730,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 316,
+                "input_tokens_estimated": 77,
+                "output_tokens_estimated": 81
+              },
+              {
+                "task": "joint_reason",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 467,
+                "input_tokens_estimated": 184,
+                "output_tokens_estimated": 85
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 88,
+            "total_tokens_estimated": 1245
+          }
+        },
+        {
+          "case_id": "conflict-is-partial",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": 1.0,
+            "anchor_recall": 1.0,
+            "bundle_precision": 1.0,
+            "coverage_accuracy": 1.0
+          },
+          "tool_calls": 3,
+          "token_cost": 1876,
+          "matched_contexts": [
+            "Conflicted Model"
+          ],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {
+            "REFERENCE|Conflicted Model|grain": true
+          },
+          "bundle_missing_context": [
+            "reference:a6948296bf95:grain",
+            "grain"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 2,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 45,
+                "output_tokens_estimated": 640,
+                "status": "OK"
+              },
+              {
+                "tool": "data_expand",
+                "input_tokens_estimated": 51,
+                "output_tokens_estimated": 267,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 1003,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 1,
+            "environment_tool_calls_complete": false,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 693,
+                "input_tokens_estimated": 76,
+                "output_tokens_estimated": 81
+              },
+              {
+                "task": "joint_reason",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 974,
+                "input_tokens_estimated": 442,
+                "output_tokens_estimated": 103
+              }
+            ],
+            "total_tool_calls": 3,
+            "environment_tokens_estimated": 171,
+            "total_tokens_estimated": 1876
+          }
+        },
+        {
+          "case_id": "candidate-excluded",
+          "passed": true,
+          "metrics": {
+            "bundle_recall": null,
+            "bundle_precision": null,
+            "coverage_accuracy": null,
+            "binding_precision": null
+          },
+          "tool_calls": 1,
+          "token_cost": 611,
+          "matched_contexts": [],
+          "missing_expected_contexts": [],
+          "required_coverage": {},
+          "expected_missing": {},
+          "coverage_checks": {},
+          "bundle_missing_context": [
+            "reference:04995c084330:business_meaning",
+            "business_meaning",
+            "reference:04995c084330:purpose",
+            "purpose"
+          ],
+          "binding_ok": true,
+          "focused_expansion_ok": true,
+          "cost_ok": true,
+          "telemetry": {
+            "tool_calls": 1,
+            "tool_trace": [
+              {
+                "tool": "data_search",
+                "input_tokens_estimated": 48,
+                "output_tokens_estimated": 233,
+                "status": "OK"
+              }
+            ],
+            "tool_tokens_estimated": 281,
+            "token_measurement": "unicode-aware estimate; provider usage tracked separately",
+            "environment_tool_calls": 0,
+            "environment_tool_calls_complete": true,
+            "semantic_calls": [
+              {
+                "task": "route",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 427,
+                "input_tokens_estimated": 75,
+                "output_tokens_estimated": 74
+              },
+              {
+                "task": "joint_reason",
+                "calls": 1,
+                "status": "ACCEPTED",
+                "provider_tokens": 335,
+                "input_tokens_estimated": 116,
+                "output_tokens_estimated": 65
+              }
+            ],
+            "total_tool_calls": 1,
+            "environment_tokens_estimated": 0,
+            "total_tokens_estimated": 611
+          }
+        }
+      ],
+      "anchor_recall": 1.0,
+      "bundle_recall": 1.0,
+      "bundle_precision": 1.0,
+      "binding_precision": 1.0,
+      "focused_expansion_success": 1.0,
+      "tool_calls": 2.8,
+      "token_cost": 2033.2,
+      "metric_sample_counts": {
+        "anchor_recall": 10,
+        "bundle_recall": 13,
+        "bundle_precision": 13,
+        "coverage_accuracy": 9,
+        "binding_precision": 1,
+        "focused_expansion_success": 1
+      }
+    }
+  }
+}

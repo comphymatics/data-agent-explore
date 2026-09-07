@@ -370,11 +370,12 @@ def test_explore_builds_dual_layer_overlay_and_versions():
     assert bundle.environment["availability_state"] == "FOUND"
     assert bundle.environment["provider"] == "metaone-fixture"
     assert bundle.reference_index_version == bundle.index_version
-    assert bundle.binding_policy_version == "environment-binding/v1"
+    assert bundle.binding_policy_version == "environment-binding/v2"
     assert bundle.binding_overlay["environment_facts"]
     assert bundle.binding_overlay["reference_semantics"]
-    assert bundle.binding_overlay["derived_bindings"]
-    assert bundle.binding_overlay["reference_only_assets"] == []
+    assert not bundle.binding_overlay["derived_bindings"]
+    assert bundle.binding_overlay["candidate_bindings"]
+    assert bundle.binding_overlay["reference_only_assets"]
     schema = json.loads(
         open("contracts/context-bundle.schema.json", encoding="utf-8").read()
     )
@@ -444,3 +445,20 @@ def test_environment_only_hit_is_not_reported_as_no_context():
     assert bundle.environment["snapshot_token"] == "snapshot-env-only"
     assert bundle.confidence > 0
     assert bundle.stop_reason != "no_context_found"
+
+
+def test_focused_resolve_propagates_scoped_absence_and_pins_snapshots():
+    client=FixtureMcpClient(sample_tools(),{
+        "data_catalog_get_capabilities":{"provider":"fixture","environmentId":"env-a","snapshotToken":"old"},
+        "data_catalog_search_assets":{"records":[environment_asset()],"total":1,"snapshotToken":"search-v2",
+            "requirement_coverage":[{"entity":"missing field","aspect":"fields","status":"MISSING","complete":True,"authoritative":True,"evidence":[{"ref":"inventory"}]}]},
+        "data_catalog_get_asset_context":{"snapshotToken":"other-v3","asset":environment_asset()},
+    })
+    adapter=MetaOneMcpAdapter(client)
+    result=adapter.resolve({"required":True,"query":"LTE Periodic MR","intent":"model_understanding","focused_expansion":True})
+    assert result.capabilities.snapshot_token=="search-v2"
+    assert result.assets[0]["evidence"][0]["snapshot_token"]=="search-v2"
+    assert result.requirement_coverage[0]["status"]=="MISSING"
+    assert result.truncated
+    assert any(w["code"]=="environment_snapshot_mismatch" for w in result.warnings)
+    assert adapter.tool_call_count==4

@@ -53,6 +53,7 @@ TOOL_DEFINITIONS = [
                 "seen_context_ids": {"type": "array", "items": {"type": "string"}},
                 "read_content": {"enum": ["L0", "L1", "auto"]},
                 "max_per_type": {"type": "integer", "minimum": 1},
+                "intent": {"enum": ["generic", "metric_to_models", "analysis_data_requirement", "model_understanding", "impact_analysis"]},
             },
             "required": ["query"],
             "additionalProperties": False,
@@ -81,7 +82,8 @@ TOOL_DEFINITIONS = [
         "title": "Expand focused context sections",
         "description": (
             "Expand fields, grain, lineage, mappings, hierarchy, parents, children, related "
-            "confirmed edges, candidates, conflicts, evidence, or the association report."
+            "rich relation summaries, candidates, conflicts, evidence, or the association report. "
+            "Optional query searches governed elements inside the selected pages."
         ),
         "inputSchema": {
             "type": "object",
@@ -89,6 +91,9 @@ TOOL_DEFINITIONS = [
                 "paths": {"type": "array", "minItems": 1, "items": {"type": "string"}},
                 "expand": {"type": "array", "minItems": 1, "items": {"type": "string"}},
                 "top_k": {"type": "integer", "minimum": 1, "default": 20},
+                "query": {"type": "string", "minLength": 1},
+                "intent": {"enum": ["generic", "metric_to_models", "analysis_data_requirement", "model_understanding", "impact_analysis"]},
+                "token_budget": {"type": "integer", "minimum": 1},
             },
             "required": ["paths", "expand"],
             "additionalProperties": False,

@@ -18,10 +18,14 @@
     "coverage",
     "warnings",
     "cursor",
-    "truncated"
+    "truncated",
+    "relations",
+    "requirement_coverage"
   ],
   "properties": {
-    "binding_required": {"type": "boolean"},
+    "binding_required": {
+      "type": "boolean"
+    },
     "binding_status": {
       "enum": [
         "not_required",
@@ -43,21 +47,89 @@
         "TRUNCATED"
       ]
     },
-    "provider": {"type": ["string", "null"]},
-    "environment_id": {"type": ["string", "null"]},
-    "capability_revision": {"type": ["string", "null"]},
-    "snapshot_token": {"type": ["string", "null"]},
-    "captured_at": {"type": ["string", "null"]},
-    "operations": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
-    "asset_types": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "provider": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "environment_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "capability_revision": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "snapshot_token": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "captured_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "operations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "asset_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
     "matched_assets": {
       "type": "array",
-      "items": {"$ref": "#/$defs/environmentAsset"}
+      "items": {
+        "$ref": "#/$defs/environmentAsset"
+      }
     },
-    "coverage": {"type": "object", "additionalProperties": {"type": "boolean"}},
-    "warnings": {"type": "array", "items": {"$ref": "#/$defs/warning"}},
-    "cursor": {"type": ["string", "null"]},
-    "truncated": {"type": "boolean"}
+    "coverage": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "boolean"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/warning"
+      }
+    },
+    "cursor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "truncated": {
+      "type": "boolean"
+    },
+    "relations": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "requirement_coverage": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
   },
   "$defs": {
     "environmentAsset": {
@@ -79,31 +151,100 @@
         "evidence"
       ],
       "properties": {
-        "id": {"type": "string", "minLength": 1},
-        "type": {"type": "string", "minLength": 1},
-        "provider_type": {"type": "string", "minLength": 1},
-        "code": {"type": "string", "minLength": 1},
-        "name": {"type": "string", "minLength": 1},
-        "description": {"type": "string"},
-        "aliases": {"type": "array", "items": {"type": "string"}},
-        "domain": {"type": ["string", "null"]},
-        "attributes": {"type": "object"},
-        "score": {"type": "number"},
-        "matched_by": {"type": "array", "items": {"type": "string"}},
-        "knowledge_layer": {"const": "ENVIRONMENT"},
-        "assertion_status": {"enum": ["EXPLICIT", "DERIVED", "CANDIDATE"]},
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provider_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "domain": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "attributes": {
+          "type": "object"
+        },
+        "score": {
+          "type": "number"
+        },
+        "matched_by": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "knowledge_layer": {
+          "const": "ENVIRONMENT"
+        },
+        "assertion_status": {
+          "enum": [
+            "EXPLICIT",
+            "DERIVED",
+            "CANDIDATE"
+          ]
+        },
         "evidence": {
           "type": "array",
           "minItems": 1,
           "items": {
             "type": "object",
-            "required": ["provider", "environment_id", "captured_at", "snapshot_token", "provider_refs"],
+            "required": [
+              "provider",
+              "environment_id",
+              "captured_at",
+              "snapshot_token",
+              "provider_refs"
+            ],
             "properties": {
-              "provider": {"type": "string"},
-              "environment_id": {"type": ["string", "null"]},
-              "captured_at": {"type": "string"},
-              "snapshot_token": {"type": ["string", "null"]},
-              "provider_refs": {"type": "array", "items": {"type": "string"}}
+              "provider": {
+                "type": "string"
+              },
+              "environment_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "captured_at": {
+                "type": "string"
+              },
+              "snapshot_token": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "provider_refs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
             },
             "additionalProperties": false
           }
@@ -113,10 +254,17 @@
     },
     "warning": {
       "type": "object",
-      "required": ["code", "message"],
+      "required": [
+        "code",
+        "message"
+      ],
       "properties": {
-        "code": {"type": "string"},
-        "message": {"type": "string"}
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
       },
       "additionalProperties": true
     }

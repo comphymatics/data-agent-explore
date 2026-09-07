@@ -21,13 +21,26 @@ def toks(s):
     return out
 
 class PageIndex:
-    def __init__(self):
+    def __init__(self, encoder=None, mode="hybrid"):
+        from .hybrid import LocalConceptEncoder
+        self.encoder = encoder or LocalConceptEncoder()
+        self.mode = mode
+        self.generation = 0
+        self.vector_generation = -1
+        self.vectors = {}
+        self.last_warnings = []
         self.pages={}
         self.docs={}
         self.df=Counter()
         self.exact=defaultdict(set)
 
     def add(self,page):
+        if page.path in self.docs:
+            for token in self.docs.pop(page.path):
+                self.df[token] -= 1
+            for paths in self.exact.values():
+                paths.discard(page.path)
+        self.generation += 1
         self.pages[page.path]=page
         if page.identity_status in {"INFERRED","CANDIDATE"}:
             return
@@ -38,6 +51,12 @@ class PageIndex:
             self.exact[str(k).lower()].add(page.path)
 
     def search(self,query,types=None,scope=None,top_k=8):
+        if self.mode == "baseline":
+            return self.baseline_search(query,types,scope,top_k)
+        from .hybrid import hybrid_search
+        return hybrid_search(self,query,types,scope,top_k)
+
+    def baseline_search(self,query,types=None,scope=None,top_k=8):
         types=set(types or []); scope=scope or {}
         q=toks(query); N=max(1,len(self.docs)); scores=defaultdict(float); reasons=defaultdict(list)
         qlower=query.lower().strip()

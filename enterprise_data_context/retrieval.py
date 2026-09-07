@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import json
+from dataclasses import asdict
+from hashlib import sha256
 import math
 import re
 from collections import Counter
 
+from enterprise_data_context.serving import BundleAssembler, rich_relations, support_facts
 from enterprise_data_context.models import SearchHit
 from enterprise_data_context.indexes.hierarchy import HierarchyIndex
 
@@ -17,7 +21,9 @@ class ContextRetrievalService:
         self.graph=compiled["graph"]; self.backrefs=compiled["backrefs"]
         self.hierarchy=compiled.get("hierarchy") or HierarchyIndex().project(compiled["contexts"])
         self.association_report=dict(compiled.get("association_report",{}))
-        self.index_version=compiled.get("index_version")
+        self.index_version=compiled.get("index_version") or "context-memory-"+sha256(json.dumps(
+            {"contexts":[asdict(c) for c in compiled["contexts"]],"coverage_declaration":compiled.get("coverage_declaration")},
+            sort_keys=True,ensure_ascii=False).encode()).hexdigest()[:16]
         self.quality_issues=list(compiled.get("quality_issues",[]))
 
     def data_search(
@@ -31,6 +37,7 @@ class ContextRetrievalService:
         seen_context_ids=None,
         read_content=None,
         max_per_type=None,
+        intent=None,
     ):
         """
         Bundle retrieval:
@@ -57,36 +64,13 @@ class ContextRetrievalService:
         seen_paths={path for path in (seen_context_ids or []) if path in self.pages}
         seed_limit=min(len(self.pages),top_k+len(seen_paths)) if seen_paths else top_k
         seed_hits=self.pidx.search(query,types,scope,seed_limit)
-        chosen={}
-        for h in seed_hits:
-            chosen[h.path]=h
-
-        # Complete the bundle with directly referenced rich contexts.
-        for h in list(seed_hits):
-            page=self.pages[h.path]
-            for ref in page.references:
-                target=ref.get("target_path")
-                if ref.get("status")=="CONFIRMED" and target in self.pages and target not in chosen:
-                    tp=self.pages[target]
-                    chosen[target]=SearchHit(
-                        target,tp.context_type,tp.name,max(0.25,h.score*0.75),
-                        [f"reference:{ref.get('relation')}"],tp.l0,tp.l1
-                    )
-
-            # Backrefs are also useful, e.g. model -> metrics/purposes or metric <- purpose.
-            for br in self.backrefs.get(h.path,[]):
-                source=br.get("source")
-                if source in self.pages and source not in chosen:
-                    sp=self.pages[source]
-                    chosen[source]=SearchHit(
-                        source,sp.context_type,sp.name,max(0.20,h.score*0.55),
-                        [f"backref:{br.get('relation')}"],sp.l0,sp.l1
-                    )
+        assembler=BundleAssembler()
+        candidates=assembler.complete(self,seed_hits,intent,types,scope)
 
         # Preserve seed relevance while allowing complementary referenced pages.
         limit=bundle_k if bundle_k is not None else max(top_k,top_k*2)
-        limit=max(top_k,limit)
-        ranked=sorted(chosen.values(),key=lambda x:(-x.score,x.path))
+
+        ranked=assembler.rank(self,candidates,seed_hits)
         effective_content="auto" if token_budget is not None and read_content is None else read_content
         type_counts=Counter(); hits=[]; serialized=[]; used_tokens=0
         truncation_reasons=[]; seen_skipped=0
@@ -132,11 +116,14 @@ class ContextRetrievalService:
             "query":query,
             "scope":scope or {},
             "contexts":serialized,
-            "coverage_hint":coverage,
+            "coverage_hint":coverage,  # legacy hint only; never authoritative Coverage
+            "anchor_context_ids":[h.path for h in seed_hits if h.path in selected_path_set],
+            "retrieval_version":"page-serving/v2:"+self.pidx.mode+":"+getattr(self.pidx.encoder,"version","custom"),
+            "encoder_version":getattr(self.pidx.encoder,"version","custom"),
             "truncated":bool(truncation_reasons),
             "truncation_reasons":truncation_reasons,
             "index_version":self.index_version,
-            "warnings":warnings,
+            "warnings":warnings+getattr(self.pidx,"last_warnings",[]),
             "selected_context_ids":selected_paths,
             "seen_context_ids":all_seen,
             "budget":{
@@ -168,6 +155,8 @@ class ContextRetrievalService:
     def _serialize_hit(self,hit,read_content,remaining_tokens):
         if read_content is None:
             row=dict(hit.__dict__)
+            row["support"] = support_facts(self.pages[hit.path],self.contexts[hit.path])
+            row["knowledge_layer"] = "REFERENCE"
             return row,_estimate_tokens(" ".join((hit.path,hit.name,hit.l0,hit.l1)))
 
         base={
@@ -177,11 +166,12 @@ class ContextRetrievalService:
         levels=("L1","L0") if read_content=="auto" else (read_content,)
         for level in levels:
             content=hit.l1 if level=="L1" else hit.l0
-            estimated=_estimate_tokens(" ".join((hit.path,hit.name," ".join(hit.reasons),content)))
+            support=support_facts(self.pages[hit.path],self.contexts[hit.path],level)
+            estimated=_estimate_tokens(json.dumps({**base,"content":content,"support":support},ensure_ascii=False))
             if remaining_tokens is None or estimated <= remaining_tokens:
                 return {
                     **base,"content_level":level,"content":content,
-                    "estimated_tokens":estimated,
+                    "estimated_tokens":estimated,"support":support,"knowledge_layer":"REFERENCE",
                 },estimated
         return None,0
 
@@ -215,27 +205,20 @@ class ContextRetrievalService:
             "hierarchy":p.hierarchy,
         }
 
-    def data_expand(self,paths,expand,top_k=20):
+    def data_expand(self,paths,expand,top_k=20,query=None,intent=None,token_budget=None):
+        if top_k < 1 or (token_budget is not None and token_budget < 1):
+            raise ValueError("expansion budgets must be positive")
         out={}
         for path in paths:
             if path not in self.pages and not self.hierarchy.has(path):
                 raise KeyError(f"unknown context path: {path}")
             page=self.pages.get(path)
-            item=self.eidx.expand(path,expand) if page else {}
+            item=self.eidx.expand(path,expand,top_k) if page else {}
             hierarchy=self.hierarchy.describe(path)
             for what in expand:
-                if what=="backrefs": item[what]=self.backrefs.get(path,[])[:top_k]
-                elif what=="lineage":
-                    item[what]={
-                        "outgoing":self.graph.neighbors(path,"out")[:top_k],
-                        "incoming":self.graph.neighbors(path,"in")[:top_k],
-                    }
-                elif what=="impact": item[what]=self.graph.impact(path)[:top_k]
-                elif what=="related":
-                    item[what]={
-                        "outgoing":self.graph.neighbors(path,"out")[:top_k],
-                        "incoming":self.graph.neighbors(path,"in")[:top_k],
-                    }
+                if what=="backrefs": item[what]=rich_relations(self,path,"related",top_k,intent)["incoming"]
+                elif what in {"lineage","related","impact"}:
+                    item[what]=rich_relations(self,path,"lineage" if what=="impact" else what,top_k,intent)
                 elif what=="parents": item[what]=hierarchy.get("parents",[])[:top_k]
                 elif what=="children": item[what]=hierarchy.get("children",[])[:top_k]
                 elif what=="hierarchy": item[what]=hierarchy
@@ -251,7 +234,45 @@ class ContextRetrievalService:
                 elif what=="candidates": item[what]=page.candidates if page else {}
                 elif what=="conflicts": item[what]=page.conflicts if page else []
                 elif what=="evidence": item[what]=self.data_source(path) if page else []
+            if page:
+                section_totals={key:len(value) for key,value in self.eidx.by_page.get(path,{}).items() if isinstance(value,list)}
+                item["section_totals"]=section_totals
+                if any(section_totals.get("important_fields" if key=="fields" else key,0)>top_k for key in expand):
+                    item["truncated"]=True
+                requested=["important_fields" if x=="fields" else x for x in expand]
+                if "business_mapping" in expand:
+                    requested += ["primary_objects","related_objects","object_attributes"]
+                item["support"]=support_facts(page,self.contexts[path],sections=requested)
+                if query:
+                    item["elements"]=self.eidx.search(query,[path],expand,top_k)
+                    for requested_section in expand:
+                        stored="important_fields" if requested_section=="fields" else requested_section
+                        focused=[e["value"] for e in item["elements"] if e["section"]==stored]
+                        if focused and isinstance(item.get(requested_section),list):
+                            item[requested_section]=focused
+                    for element in item["elements"]:
+                        element["evidence"]=self.data_source(path,element["section"])
+                for proof in item.get("support",[]):
+                    if section_totals.get(proof["section"],0)>top_k:
+                        proof["truncated"]=True
             out[path]=item
+        if token_budget is not None:
+            # Trim whole path payloads, then whole sections. Never cut an evidence assertion.
+            used=0
+            for path,item in list(out.items()):
+                accepted={}
+                for key,value in item.items():
+                    cost=_estimate_tokens(json.dumps({key:value},ensure_ascii=False))
+                    if used+cost <= token_budget:
+                        accepted[key]=value; used+=cost
+                    else:
+                        accepted["truncated"]=True
+                # A trimmed section cannot keep its support proof.
+                if "support" in accepted:
+                    accepted["support"]=[r for r in accepted["support"] if r["section"] in accepted or
+                        (r["section"]=="important_fields" and "fields" in accepted) or
+                        (r["section"] in {"primary_objects","related_objects","object_attributes"} and "business_mapping" in accepted)]
+                out[path]=accepted
         return out
 
     def data_source(self,path,section=None):

@@ -156,7 +156,9 @@ def test_managed_bundle_budget_novelty_and_resume_state():
     assert second.novelty["seen_skipped_count"] >= 1
     assert "seen_context" in second.truncation_reasons
     assert second.exploration_state["rounds"]==2
-    assert second.stop_reason=="no_new_context"
+    # Evidence-bearing hydration can require a further round under a small budget.
+    final=agent.explore("RSRP 有哪些现有模型可以提供？",top_k=1,token_budget=500,state=second.exploration_state)
+    assert final.stop_reason=="no_new_context"
 
     tiny=agent.explore("RSRP",top_k=1,token_budget=1)
     assert tiny.primary_contexts==[]

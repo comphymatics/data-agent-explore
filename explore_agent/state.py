@@ -10,7 +10,10 @@ class ExplorationState:
 
     index_version: str | None = None
     seen_context_ids: list[str] = field(default_factory=list)
-    coverage: dict[str, bool] = field(default_factory=dict)
+    coverage: dict[str, dict[str, Any]] = field(default_factory=dict)
+    serving_version: str | None = None
+    query_signature: str | None = None
+    environment_snapshot: str | None = None
     rounds: int = 0
     used_tokens: int = 0
     last_intent: str | None = None
