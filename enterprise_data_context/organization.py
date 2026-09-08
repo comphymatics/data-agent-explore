@@ -8,9 +8,16 @@ from .indexes.hierarchy import HierarchyIndex
 class SemanticOrganizationBuilder:
     """Build derived hierarchy views and an auditable association coverage report."""
 
-    def build(self, contexts):
+    def __init__(self, config=None, provider=None):
+        self.config, self.provider = config, provider
+
+    def build(self, contexts, previous=None):
         contexts = list(contexts)
-        hierarchy = HierarchyIndex().project(contexts)
+        hierarchy = (HierarchyIndex.from_dict(previous.to_dict(), previous.contexts.values())
+                     if previous is not None else HierarchyIndex(self.config, self.provider))
+        hierarchy.config = self.config or hierarchy.config
+        hierarchy.provider = self.provider
+        hierarchy.update(contexts)
         return {
             "hierarchy": hierarchy,
             "association_report": association_report(contexts, hierarchy),

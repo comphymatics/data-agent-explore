@@ -559,6 +559,38 @@
         "encoder_version",
         "coverage_version"
       ]
+    },
+    "retrieval_trace": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "enum": [
+            "direct",
+            "hierarchical",
+            "hybrid"
+          ]
+        },
+        "hierarchy_view": {
+          "enum": [
+            "analysis",
+            "domain",
+            "asset",
+            null
+          ]
+        },
+        "selected_branches": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "hierarchy_contexts": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
     }
   },
   "$defs": {

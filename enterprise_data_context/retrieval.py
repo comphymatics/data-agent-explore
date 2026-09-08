@@ -23,7 +23,8 @@ class ContextRetrievalService:
         self.hierarchy=compiled.get("hierarchy") or HierarchyIndex().project(compiled["contexts"])
         self.association_report=dict(compiled.get("association_report",{}))
         self.index_version=compiled.get("index_version") or "context-memory-"+sha256(json.dumps(
-            {"contexts":[asdict(c) for c in compiled["contexts"]],"coverage_declaration":compiled.get("coverage_declaration")},
+            {"contexts":[asdict(c) for c in compiled["contexts"]],"coverage_declaration":compiled.get("coverage_declaration"),
+             "organization":self.hierarchy.config,"hierarchy_edges":[{k:v for k,v in e.items() if k!="created_at"} for e in self.hierarchy.edges]},
             sort_keys=True,ensure_ascii=False).encode()).hexdigest()[:16]
         self.quality_issues=list(compiled.get("quality_issues",[]))
 
@@ -39,6 +40,8 @@ class ContextRetrievalService:
         read_content=None,
         max_per_type=None,
         intent=None,
+        mode="auto",
+        hierarchy=None,
     ):
         """
         Bundle retrieval:
@@ -65,6 +68,9 @@ class ContextRetrievalService:
         seen_paths={path for path in (seen_context_ids or []) if path in self.pages}
         seed_limit=min(len(self.pages),top_k+len(seen_paths)) if seen_paths else top_k
         seed_hits=self.pidx.search(query,types,scope,seed_limit)
+        from .hierarchical_retrieval import route, discover
+        retrieval_trace=route(self,query,mode,hierarchy,intent)
+        seed_hits=discover(self,query,retrieval_trace,seed_hits,seed_limit,types,scope)
         assembler=BundleAssembler()
         candidates=assembler.complete(self,seed_hits,intent,types,scope)
 
@@ -73,8 +79,22 @@ class ContextRetrievalService:
 
         ranked=assembler.rank(self,candidates,seed_hits)
         effective_content="auto" if token_budget is not None and read_content is None else read_content
-        type_counts=Counter(); hits=[]; serialized=[]; used_tokens=0
-        truncation_reasons=[]; seen_skipped=0
+        # Aggregate disclosure shares the hydration budget with canonical pages.
+        hierarchy_contexts=[]; aggregate_tokens=0
+        for context in retrieval_trace["hierarchy_contexts"]:
+            cost=_estimate_tokens(json.dumps(context,ensure_ascii=False))
+            if token_budget is not None and aggregate_tokens+cost > token_budget//4:
+                retrieval_trace["aggregate_truncated"]=True
+                from .materialization.aggregate_pages import read_aggregate
+                context=read_aggregate(self.hierarchy,context["path"],"L0",view=retrieval_trace["hierarchy_view"])
+                cost=_estimate_tokens(json.dumps(context,ensure_ascii=False))
+                if aggregate_tokens+cost > token_budget//4:
+                    continue
+            hierarchy_contexts.append(context); aggregate_tokens+=cost
+        retrieval_trace["hierarchy_contexts"]=hierarchy_contexts
+        type_counts=Counter(); hits=[]; serialized=[]; used_tokens=aggregate_tokens
+        truncation_reasons=["aggregate_disclosure_budget"] if retrieval_trace.get("aggregate_truncated") else []
+        seen_skipped=0
 
         def mark_truncated(reason):
             if reason not in truncation_reasons:
@@ -113,11 +133,12 @@ class ContextRetrievalService:
         novel_candidate_count=candidate_count-seen_skipped
         return {
             "query":query,
+            "retrieval_trace":retrieval_trace,
             "scope":scope or {},
             "contexts":serialized,
             "anchor_context_ids":[h.path for h in seed_hits[:top_k]],
             "anchor_candidates":[{"path":h.path,"name":h.name,"rank":i+1} for i,h in enumerate(seed_hits[:top_k])],
-            "retrieval_version":"page-serving/v3:"+self.pidx.mode+":"+getattr(self.pidx.encoder,"version","custom"),
+            "retrieval_version":"page-serving/v4:"+self.pidx.mode+":"+getattr(self.pidx.encoder,"version","custom"),
             "encoder_version":getattr(self.pidx.encoder,"version","custom"),
             "truncated":bool(truncation_reasons),
             "truncation_reasons":truncation_reasons,
@@ -184,6 +205,10 @@ class ContextRetrievalService:
         return None,0
 
     def data_read(self,path,level="L1",sections=None):
+        path=self.hierarchy.resolve_path(path)
+        if path not in self.pages and path in self.hierarchy.aggregate_pages:
+            from .materialization.aggregate_pages import read_aggregate
+            return read_aggregate(self.hierarchy,path,level,sections)
         if path not in self.pages:
             if self.hierarchy.has(path):
                 return {
@@ -218,11 +243,15 @@ class ContextRetrievalService:
             raise ValueError("expansion budgets must be positive")
         out={}
         for path in paths:
+            resolved_path=self.hierarchy.resolve_path(path)
+            if resolved_path != path:
+                out[path]=self.data_expand([resolved_path],expand,top_k,query,intent,token_budget)[resolved_path]
+                continue
             if path not in self.pages and not self.hierarchy.has(path):
                 raise KeyError(f"unknown context path: {path}")
             page=self.pages.get(path)
             item=self.eidx.expand(path,expand,top_k) if page else {}
-            hierarchy=self.hierarchy.describe(path)
+            hierarchy=self.hierarchy.navigation(path,top_k) if self.hierarchy.config.get("hierarchy_enabled",True) else {}
             for what in expand:
                 if what=="backrefs": item[what]=rich_relations(self,path,"related",top_k,intent)["incoming"]
                 elif what in {"lineage","related","impact"}:
@@ -230,6 +259,11 @@ class ContextRetrievalService:
                 elif what=="parents": item[what]=hierarchy.get("parents",[])[:top_k]
                 elif what=="children": item[what]=hierarchy.get("children",[])[:top_k]
                 elif what=="hierarchy": item[what]=hierarchy
+                elif what=="hierarchy_provenance" and self.hierarchy.config.get("hierarchy_enabled",True):
+                    item[what]=self.hierarchy.describe(path)
+                elif what=="aggregate" and path in self.hierarchy.aggregate_pages:
+                    from .materialization.aggregate_pages import read_aggregate
+                    item[what]=read_aggregate(self.hierarchy,path,"L2")
                 elif what=="association_report": item[what]=dict(self.association_report)
                 elif what=="business_mapping":
                     mapping={
@@ -270,7 +304,11 @@ class ContextRetrievalService:
             used=0
             for path,item in list(out.items()):
                 accepted={}
-                for key,value in item.items():
+                # Reserve evidence support before optional navigation/audit metadata.
+                # Support is subsequently removed if its content did not fit.
+                ordered_keys=sorted(item, key=lambda k:(0 if k=="support" else 2 if k in {"hierarchy","related","candidates","conflicts","hierarchy_provenance"} else 1))
+                for key in ordered_keys:
+                    value=item[key]
                     cost=_estimate_tokens(json.dumps({key:value},ensure_ascii=False))
                     if used+cost <= token_budget:
                         accepted[key]=value; used+=cost
@@ -285,6 +323,9 @@ class ContextRetrievalService:
         return out
 
     def data_source(self,path,section=None):
+        path=self.hierarchy.resolve_path(path)
+        if path not in self.contexts and path in self.hierarchy.aggregate_pages:
+            return [e for v in self.hierarchy.aggregate_pages[path]["views"].values() for e in v["L2"]["evidence"]]
         if path not in self.contexts:
             raise KeyError(f"unknown context path: {path}")
         c=self.contexts[path]

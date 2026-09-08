@@ -359,3 +359,32 @@ uv run --isolated --extra dev --extra dense python -m evaluation.scripts.run_ret
 See the [correctness report](evaluation/retrieval_golden/correctness-report.json).
 It uses real local embeddings and synthetic source/MetaOne fixtures, not live
 environment evidence. No LLM provider participates in this suite.
+
+## Semantic Hierarchy and Progressive Disclosure
+
+The existing organizer now produces Analysis, Domain and Asset views over shared
+Canonical Entities, with governed edge status and deterministic L0/L1/L2 aggregate
+pages. Explore supports direct, hierarchical and hybrid retrieval inside the same
+four read-only tools. See [implementation review](SEMANTIC_HIERARCHY_IMPLEMENTATION.md)
+and [contracts and governance](specs/semantic-hierarchy.md).
+
+```bash
+# Build from the agreed parser handoff with an explicit organization policy.
+uv run --isolated --extra dev python scripts/build_template_inputs.py \
+  --input source-materials/templates --out /tmp/context-with-hierarchy \
+  --hierarchy-config config/semantic-hierarchy.sample.json
+
+# Rebuild organization over a pinned snapshot; no raw parsing or canonical edits.
+uv run --isolated --extra dev python scripts/build_hierarchy.py \
+  --snapshot /tmp/context-with-hierarchy --out /tmp/context-reorganized \
+  --config config/semantic-hierarchy.sample.json
+
+# Separate synthetic ablation; does not change the official four-system benchmark.
+uv run --isolated --extra dev python -m evaluation.hierarchy.run \
+  --out /tmp/hierarchy-ablation
+```
+
+The sample taxonomy is illustrative. LLM classification is off by default; opt-in
+requires `llm_enabled` and `scripts/build_hierarchy.py --llm-config` using the existing
+provider configuration. Synthetic gates and ablation do not establish live accuracy
+or environment availability.

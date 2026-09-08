@@ -244,3 +244,29 @@ def _compatible_types(environment_type: str, reference_type: str) -> bool:
 
 def _normalize(value: Any) -> str:
     return re.sub(r"[\W_]+", "", str(value or "").lower(), flags=re.UNICODE)
+
+
+def aggregate_availability(retrieval_trace, binding_overlay):
+    """Decorate disclosed aggregates using only already-verified Binding V3 identities.
+
+    Summary scope is the model lists disclosed in L1; undisclosed members remain
+    unknown. This projection never writes an environment state into the snapshot.
+    """
+    from copy import deepcopy
+    trace = deepcopy(retrieval_trace)
+    identities = binding_overlay.get("identity_bindings", [])
+    for page in trace.get("hierarchy_contexts", []):
+        if page.get("level") != "L1":
+            continue
+        for content in page.get("content", {}).values():
+            models = set(content.get("logical_models", []) + content.get("physical_models", []))
+            matches = [row for row in identities if row["reference_path"] in models]
+            available = {row["reference_path"] for row in matches}
+            total = sum(content.get("model_counts", {}).values())
+            content["environment_availability"] = {
+                "status": "PARTIALLY_VERIFIED" if available else "UNRESOLVED",
+                "scope": "DISCLOSED_MEMBERS_WITH_BINDING_V3", "complete": False,
+                "counts": {"available_verified": len(available), "identity_unverified": total - len(available)},
+                "identity_bindings": matches,
+            }
+    return trace

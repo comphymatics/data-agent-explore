@@ -29,33 +29,23 @@ not be interpreted as a governed modeling Topic. Confirmed `part_of` references
 derive the parent/child hierarchy. A missing or candidate parent does not enter the
 formal hierarchy.
 
-## 3. Model classification hierarchy
+## 3. Multiple semantic organization views
 
-The governed hierarchy is:
+This section is superseded by [Semantic Hierarchy](semantic-hierarchy.md),
+[Progressive Disclosure](progressive-disclosure.md) and
+[Hierarchical Retrieval](hierarchical-retrieval.md).
 
-```text
-Layer -> Domain -> Topic/Subobject -> Logical/Physical Model
-```
+Layer, Domain and Topic no longer form one forced tree. Asset View organizes by
+layer and models; Domain View organizes by domain/topic/objects; Analysis View
+organizes scenarios/purposes/metrics/models. A Canonical Entity may appear in all
+three, with sparse levels and multiple organizational parents.
 
-- `ODS` uses source type as its domain policy.
-- `SDL` uses controlled topic domain and topic.
-- `ODI` uses controlled object domain and subobject.
-- `ADS` uses application scenario.
+Virtual groups use `data://views/<view>/<kind>/<label>`; old
+`hierarchy://models/...` URIs resolve to their respective view groups. Fields stay
+in ElementIndex with a bounded important-element preview, not new Rich Pages.
 
-The hierarchy uses only canonical classification sections. Raw aliases remain in
-`classification.*_raw`. Unrecognized domain/topic values remain candidates and do
-not create `hierarchy://` nodes.
-
-Virtual paths are deterministic and percent-encoded, for example:
-
-```text
-hierarchy://models/ODI
-hierarchy://models/ODI/%E7%BD%91%E7%BB%9C%E5%AF%B9%E8%B1%A1
-hierarchy://models/ODI/%E7%BD%91%E7%BB%9C%E5%AF%B9%E8%B1%A1/%E5%B0%8F%E5%8C%BA
-```
-
-Fields remain Elements inside model Pages and are returned through focused
-`data_expand(..., ["fields"])`. They are not promoted to graph nodes by default.
+CONFIRMED/DERIVED organization navigates with provenance; CANDIDATE placements are
+separate audited overlay records. No placement is promoted into Canonical facts.
 
 ## 4. Typed relationship graph
 
@@ -87,8 +77,9 @@ resolution, `SemanticOrganizationBuilder` derives:
 - `association_report`;
 - per-Page breadcrumb, parent and child views.
 
-The hierarchy and graph are rebuildable runtime views. The association report is
-also persisted as `association-report.json` for review and release evidence.
+The graph remains rebuildable. Hierarchy contributions, candidate audits, aggregates
+and incremental dependencies are persisted in `semantic-organization.json`, so
+reload never reruns inference. The association report is persisted separately.
 
 The four stable read-only tools are unchanged:
 
@@ -120,7 +111,7 @@ silently rewrite source data.
 Acceptance requires:
 
 1. candidate or inferred identities/edges never enter formal indexes or graph;
-2. unknown model classifications never create formal hierarchy nodes;
+2. missing model semantics remain unclassified; candidates never navigate as facts;
 3. Page breadcrumbs and virtual hierarchy reads are deterministic after snapshot
    save/load;
 4. cross-source edge coverage is measured, not fabricated when source materials are

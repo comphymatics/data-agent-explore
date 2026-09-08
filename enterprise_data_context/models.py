@@ -159,6 +159,7 @@ class ContextBundle:
     focused_expansion: dict[str, Any] = field(default_factory=dict)
     telemetry: dict[str, Any] = field(default_factory=dict)
     reasoning_observations: list[dict[str, Any]] = field(default_factory=list)
+    retrieval_trace: dict[str, Any] = field(default_factory=dict)
 
 def dump(obj):
     return asdict(obj)

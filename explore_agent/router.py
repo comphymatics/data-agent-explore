@@ -42,6 +42,13 @@ class QueryRouter:
 
     def route(self,query):
         q=query.lower(); scope=classification_scope(query)
+        # A broad business question may mention an object (e.g. 小区) whose name
+        # is also a taxonomy alias. That does not request its inferred warehouse
+        # layer as a hard filter. Explicit modeling-scope questions still use it.
+        if ("数据" in query or "data" in q) and not any(
+            word in q for word in ("主题", "分层", "domain", "topic", "ods", "sdl", "odi", "ads", "dwd", "dws")
+        ):
+            scope={k:v for k,v in scope.items() if k not in {"layer", "topic_domain", "topic"}}
         for t in KNOWN_TECH:
             if t.lower() in q: scope["technology"]=t; break
         if "地铁" in query or "metro" in q: scope["scenario"]="metro"

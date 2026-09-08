@@ -31,9 +31,11 @@ class PageMaterializer:
         confirmed=[r for r in ctx.references if r.status=="CONFIRMED" and r.target_path]
         if confirmed:
             lines += ["","## References"] + [f"- {r.relation}: {r.target_path}" for r in confirmed]
-        breadcrumb=hierarchy.get("breadcrumb",[])
-        if len(breadcrumb)>1:
-            lines += ["","## Hierarchy", " > ".join(row["name"] for row in breadcrumb)]
+        for view, breadcrumb in hierarchy.get("breadcrumbs", {}).items():
+            if len(breadcrumb)>1:
+                statuses=sorted({e["status"] for e in hierarchy.get("parents", []) if e.get("active") and e["hierarchy_id"]==view})
+                lines += ["",f"## Organization: {view} ({'/'.join(statuses)})",
+                          " > ".join(row["name"] for row in breadcrumb)]
         facet_sections={
             "layer":"classification.layer", "topic_domain":"topic_domain", "topic":"topic",
             "grain":"grain", "primary_objects":"primary_objects",

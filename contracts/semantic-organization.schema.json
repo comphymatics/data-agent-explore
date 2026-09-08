@@ -1,0 +1,397 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Semantic organization snapshot",
+  "type": "object",
+  "required": [
+    "version",
+    "config",
+    "contributions",
+    "inference_audit",
+    "aggregate_pages",
+    "dependencies",
+    "hashes",
+    "config_hash",
+    "history"
+  ],
+  "properties": {
+    "version": {
+      "const": "semantic-hierarchy/v1"
+    },
+    "config": {
+      "type": "object",
+      "required": [
+        "version"
+      ]
+    },
+    "contributions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "edges",
+          "nodes"
+        ],
+        "properties": {
+          "edges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/edge"
+            }
+          },
+          "nodes": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "aggregate_pages": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "path",
+          "kind",
+          "L0",
+          "views",
+          "member_fingerprints"
+        ],
+        "properties": {
+          "kind": {
+            "const": "aggregate-context"
+          },
+          "L0": {
+            "type": "string"
+          },
+          "views": {
+            "type": "object",
+            "propertyNames": {
+              "enum": [
+                "analysis",
+                "domain",
+                "asset"
+              ]
+            },
+            "additionalProperties": {
+              "type": "object",
+              "required": [
+                "L0",
+                "L1",
+                "L2"
+              ],
+              "properties": {
+                "L0": {
+                  "type": "string"
+                },
+                "L1": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "primary_objects",
+                    "core_metrics",
+                    "core_dimensions",
+                    "main_purposes",
+                    "logical_models",
+                    "physical_models",
+                    "child_groups",
+                    "environment_availability",
+                    "placement_counts",
+                    "member_count"
+                  ],
+                  "properties": {
+                    "member_count": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "environment_availability": {
+                      "type": "object",
+                      "required": [
+                        "status",
+                        "counts",
+                        "scope",
+                        "complete"
+                      ]
+                    }
+                  }
+                },
+                "L2": {
+                  "type": "object",
+                  "required": [
+                    "members",
+                    "relations",
+                    "evidence",
+                    "hierarchy_provenance",
+                    "classification_conflicts",
+                    "unclassified_members",
+                    "candidate_placements"
+                  ],
+                  "properties": {
+                    "members": {
+                      "type": "array",
+                      "uniqueItems": true,
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "relations": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/edge"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "history": {
+      "type": "array"
+    }
+  },
+  "$defs": {
+    "edge": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "HierarchyEdge",
+      "type": "object",
+      "required": [
+        "hierarchy_id",
+        "parent_id",
+        "child_id",
+        "relation",
+        "status",
+        "confidence",
+        "provenance",
+        "evidence",
+        "inference_version",
+        "created_at"
+      ],
+      "properties": {
+        "hierarchy_id": {
+          "enum": [
+            "analysis",
+            "domain",
+            "asset"
+          ]
+        },
+        "parent_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "child_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relation": {
+          "const": "organized_under"
+        },
+        "status": {
+          "enum": [
+            "CONFIRMED",
+            "DERIVED",
+            "CANDIDATE"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "inference_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "source"
+            ],
+            "properties": {
+              "source": {
+                "type": "object",
+                "required": [
+                  "source_id",
+                  "path"
+                ],
+                "properties": {
+                  "source_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "provenance": {
+          "type": "object",
+          "required": [
+            "method",
+            "source_ids"
+          ],
+          "properties": {
+            "method": {
+              "enum": [
+                "explicit",
+                "domain_rule",
+                "metadata_inference",
+                "neighbor_inference",
+                "llm_inference"
+              ]
+            },
+            "source_ids": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "rule_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "input_facts": {
+              "type": "array",
+              "minItems": 1
+            },
+            "inference": {
+              "type": "object",
+              "required": [
+                "candidate_set",
+                "selected",
+                "confidence",
+                "supporting_features",
+                "supporting_context_ids",
+                "model",
+                "prompt_version"
+              ],
+              "properties": {
+                "candidate_set": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "selected": {
+                  "type": "string"
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "supporting_features": {
+                  "type": "object"
+                },
+                "supporting_context_ids": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "model": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "prompt_version": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "CONFIRMED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "provenance": {
+                "properties": {
+                  "method": {
+                    "const": "explicit"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "DERIVED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "provenance": {
+                "required": [
+                  "rule_id",
+                  "input_facts"
+                ],
+                "properties": {
+                  "method": {
+                    "const": "domain_rule"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "CANDIDATE"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "provenance": {
+                "required": [
+                  "inference"
+                ],
+                "properties": {
+                  "method": {
+                    "enum": [
+                      "metadata_inference",
+                      "neighbor_inference",
+                      "llm_inference"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

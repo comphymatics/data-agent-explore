@@ -16,13 +16,13 @@ from .classification import normalize_context_classification
 from .organization import SemanticOrganizationBuilder
 
 class ContextCompiler:
-    def __init__(self,semantic_provider=None):
+    def __init__(self,semantic_provider=None,hierarchy_config=None,hierarchy_provider=None):
         self.rule=RuleExtractor()
         self.heuristic=HeuristicExtractor()
         self.semantic=SemanticExtractor(semantic_provider)
         self.mapper=BusinessSemanticMapper()
         self.materializer=PageMaterializer()
-        self.organization=SemanticOrganizationBuilder()
+        self.organization=SemanticOrganizationBuilder(hierarchy_config, hierarchy_provider)
 
     def compile(self,sources):
         """Compatibility entrypoint: parse registered sources, then compile downstream."""
@@ -52,7 +52,7 @@ class ContextCompiler:
         compiled["delivery_report"] = batch["delivery_report"]
         return compiled
 
-    def compile_fragments(self, fragments, documents=None, sources=None):
+    def compile_fragments(self, fragments, documents=None, sources=None, previous_compiled=None):
         """
         Compile normalized internal ContextFragment IR.
 
@@ -92,10 +92,11 @@ class ContextCompiler:
                 "lineage":bool(c.sections.get("lineage.upstream") or c.sections.get("lineage.downstream")),
             }
 
-        organization=self.organization.build(list(contexts.values()))
+        organization=self.organization.build(list(contexts.values()),
+            previous=previous_compiled.get("hierarchy") if previous_compiled else None)
         hierarchy=organization["hierarchy"]
         pages=[
-            self.materializer.materialize(c,hierarchy=hierarchy.describe(c.path))
+            self.materializer.materialize(c,hierarchy=hierarchy.describe(c.path) if hierarchy.config.get("hierarchy_enabled",True) else {})
             for c in contexts.values()
         ]
         pidx=PageIndex(); eidx=ElementIndex()
@@ -107,7 +108,7 @@ class ContextCompiler:
             "hierarchy":hierarchy,
             "association_report":organization["association_report"],
             "backrefs":build_backrefs(list(contexts.values())),
-            "quality_issues":validate_contexts(list(contexts.values())),
+            "quality_issues":validate_contexts(list(contexts.values())) + hierarchy.validate(),
             "coverage_declaration": {
                 "status": "UNKNOWN",
                 "scope": "unspecified",

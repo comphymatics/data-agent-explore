@@ -45,8 +45,11 @@ def assert_publishable(compiled):
 
 def save_compiled(compiled, out_dir):
     """Write an immutable version directory, then atomically move latest.json."""
-    assert_publishable(compiled)
     hierarchy = compiled.get("hierarchy") or HierarchyIndex().project(compiled["contexts"])
+    hierarchy_errors = [i for i in hierarchy.validate() if i.get("severity") == "error"]
+    if hierarchy_errors:
+        raise QualityGateError("hierarchy quality errors: " + ", ".join(i["code"] for i in hierarchy_errors))
+    assert_publishable(compiled)
     associations = compiled.get("association_report") or association_report(
         compiled["contexts"], hierarchy
     )
@@ -62,14 +65,15 @@ def save_compiled(compiled, out_dir):
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     canonical_payload = {
-        "contexts": [asdict(x) for x in compiled["contexts"]],
-        "pages": [asdict(x) for x in compiled["pages"]],
+        "contexts": [asdict(x) for x in sorted(compiled["contexts"], key=lambda c:c.canonical_id)],
+        "pages": [asdict(x) for x in sorted(compiled["pages"], key=lambda p:p.path)],
         "source_fingerprints": compiled.get("source_fingerprints", {}),
         "coverage_declaration": coverage_declaration,
         "delivery_report": delivery_report,
+        "semantic_organization": hierarchy.to_dict(),
     }
     content_hash = sha256(
-        json.dumps(canonical_payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
+        json.dumps(_without_build_times(canonical_payload), ensure_ascii=False, sort_keys=True).encode("utf-8")
     ).hexdigest()
     index_version = f"context-{content_hash[:16]}"
     version_dir = out / "versions" / index_version
@@ -88,6 +92,7 @@ def save_compiled(compiled, out_dir):
             _write_json(version_dir / "pages" / f"{safe(page.canonical_id)}.json", asdict(page))
         _write_json(version_dir / "quality.json", compiled["quality_issues"])
         _write_json(version_dir / "association-report.json", associations)
+        _write_json(version_dir / "semantic-organization.json", hierarchy.to_dict())
         if delivery_report:
             _write_json(version_dir / "delivery-report.json", delivery_report)
         if inference_runs:
@@ -174,10 +179,14 @@ def load_compiled(in_dir, index_version=None):
         element_index.add(page)
 
     graph = BackendGraph().project(contexts)
-    hierarchy = HierarchyIndex().project(contexts)
+    organization_file = snapshot / "semantic-organization.json"
+    hierarchy = (HierarchyIndex.from_dict(_read_json(organization_file), contexts)
+                 if organization_file.exists() else HierarchyIndex().project(contexts))
+    errors = [i for i in hierarchy.validate() if i.get("severity") == "error"]
+    if errors:
+        raise QualityGateError("invalid saved hierarchy: " + ", ".join(i["code"] for i in errors))
     for page in pages:
-        if not page.hierarchy:
-            page.hierarchy = hierarchy.describe(page.path)
+        page.hierarchy = hierarchy.describe(page.path) if hierarchy.config.get("hierarchy_enabled",True) else {}
     return {
         "documents": documents,
         "fragments": fragments,
@@ -269,3 +278,13 @@ def _context_from_dict(data):
 
 def _page_from_dict(data):
     return ContextPage(**data)
+
+
+def _without_build_times(value):
+    """Creation timestamps are audit metadata, excluded from semantic snapshot identity."""
+    if isinstance(value, dict):
+        is_edge = value.get("relation") == "organized_under" and "hierarchy_id" in value and "edge_id" in value
+        return {k: _without_build_times(v) for k, v in value.items() if not (is_edge and k == "created_at")}
+    if isinstance(value, list):
+        return [_without_build_times(v) for v in value]
+    return value

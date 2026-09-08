@@ -1,3 +1,4 @@
+from .binding import aggregate_availability
 from hashlib import sha256
 import json
 from .coverage import assess, infer_requirements, validate_requirements, requirement, missing_requirements, summarize_coverage
@@ -29,7 +30,7 @@ class ExploreAgent:
         self.reasoner=JointReasoner(semantic_provider,semantic_limits)
         self.environment=environment_adapter or NullEnvironmentBindingAdapter()
 
-    def explore(self,query,top_k=None,token_budget=None,state=None,requirements=None):
+    def explore(self,query,top_k=None,token_budget=None,state=None,requirements=None,mode="auto",hierarchy=None):
         if not isinstance(query,str) or not query.strip():
             raise ValueError("query must be a non-empty string")
         explicit_requirements=validate_requirements(requirements) if requirements is not None else None
@@ -38,7 +39,7 @@ class ExploreAgent:
         tools=MeteredTools(self.tools)
         policy=self.planner.plan(intent,top_k=top_k,token_budget=token_budget)
         previous_state=ExplorationState.from_value(state)
-        query_signature=sha256(json.dumps([query,scope,intent,route["entities"],route["aspects"],explicit_requirements],sort_keys=True,ensure_ascii=False).encode()).hexdigest()
+        query_signature=sha256(json.dumps([query,scope,intent,route["entities"],route["aspects"],explicit_requirements,mode,hierarchy],sort_keys=True,ensure_ascii=False).encode()).hexdigest()
         if previous_state.query_signature and previous_state.query_signature != query_signature:
             raise ValueError("exploration state query/requirements mismatch")
         env_required=environment_required(intent,query) or environment_required(self.router.intent(query),query) or any(r["layer"]=="ENVIRONMENT" for r in (explicit_requirements or []))
@@ -81,6 +82,8 @@ class ExploreAgent:
             read_content=policy.read_content,
             max_per_type=policy.max_contexts_per_type,
             intent=intent,
+            mode=mode,
+            hierarchy=hierarchy,
         )
         current_version=search.get("index_version")
         if (
@@ -260,6 +263,7 @@ class ExploreAgent:
             anchor_context_ids=search.get("anchor_context_ids",[]),
             focused_expansion=expansions,
             telemetry=telemetry,
+            retrieval_trace=aggregate_availability(search.get("retrieval_trace",{}),binding_overlay),
             reasoning_observations=self.reasoner.observations,
             primary_contexts=[{
                 "path":h["path"],"type":h["context_type"],"name":h["name"],

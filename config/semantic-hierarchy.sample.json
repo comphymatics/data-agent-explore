@@ -1,0 +1,44 @@
+{
+  "version": "synthetic-organization/v1",
+  "confidence_threshold": 0.8,
+  "hierarchy_enabled": true,
+  "inference_enabled": true,
+  "llm_enabled": false,
+  "taxonomy": [
+    {
+      "id": "coverage",
+      "view": "domain",
+      "kind": "topic",
+      "label": "无线覆盖",
+      "features": {
+        "metrics": [
+          "RSRP"
+        ]
+      }
+    },
+    {
+      "id": "billing",
+      "view": "domain",
+      "kind": "topic",
+      "label": "账单",
+      "features": {
+        "metrics": [
+          "AMOUNT"
+        ]
+      }
+    }
+  ],
+  "rules": [
+    {
+      "id": "synthetic-lte-rsrp/v1",
+      "selected": "coverage",
+      "when": {
+        "technology": "LTE",
+        "metrics": [
+          "RSRP"
+        ]
+      },
+      "confidence": 0.95
+    }
+  ]
+}

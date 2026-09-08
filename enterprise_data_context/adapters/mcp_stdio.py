@@ -29,6 +29,8 @@ TOOL_DEFINITIONS = [
             "type": "object",
             "properties": {
                 "query": {"type": "string", "minLength": 1},
+                "mode": {"enum": ["auto", "direct", "hierarchical", "hybrid"], "default": "auto"},
+                "hierarchy": {"enum": ["analysis", "domain", "asset"]},
                 "scope": {
                     "type": "object",
                     "description": "Keyed retrieval scope; governed model facets use formal ODS/SDL/ODI/ADS values.",
@@ -63,7 +65,7 @@ TOOL_DEFINITIONS = [
         "name": "data_read",
         "title": "Read a Rich Context Page",
         "description": (
-            "Read one context page at L0, L1, or selected L2 sections. A hierarchy:// "
+            "Read one context or data://views aggregate page at L0, L1, or selected L2 sections. A hierarchy:// "
             "path returns the derived classification node and its browse context."
         ),
         "inputSchema": {

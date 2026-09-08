@@ -6,7 +6,7 @@ import sys
 from jsonschema import Draft202012Validator
 
 from enterprise_data_context.compiler import ContextCompiler
-from enterprise_data_context.indexes.hierarchy import hierarchy_path
+from enterprise_data_context.indexes.hierarchy import hierarchy_path, view_path
 from enterprise_data_context.models import ContextFragment, Evidence, SourceLocation, TypedReference
 from enterprise_data_context.persistence import save_compiled
 from enterprise_data_context.runtime import from_compiled, load_runtime
@@ -90,11 +90,9 @@ def test_semantic_hierarchy_and_cross_source_association_report():
     ]
 
     model_root = hierarchy_path("models", "ODI")
-    topic_path = hierarchy_path("models", "ODI", "网络对象", "小区")
+    topic_path = view_path("domain", "topic", "小区")
     assert hierarchy.has(model_root)
-    assert {row["node"]["path"] for row in hierarchy.describe(topic_path)["children"]} == {
-        logical.path, physical.path,
-    }
+    assert {logical.path, physical.path} <= hierarchy.descendants(topic_path, "domain")
     assert logical.path in {row["node"]["path"] for row in hierarchy.describe(physical.path)["parents"]}
 
     report = compiled["association_report"]
@@ -130,9 +128,10 @@ def test_read_only_tools_expand_real_and_virtual_hierarchy_nodes():
 
     model_root = hierarchy_path("models", "ODI")
     virtual = tools.data_read(model_root)
-    assert virtual["level"] == "HIERARCHY"
+    assert virtual["level"] == "L1"
+    assert virtual["content"]["asset"]["model_counts"]["physical_models"] == 1
     children = tools.data_expand([model_root], ["children"])[model_root]["children"]
-    assert children[0]["node"]["name"] == "网络对象"
+    assert {row["node"]["kind"] for row in children} <= {"logical-model", "physical-model"}
 
     search = tools.data_search("High-speed Railway", top_k=1)
     assert search["association_summary"]["cross_source_confirmed_count"] == 3
@@ -159,9 +158,9 @@ def test_hierarchy_and_association_report_survive_snapshot_reload(tmp_path):
         if context.name == "dws_cell_coverage"
     )
     hierarchy = runtime.retrieval.data_read(physical.path)["hierarchy"]
-    assert [row["name"] for row in hierarchy["breadcrumb"]][0:3] == [
-        "ODI", "网络对象", "小区",
-    ]
+    assert hierarchy["breadcrumbs"]["asset"][0]["name"] == "ODI"
+    domain_parent_names = {row["node"]["name"] for row in hierarchy["parents"] if row["hierarchy_id"] == "domain"}
+    assert {"网络对象", "小区"} <= domain_parent_names
 
 
 def test_offline_semantic_visualization_embeds_governed_snapshot(tmp_path):
