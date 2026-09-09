@@ -87,3 +87,22 @@ def edge_errors(edge):
         if not audit.get("supporting_context_ids") or not audit.get("prompt_version"):
             errors.append("missing_inference_support")
     return errors
+
+# Explicit sparse skips are allowed; reverse and unrelated kinds are not.
+TAXONOMY_TRANSITIONS = {
+    "domain": {"business-category": ["data-domain", "topic-domain", "topic"],
+        "data-domain": ["topic-domain", "topic"], "topic-domain": ["topic"],
+        "topic": ["business-object", "sub-object", "logical-model", "physical-model"],
+        "business-object": ["sub-object", "logical-model", "physical-model"],
+        "sub-object": ["logical-model", "physical-model"], "logical-model": ["physical-model"]},
+    "analysis": {"topic": ["scenario", "analysis-purpose"], "scenario": ["analysis-purpose"],
+        "analysis-purpose": ["metric", "dimension", "business-object", "logical-model", "physical-model"],
+        "metric": ["logical-model", "physical-model"], "dimension": ["logical-model", "physical-model"],
+        "business-object": ["logical-model", "physical-model"], "logical-model": ["physical-model"]},
+    "asset": {"layer": ["logical-model", "physical-model"], "logical-model": ["physical-model"],
+        "physical-model": ["element"]},
+}
+HARDENING_VERSION = "retrieval-hardening/v1.2"
+BRANCH_RETRIEVAL_DEFAULTS = {"branch_k": 3, "entity_candidate_k": 50,
+    "max_entities_examined_per_branch": 100, "bundle_k": 8}
+ARBITRATION_DEFAULTS = {"enabled": True, "confidence_threshold": .8, "max_views": 2, "branch_k": 3}

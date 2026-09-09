@@ -71,8 +71,11 @@ def strategy(query, intent=None, scope=None, anchor_types=None, aspects=None, mo
     views = list(dict.fromkeys(views))[:2] if selected != "direct" else []
     if mode != "auto":
         reasons.append("explicit_mode_override")
+    confidence = .99 if anchors else .95 if hierarchy or intent in INTENT_VIEWS or scope.get("layer") else .75
+    if preferred and not anchors and not hierarchy:
+        confidence = min(confidence, preferred["confidence"])
     return validate_strategy({"mode": selected, "hierarchy_views": views,
-        "primary_view": views[0] if views else None, "confidence": .99 if anchors else .95 if hierarchy or intent in INTENT_VIEWS or scope.get("layer") else .75,
+        "primary_view": views[0] if views else None, "confidence": confidence,
         "reasons": list(dict.fromkeys(reasons)) or ["direct_override"]})
 
 

@@ -72,6 +72,8 @@ class HierarchyIndex:
         self.contexts = {}
         self.aggregate_pages = {}
         self.aggregate_terms = {}
+        self.branch_membership = {}
+        self.branch_previews = {}
         self.branch_postings = {v: defaultdict(set) for v in VIEWS}
         self.dependencies = {}
         self.inference_audit = {}
@@ -96,7 +98,8 @@ class HierarchyIndex:
         changed = {p for p in set(previous_hashes) | set(hashes) if previous_hashes.get(p) != hashes.get(p)}
         inference_config = {k: v for k, v in self.config.items() if k not in {
             "taxonomy_nodes", "taxonomy_edges", "routing_policy_version", "aggregate_materialization_version",
-            "aggregate_index_version", "branch_retrieval", "branch_k", "hierarchy_enabled", "candidate_branch_weight"}}
+            "aggregate_index_version", "branch_retrieval", "branch_k", "hierarchy_enabled", "candidate_branch_weight",
+            "hierarchy_retrieval", "view_arbitration", "mention_index_version", "hardening_version", "taxonomy_transitions"}}
         inference_hash = fingerprint(inference_config)
         if inference_hash != getattr(self, "_inference_hash", None):
             changed |= set(current)
@@ -331,8 +334,12 @@ class HierarchyIndex:
                     for prev in previous:
                         if view == "analysis" and {previous_kind,kind} <= {"metric","dimension"}:
                             continue
+                        supported = self._pair_supported(view, prev, p)
+                        if self.config["co_classification_guard"] and len(previous) > 1 and len(parents) > 1 and not supported:
+                            continue
                         self._record(context.path, view, prev, p, "DERIVED", previous_proofs + proofs,
-                            source_relation="co_classification", method="domain_rule", rule_id="co-classification-navigation/v1",
+                            source_relation="co_classification", method="domain_rule", rule_id=self.config["co_classification_guard_version"],
+                            parent_cardinality=len(previous), child_cardinality=len(parents), pair_supported=supported,
                             input_facts=[{"context": context.path, "parent": prev, "child": p}], confidence=.95)
                 if parents:
                     previous, previous_proofs, previous_kind = parents, proofs, kind
@@ -353,6 +360,21 @@ class HierarchyIndex:
                         [asdict(e) for e in context.evidence.get("important_fields", [])],
                         source_relation="important_fields", method="domain_rule", rule_id="important-element-projection/v1",
                         input_facts=[{"context": context.path, "section": "important_fields", "value": label[0]}])
+
+    def _pair_supported(self, view, parent, child):
+        if any(e["hierarchy_id"] == view and e["parent_id"] == parent and e["child_id"] == child
+               for e in self.contributions.get("@taxonomy", {}).get("edges", [])):
+            return True
+        for source, target in ((parent, child), (child, parent)):
+            context = self.contexts.get(source)
+            for ref in context.references if context else ():
+                if ref.status != "CONFIRMED" or ref.target_path != target or not ref.evidence:
+                    continue
+                for relation_view, direction in RELATION_VIEWS.get(ref.relation, ()):
+                    a, b = (source, target) if direction == "forward" else (target, source)
+                    if relation_view == view and (a, b) == (parent, child):
+                        return True
+        return False
 
     def _build_tags(self, context):
         if context.section_status.get("tags", "EXPLICIT") != "EXPLICIT":
@@ -442,8 +464,14 @@ class HierarchyIndex:
         for view, terms in self.aggregate_terms.pop(path, {}).items():
             for term in terms:
                 self.branch_postings[view][term].discard(path)
+        self.branch_membership.pop(path, None)
+        self.branch_previews.pop(path, None)
         if page is None:
             return
+        members = tuple(dict.fromkeys(([page["canonical_ref"]] if page.get("canonical_ref") else []) + page["member_refs"]))
+        self.branch_membership[path] = frozenset(members)
+        # Offline deterministic fallback; query never walks all member_refs.
+        self.branch_previews[path] = members[:1000]
         self.aggregate_terms[path] = {}
         for view, content in page["views"].items():
             terms = set(toks(content["L0"]))
@@ -546,6 +574,12 @@ class HierarchyIndex:
         for edge in self.config.get("taxonomy_edges", []):
             known_evidence.update(json.dumps(e, sort_keys=True) for e in edge["evidence"])
         for e in self.edges:
+            provenance = e.get("provenance", {})
+            if (self.config["co_classification_guard"] and e["status"] == "DERIVED" and
+                provenance.get("source_relation") == "co_classification" and
+                provenance.get("parent_cardinality", 2) > 1 and provenance.get("child_cardinality", 2) > 1 and
+                not self._pair_supported(e["hierarchy_id"], e["parent_id"], e["child_id"])):
+                issues.append({"severity": "error", "code": "ambiguous_derived_edge", "edge_id": e["edge_id"]})
             for endpoint in (e["parent_id"], e["child_id"]):
                 if endpoint in self.nodes and e["hierarchy_id"] not in self.config["applicable_views"].get(self.nodes[endpoint]["kind"], []):
                     issues.append({"severity": "error", "code": "entity_placed_in_non_applicable_view", "context": endpoint})
@@ -581,6 +615,9 @@ class HierarchyIndex:
         exclusive = {(slot["view"],slot["kind"]) for slot in self.config.get("exclusive_slots", [])}
         issues.extend({"severity": "error" if c["code"]=="conflicting_confirmed_placement" and (c["hierarchy_id"],c["kind"]) in exclusive else "warning", **c} for c in self.conflicts)
         for p, page in self.aggregate_pages.items():
+            members = frozenset(page["member_refs"]) | ({page["canonical_ref"]} if page.get("canonical_ref") else set())
+            if self.branch_membership.get(p) != members or self.branch_previews.get(p) != tuple(dict.fromkeys(([page["canonical_ref"]] if page.get("canonical_ref") else []) + page["member_refs"]))[:1000]:
+                issues.append({"severity": "error", "code": "branch_member_index_stale", "path": p})
             if p in self.contexts:
                 issues.append({"severity": "error", "code": "page_path_collision", "path": p})
             if p != page["path"] or not p.startswith("data://views/" + page["hierarchy_view"] + "/") or set(page["views"]) != {page["hierarchy_view"]}:
@@ -610,6 +647,8 @@ class HierarchyIndex:
         if value["config_hash"] != fingerprint(value["config"]):
             raise ValueError("organization config fingerprint mismatch")
         index = cls(value["config"])
+        if index.config != value["config"]:
+            raise ValueError("retrieval_policy_version_mismatch; rebuild snapshot")
         index.contexts = {c.path: c for c in contexts if c.identity_status not in {"INFERRED", "CANDIDATE"}}
         index.contributions = value["contributions"]
         index.nodes = {p: {"path": p, "name": c.name, "kind": c.context_type, "virtual": False, "facets": {k:c.sections[k] for k in ("topic_domain", "topic", "classification.layer") if k in c.sections}}

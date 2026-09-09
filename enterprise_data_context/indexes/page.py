@@ -1,6 +1,7 @@
 import re, math
 from collections import defaultdict, Counter
 from enterprise_data_context.models import SearchHit
+from .mention import MentionVocabulary, normalize, StablePosting
 
 FACET_ALIASES={
     "classification.layer":"layer", "domain":"topic_domain",
@@ -32,44 +33,76 @@ class PageIndex:
         self.pages={}
         self.docs={}
         self.df=Counter()
-        self.exact=defaultdict(set)
+        self.exact=defaultdict(StablePosting)
+        self.mentions = MentionVocabulary()
+        self.page_keys = {}
+        self.postings = defaultdict(StablePosting)
+        self.doc_lengths = {}
+        self.total_length = 0
 
     def remove(self, path):
         for token in self.docs.pop(path, {}):
             self.df[token] -= 1
-        for paths in self.exact.values():
-            paths.discard(path)
+            self.postings[token].discard(path)
+            if not self.postings[token]:
+                del self.postings[token]
+        for key in self.page_keys.pop(path, ()):
+            self.exact[key].discard(path)
+            self.mentions.remove(key)
+            if not self.exact[key]:
+                del self.exact[key]
+        self.total_length -= self.doc_lengths.pop(path, 0)
         self.pages.pop(path, None)
         self.vectors.pop(path, None)
         self.generation += 1
 
-    def add(self,page):
-        if page.path in self.docs:
-            for token in self.docs.pop(page.path):
-                self.df[token] -= 1
-            for paths in self.exact.values():
-                paths.discard(page.path)
+    def add(self, page, extra_keys=()):
+        if page.path in self.pages:
+            self.remove(page.path)
         self.generation += 1
-        self.pages[page.path]=page
-        if page.identity_status in {"INFERRED","CANDIDATE"}:
+        self.pages[page.path] = page
+        if page.identity_status in {"INFERRED", "CANDIDATE"}:
             return
-        text=" ".join([page.name]+page.aliases+[page.l0,page.l1])
-        tokens=toks(text); self.docs[page.path]=Counter(tokens)
-        for t in set(tokens): self.df[t]+=1
-        for k in [page.name,page.canonical_id]+page.aliases:
-            self.exact[str(k).lower()].add(page.path)
+        text = " ".join([page.name]+page.aliases+[page.l0, page.l1])
+        tokens = toks(text); self.docs[page.path] = Counter(tokens)
+        self.doc_lengths[page.path] = len(tokens)
+        self.total_length += len(tokens)
+        for token in set(tokens):
+            self.df[token] += 1
+            self.postings[token].add(page.path)
+        self.add_exact_keys(page.path, [page.name, page.canonical_id, page.path, *page.aliases, *extra_keys])
 
-    def search(self,query,types=None,scope=None,top_k=8):
-        if self.mode == "baseline":
+    def add_exact_keys(self, path, keys):
+        owned = self.page_keys.setdefault(path, set())
+        for key in map(normalize, keys):
+            if key and key not in owned:
+                owned.add(key)
+                self.exact[key].add(path)
+                self.mentions.add(key)
+
+    def validate(self):
+        expected = {key: set() for keys in self.page_keys.values() for key in keys}
+        for path, keys in self.page_keys.items():
+            for key in keys:
+                expected[key].add(path)
+        missing_keys = any(not {normalize(k) for k in [page.name, page.canonical_id, page.path, *page.aliases] if k} <= self.page_keys.get(path, set())
+                           for path, page in self.pages.items() if page.identity_status not in {"INFERRED", "CANDIDATE"})
+        if missing_keys or not self.mentions.is_current() or expected != self.exact or {k: len(v) for k, v in expected.items()} != self.mentions.counts:
+            return [{"severity": "error", "code": "exact_mention_index_stale"}]
+        return []
+
+    def search(self,query,types=None,scope=None,top_k=8, *, candidate_limit=None, allowed_paths=None, fallback_paths=()):
+        if self.mode == "baseline" and candidate_limit is None:
             return self.baseline_search(query,types,scope,top_k)
         from .hybrid import hybrid_search
-        return hybrid_search(self,query,types,scope,top_k)
+        return hybrid_search(self,query,types,scope,top_k, candidate_limit=candidate_limit, allowed_paths=allowed_paths, fallback_paths=fallback_paths)
 
-    def baseline_search(self,query,types=None,scope=None,top_k=8):
+    def baseline_search(self,query,types=None,scope=None,top_k=8,candidate_paths=None):
         types=set(types or []); scope=scope or {}
         q=toks(query); N=max(1,len(self.docs)); scores=defaultdict(float); reasons=defaultdict(list)
         qlower=query.lower().strip()
-        for p,tf in self.docs.items():
+        for p in self.docs if candidate_paths is None else candidate_paths:
+            tf=self.docs[p]
             page=self.pages[p]
             if types and page.context_type not in types: continue
             governed_scope={FACET_ALIASES.get(k,k):v for k,v in scope.items() if FACET_ALIASES.get(k,k) in CLASSIFICATION_FILTERS}

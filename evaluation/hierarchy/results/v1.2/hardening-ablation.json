@@ -1,0 +1,265 @@
+{
+  "scope": "synthetic internal ablation; not enterprise E2E readiness",
+  "guard": {
+    "OFF": {
+      "derived_pair_count": 4,
+      "branch_precision": {
+        "precision": 0.4,
+        "recall": 1.0,
+        "f1": 0.5714285714285715
+      },
+      "broad_query_bundle": {
+        "precision": 0.4,
+        "recall": 1.0,
+        "f1": 0.5714285714285715
+      },
+      "selected_branches": [
+        "data://views/analysis/analysis-purpose/alpha",
+        "data://views/analysis/analysis-purpose/beta",
+        "data://views/analysis/metric/one"
+      ],
+      "selected_entities": [
+        "data://physical-models/mixed",
+        "data://metrics/one",
+        "data://analysis-purposes/alpha",
+        "data://metrics/two",
+        "data://analysis-purposes/beta"
+      ]
+    },
+    "ON": {
+      "derived_pair_count": 0,
+      "branch_precision": {
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1": 0.6666666666666666
+      },
+      "broad_query_bundle": {
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1": 0.6666666666666666
+      },
+      "selected_branches": [
+        "data://views/analysis/analysis-purpose/alpha",
+        "data://views/analysis/analysis-purpose/beta",
+        "data://views/analysis/metric/one"
+      ],
+      "selected_entities": [
+        "data://physical-models/mixed",
+        "data://analysis-purposes/alpha",
+        "data://analysis-purposes/beta",
+        "data://metrics/one"
+      ]
+    }
+  },
+  "routing": {
+    "keyword_default": {
+      "cases": [
+        {
+          "query": "有哪些数据描述网络设施全貌？",
+          "routing": {
+            "initial": {
+              "mode": "hierarchical",
+              "views": [
+                "analysis"
+              ],
+              "confidence": 0.75
+            },
+            "arbitration": {
+              "triggered": false,
+              "view_scores": {}
+            },
+            "final": {
+              "mode": "hierarchical",
+              "primary_view": "analysis",
+              "views": [
+                "analysis"
+              ]
+            }
+          },
+          "view_accuracy": 0,
+          "branch_recall": 0.0,
+          "entity_metrics": {
+            "precision": 0.5,
+            "recall": 1.0,
+            "f1": 0.6666666666666666
+          }
+        },
+        {
+          "query": "介绍存储归档中的数据",
+          "routing": {
+            "initial": {
+              "mode": "hierarchical",
+              "views": [
+                "analysis"
+              ],
+              "confidence": 0.75
+            },
+            "arbitration": {
+              "triggered": false,
+              "view_scores": {}
+            },
+            "final": {
+              "mode": "hierarchical",
+              "primary_view": "analysis",
+              "views": [
+                "analysis"
+              ]
+            }
+          },
+          "view_accuracy": 0,
+          "branch_recall": 0.0,
+          "entity_metrics": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
+          }
+        },
+        {
+          "query": "弱覆盖诊断有哪些支撑数据？",
+          "routing": {
+            "initial": {
+              "mode": "hierarchical",
+              "views": [
+                "analysis"
+              ],
+              "confidence": 0.75
+            },
+            "arbitration": {
+              "triggered": false,
+              "view_scores": {}
+            },
+            "final": {
+              "mode": "hierarchical",
+              "primary_view": "analysis",
+              "views": [
+                "analysis"
+              ]
+            }
+          },
+          "view_accuracy": 1,
+          "branch_recall": 1.0,
+          "entity_metrics": {
+            "precision": 0.5,
+            "recall": 1.0,
+            "f1": 0.6666666666666666
+          }
+        }
+      ],
+      "mean_view_accuracy": 0.3333333333333333,
+      "mean_branch_recall": 0.3333333333333333,
+      "mean_entity_f1": 0.7777777777777777
+    },
+    "arbitration": {
+      "cases": [
+        {
+          "query": "有哪些数据描述网络设施全貌？",
+          "routing": {
+            "initial": {
+              "mode": "hierarchical",
+              "views": [
+                "analysis"
+              ],
+              "confidence": 0.75
+            },
+            "arbitration": {
+              "triggered": true,
+              "view_scores": {
+                "analysis": 0.0,
+                "domain": 0.020491803278688527,
+                "asset": 0.0
+              },
+              "latency_ms": 0.4446250095497817
+            },
+            "final": {
+              "mode": "hierarchical",
+              "primary_view": "domain",
+              "views": [
+                "domain"
+              ]
+            }
+          },
+          "view_accuracy": 1,
+          "branch_recall": 1.0,
+          "entity_metrics": {
+            "precision": 0.5,
+            "recall": 1.0,
+            "f1": 0.6666666666666666
+          }
+        },
+        {
+          "query": "介绍存储归档中的数据",
+          "routing": {
+            "initial": {
+              "mode": "hierarchical",
+              "views": [
+                "analysis"
+              ],
+              "confidence": 0.75
+            },
+            "arbitration": {
+              "triggered": true,
+              "view_scores": {
+                "analysis": 0.0,
+                "domain": 0.0,
+                "asset": 0.020491803278688527
+              },
+              "latency_ms": 0.20445900736376643
+            },
+            "final": {
+              "mode": "hierarchical",
+              "primary_view": "asset",
+              "views": [
+                "asset"
+              ]
+            }
+          },
+          "view_accuracy": 1,
+          "branch_recall": 1.0,
+          "entity_metrics": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
+          }
+        },
+        {
+          "query": "弱覆盖诊断有哪些支撑数据？",
+          "routing": {
+            "initial": {
+              "mode": "hierarchical",
+              "views": [
+                "analysis"
+              ],
+              "confidence": 0.75
+            },
+            "arbitration": {
+              "triggered": true,
+              "view_scores": {
+                "analysis": 0.02254098360655738,
+                "domain": 0.0,
+                "asset": 0.0
+              },
+              "latency_ms": 0.22366599296219647
+            },
+            "final": {
+              "mode": "hierarchical",
+              "primary_view": "analysis",
+              "views": [
+                "analysis"
+              ]
+            }
+          },
+          "view_accuracy": 1,
+          "branch_recall": 1.0,
+          "entity_metrics": {
+            "precision": 0.5,
+            "recall": 1.0,
+            "f1": 0.6666666666666666
+          }
+        }
+      ],
+      "mean_view_accuracy": 1.0,
+      "mean_branch_recall": 1.0,
+      "mean_entity_f1": 0.7777777777777777
+    }
+  }
+}

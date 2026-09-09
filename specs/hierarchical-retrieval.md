@@ -26,7 +26,7 @@ Hybrid: merge the two anchor sets
     → existing Focused Expansion
 ```
 
-`AggregatePageIndex` 按 view 包装现有 PageIndex，复用 Exact/Alias、BM25、既有 Dense encoder、Facet 与 RRF；默认一次最多两个视图、合计三个分支。没有复制 embedding 或实体排序算法。实体 Hybrid 算法仅增加通道分数诊断，排序行为保持不变。
+`AggregatePageIndex` 按 view 包装现有 PageIndex，复用 Exact/Alias、BM25、既有 Dense encoder、Facet 与 RRF；默认一次最多两个视图、合计三个分支。没有复制 embedding 或实体排序算法。V1.1 复用实体 Hybrid 排序；V1.2 在同一路径上增加候选计算预算，详见下文。
 
 仅索引 branch ID/name/aliases/view、L0、有界 L1 summary/objects/metrics/dimensions/purposes/models 和 taxonomy labels。L2 的全量成员、边、Evidence、候选审计不进入 embedding。按文档指纹更新 postings，并缓存未变更文档向量；服务查询不重建组织。
 
@@ -65,3 +65,60 @@ uv run --isolated --extra dev --extra dense python -m evaluation.hierarchy.seman
 ```
 
 该命令使用本机缓存的真实多语言 MiniLM，local_files_only=True；数据仍为 synthetic。另有受控 FixtureSemanticEncoder 机械测试，仅位于 evaluation，不进入生产编码器。没有 Dense Entity Classification。缺失真实数据评审时，不把两条样例命中解读为企业语义检索整体准确率。
+
+## V1.2：规模与精度加固
+
+### Query-driven Exact Mention
+
+统一 `ExactMentionResolver` 消费 **现有** PageIndex.exact 和 ElementIndex.exact。ASCII identifier（含 snake_case/camelCase/UPPER_CASE）、限定名及其组成部分、引号短语由 Query 提取；中文/多词 alias 使用随所属索引增量维护的词汇 Trie。Trie 不复制目标记录，不引入 embedding。字段的显式 alias 同样进入原 Element exact postings。
+
+Query 只对候选执行 `exact.get(normalized)`；不会迭代 exact keys，也不会再遍历所有 Context 的 stable IDs。Canonical path/stable ID/strong key 在构建/加载时进入同一 Page exact 索引。Mention 结果保留实际目标 ID、parent_page、entity_type、element_type；过多同名目标按预算截断并明确报告，不能视为穷尽全部匹配。
+
+复杂度是 O(Q×L + C log C + T log T)，其中 Q 为 Query 长度、L 为最长匹配词长度、C 为查询候选数、T 为有界目标展开量；不含遍历所有 exact keys 的项。Trie 为逐起点匹配，最坏 O(Q²)，并非声称 Aho-Corasick 的严格 O(Q)。排序 posting 在离线维护，查询不对整个命中 posting 排序。
+
+### Bounded Branch-scoped Entity Retrieval
+
+配置位于现有 hierarchy config：
+
+```yaml
+hierarchy_retrieval:
+  branch_k: 3
+  entity_candidate_k: 50
+  max_entities_examined_per_branch: 100
+  bundle_k: 8
+view_arbitration:
+  enabled: true
+  confidence_threshold: 0.80
+  max_views: 2
+  branch_k: 3
+```
+
+`HierarchyIndex._index_aggregate` 在受影响 Aggregate 更新时维护成员 membership 与最多 1000 个确定性预览 ID；这是原组织索引的内部投影。查询不读取或枚举全量 `member_refs`。
+
+现有 PageIndex 增量维护 BM25 token postings、文档长度及总长度。现有 Hybrid Retrieval 增加内部 `candidate_limit/allowed_paths/fallback_paths` 参数：优先从 exact、低文档频率 token postings 取得有界候选，对 branch membership 做 contains 过滤；不足时使用已物化的有界成员预览。随后仍执行原 Exact/BM25/Dense/Facet/RRF。没有第二套搜索引擎。每个分支最多读取 100 个 posting ID、检查/评分 100 个实体，再保留 50 个候选；所有选中分支合计默认最多检查 300 个实体，最终最多 8 个 Rich Page。
+
+全局 seed 同样使用预算。Aggregate hybrid recall 每个 View 的候选池上限为 256，最多仲裁三个 View；该常量归属 hardening policy 版本。传统 lexical branch ablation 仍是离线基线。原 BundleAssembler 也在读取 reference/backref 时应用已有候选预算，避免先构造全量关系列表再截断。
+
+**召回取舍必须显式说明**：这是有界候选检索，不保证全库或大分支 exact top-k。Dense 在召回候选池内排序；不新增 ANN 或 Dense taxonomy classifier。只有 Dense 相关、没有词面召回且不在有界预览中的尾部实体可能被遗漏。命中分支提供 scope 分数，不伪造实体的词面命中。`truncated` 和各阶段预算均进入 diagnostics；真实语料需校准候选预算、Precision 与 Recall。
+
+L1 保留摘要、top members 和计数；全量 member_refs 仅属于 L2/内部索引。成员数量不再线性影响这些 Query-time 阶段的计算量。对外 Context Tool、Context Bundle 和四方案 E2E 合约保持不变。
+
+### Low-confidence Cross-view Arbitration
+
+保留集中策略与已有关键词，不新增领域关键词补丁。无 exact anchor、非显式 View、confidence < 0.80 时，对 Analysis/Domain/Asset **分别复用 AggregatePageIndex Hybrid Recall**。当前 view score = 0.7×best RRF + 0.3×top-k mean RRF；有实际召回证据的初始 View 给予 1.1 倍 prior，用于相近排名的裁决。选择得分不低于最好分 80% 的前 1～2 个 View，并复用已召回行，不重复执行分支搜索。
+
+零相关证据时保留初始路由并报告 fallback，不伪造正确 View；Exact Direct 和明确 View override 均绕过仲裁。置信度高的结构化路由保持原 View；低置信 preferred strategy 不会因 intent 映射被抬高为 0.95。无新增 LLM 调用。
+
+Trace 增加 `mention_resolution`、`entity_retrieval`、`branch_budget`、`view_arbitration`、`routing.initial/arbitration/final` 与 `relation_completion`，旧消费者可忽略。
+
+### 验证与边界
+
+```bash
+uv run --isolated --extra dev pytest -q
+RUN_RETRIEVAL_SCALE=1 uv run --isolated --extra dev pytest -q -s tests/performance
+uv run --isolated --extra dev python -m evaluation.hierarchy.hardening
+```
+
+规模诊断真实构建 5000 个含字段模型/500000 条 Element 记录；另运行 10000 成员单分支和 100 Aggregate/10000 Page/500000 Element 组合场景。通过禁止 exact 迭代、禁止分支 member_refs 迭代的运行时哨兵及计数检查验证复杂度，不仅比较毫秒数。结果在 `evaluation/hierarchy/results/v1.2/`。
+
+该规模实验验证索引与 serving，不是完整 Parser/Canonical 构建、真实 Dense/LLM 或 MetaOne 联调的规模认证。Guard/Arbitration ablation 是独立消费者，不修改正式 E2E scorer，也不向生产配置或索引传递期待答案。

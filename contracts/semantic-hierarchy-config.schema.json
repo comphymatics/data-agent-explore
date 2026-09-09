@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Semantic hierarchy configuration V1.1",
+  "title": "Semantic hierarchy configuration V1.2 hardening",
   "type": "object",
   "required": [
     "version"
@@ -141,6 +141,112 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "hardening_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mention_index_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "co_classification_guard_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "co_classification_guard": {
+      "type": "boolean"
+    },
+    "hierarchy_retrieval": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "branch_k": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "entity_candidate_k": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "max_entities_examined_per_branch": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "bundle_k": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        }
+      }
+    },
+    "view_arbitration": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "confidence_threshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "max_views": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2
+        },
+        "branch_k": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        }
+      }
+    },
+    "taxonomy_transitions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "analysis",
+        "domain",
+        "asset"
+      ],
+      "properties": {
+        "analysis": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          }
+        },
+        "domain": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          }
+        },
+        "asset": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
           }
         }
       }

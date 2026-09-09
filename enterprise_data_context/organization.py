@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+from copy import deepcopy
 
 from .indexes.hierarchy import HierarchyIndex
 
@@ -13,7 +14,7 @@ class SemanticOrganizationBuilder:
 
     def build(self, contexts, previous=None):
         contexts = list(contexts)
-        hierarchy = (HierarchyIndex.from_dict(previous.to_dict(), previous.contexts.values())
+        hierarchy = (deepcopy(previous, {id(previous.aggregate_index.encoder.encoder):previous.aggregate_index.encoder.encoder})
                      if previous is not None else HierarchyIndex(self.config, self.provider))
         hierarchy.config = self.config or hierarchy.config
         hierarchy.provider = self.provider

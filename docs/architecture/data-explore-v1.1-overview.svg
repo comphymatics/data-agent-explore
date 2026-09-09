@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1680 1340" width="1680" height="1340" role="img" aria-labelledby="overview-title overview-desc" data-quality-profile="standard">
+<title id="overview-title">Data Explore｜当前整体技术方案</title>
+<desc id="overview-desc">离线构建参考语义，在线读取环境事实；Explore 编排检索，输出带证据的 Context Bundle。</desc>
+<style>text{font-family:"Helvetica Neue",Arial,"PingFang SC","Microsoft YaHei",sans-serif}.node{cursor:pointer}.node:focus{outline:none}.node:focus .card,.node.selected .card{stroke:#111827;stroke-width:3}.node:hover .card{stroke-width:3}</style>
+<defs>
+<marker id="overview-arrow-blue" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L10 3.5 L0 7 Z" fill="#2563eb"/></marker>
+<marker id="overview-arrow-green" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L10 3.5 L0 7 Z" fill="#15803d"/></marker>
+<marker id="overview-arrow-purple" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L10 3.5 L0 7 Z" fill="#9333ea"/></marker>
+<marker id="overview-arrow-orange" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L10 3.5 L0 7 Z" fill="#c2410c"/></marker>
+<marker id="overview-arrow-gray" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L10 3.5 L0 7 Z" fill="#475569"/></marker>
+</defs>
+<rect width="1680" height="1340" fill="#ffffff" data-graph-role="background"/>
+<text x="40" y="60" font-size="34" font-weight="600" fill="#111827" text-anchor="start">Data Explore｜当前整体技术方案</text>
+<text x="40" y="98" font-size="19" font-weight="400" fill="#64748b" text-anchor="start">离线构建参考语义，在线读取环境事实；Explore 编排检索，输出带证据的 Context Bundle。</text>
+<rect x="40" y="150" width="660" height="890" rx="14" fill="#f0fdf4" fill-opacity="0.45" stroke="#15803d" stroke-opacity="0.3" stroke-dasharray="8 6" data-graph-role="container"/>
+<text x="64" y="186" font-size="23" font-weight="600" fill="#15803d" text-anchor="start">参考语义｜构建与发布</text>
+<text x="64" y="215" font-size="17" font-weight="400" fill="#64748b" text-anchor="start">外部 Parser 交付 → Enterprise Data Context</text>
+<rect x="780" y="150" width="860" height="890" rx="14" fill="#eff6ff" fill-opacity="0.45" stroke="#2563eb" stroke-opacity="0.3" stroke-dasharray="8 6" data-graph-role="container"/>
+<text x="804" y="186" font-size="23" font-weight="600" fill="#2563eb" text-anchor="start">Explore Agent｜查询期编排</text>
+<text x="804" y="215" font-size="17" font-weight="400" fill="#64748b" text-anchor="start">参考知识与环境事实保留各自的权威和版本</text>
+<path id="overview-edge-0" d="M 370 365 L 370 425" fill="none" stroke="#15803d" stroke-width="2" marker-end="url(#overview-arrow-green)" data-graph-role="edge" data-source="o-input" data-target="o-compile"/>
+<text x="394" y="401" font-size="16" font-weight="400" fill="#15803d" text-anchor="start">有来源的 Fragments</text>
+<path id="overview-edge-1" d="M 370 545 L 370 605" fill="none" stroke="#15803d" stroke-width="2" marker-end="url(#overview-arrow-green)" data-graph-role="edge" data-source="o-compile" data-target="o-represent"/>
+<text x="394" y="582" font-size="16" font-weight="400" fill="#15803d" text-anchor="start">Canonical Contexts</text>
+<path id="overview-edge-2" d="M 370 745 L 370 805" fill="none" stroke="#15803d" stroke-width="2" marker-end="url(#overview-arrow-green)" data-graph-role="edge" data-source="o-represent" data-target="o-snapshot"/>
+<text x="394" y="782" font-size="16" font-weight="400" fill="#15803d" text-anchor="start">版本化产物</text>
+<path id="overview-edge-3" d="M 660 865 L 740 865 L 740 530 L 820 530" fill="none" stroke="#15803d" stroke-width="2" marker-end="url(#overview-arrow-green)" data-graph-role="edge" data-source="o-snapshot" data-target="o-search"/>
+<path id="overview-edge-4" d="M 1050 365 L 1050 395 L 995 395 L 995 440" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#overview-arrow-blue)" data-graph-role="edge" data-source="o-router" data-target="o-search"/>
+<text x="819" y="385" font-size="16" font-weight="400" fill="#2563eb" text-anchor="start">Reference 检索</text>
+<path id="overview-edge-5" d="M 1370 365 L 1370 395 L 1425 395 L 1425 440" fill="none" stroke="#c2410c" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#overview-arrow-orange)" data-graph-role="edge" data-source="o-router" data-target="o-env"/>
+<text x="1450" y="393" font-size="16" font-weight="400" fill="#c2410c" text-anchor="start">需要时先读</text>
+<path id="overview-edge-6" d="M 995 615 L 995 710" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#overview-arrow-blue)" data-graph-role="edge" data-source="o-search" data-target="o-assemble"/>
+<text x="1015" y="666" font-size="16" font-weight="400" fill="#2563eb" text-anchor="start">富语义上下文</text>
+<path id="overview-edge-7" d="M 1425 615 L 1425 710" fill="none" stroke="#c2410c" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#overview-arrow-orange)" data-graph-role="edge" data-source="o-env" data-target="o-assemble"/>
+<text x="1443" y="666" font-size="16" font-weight="400" fill="#c2410c" text-anchor="start">环境证据</text>
+<path id="overview-edge-8" d="M 1210 860 L 1210 920" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#overview-arrow-blue)" data-graph-role="edge" data-source="o-assemble" data-target="o-bundle"/>
+<text x="1230" y="894" font-size="16" font-weight="400" fill="#2563eb" text-anchor="start">有界组装</text>
+<g class="node" data-detail="o-input" id="o-input" role="button" aria-label="01  外部材料与 Parser 交付" tabindex="0">
+<rect class="card" x="80" y="245" width="580" height="120" rx="8" fill="#ffffff" stroke="#c2410c" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="o-input"/>
+<rect x="81" y="246" width="6" height="118" rx="3" fill="#c2410c" data-graph-role="decoration"/>
+<text x="104" y="284" font-size="23" font-weight="600" fill="#111827" text-anchor="start">01  外部材料与 Parser 交付</text>
+<text x="104" y="321" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Word / Excel / SID / 建模规范</text>
+<text x="104" y="345" font-size="19" font-weight="400" fill="#475569" text-anchor="start">约定 Template JSON → 校验 → ContextFragment</text>
+</g>
+<g class="node" data-detail="o-compile" id="o-compile" role="button" aria-label="02  Context Engine：语义编译" tabindex="0">
+<rect class="card" x="80" y="425" width="580" height="120" rx="8" fill="#ffffff" stroke="#15803d" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="o-compile"/>
+<rect x="81" y="426" width="6" height="118" rx="3" fill="#15803d" data-graph-role="decoration"/>
+<text x="104" y="464" font-size="23" font-weight="600" fill="#111827" text-anchor="start">02  Context Engine：语义编译</text>
+<text x="104" y="501" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Canonical Resolution → Section-level Fusion</text>
+<text x="104" y="525" font-size="19" font-weight="400" fill="#475569" text-anchor="start">业务映射 + Typed Reference Resolution</text>
+</g>
+<g class="node" data-detail="o-represent" id="o-represent" role="button" aria-label="03  同一实体，多种读取表示" tabindex="0">
+<rect class="card" x="80" y="605" width="580" height="140" rx="8" fill="#ffffff" stroke="#15803d" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="o-represent"/>
+<rect x="81" y="606" width="6" height="138" rx="3" fill="#15803d" data-graph-role="decoration"/>
+<text x="104" y="644" font-size="23" font-weight="600" fill="#111827" text-anchor="start">03  同一实体，多种读取表示</text>
+<text x="104" y="681" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Rich Page + 多视图 Hierarchy / Aggregate Page</text>
+<text x="104" y="705" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Page / Aggregate Hybrid Index + ElementIndex</text>
+<text x="104" y="729" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Typed Graph / Backrefs 仅服务机器补全</text>
+</g>
+<g class="node" data-detail="o-snapshot" id="o-snapshot" role="button" aria-label="04  质量校验与不可变参考快照" tabindex="0">
+<rect class="card" x="80" y="805" width="580" height="125" rx="8" fill="#ffffff" stroke="#15803d" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="o-snapshot"/>
+<rect x="81" y="806" width="6" height="123" rx="3" fill="#15803d" data-graph-role="decoration"/>
+<text x="104" y="844" font-size="23" font-weight="600" fill="#111827" text-anchor="start">04  质量校验与不可变参考快照</text>
+<text x="104" y="881" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Evidence / URI / Taxonomy / Index 一致性 Gate</text>
+<text x="104" y="905" font-size="19" font-weight="400" fill="#475569" text-anchor="start">固定 IndexVersion；加载时重建索引与图</text>
+</g>
+<g class="node" data-detail="o-router" id="o-router" role="button" aria-label="05  用户问题 → Explore Router" tabindex="0">
+<rect class="card" x="1000" y="245" width="420" height="120" rx="8" fill="#ffffff" stroke="#2563eb" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="o-router"/>
+<rect x="1001" y="246" width="6" height="118" rx="3" fill="#2563eb" data-graph-role="decoration"/>
+<text x="1024" y="284" font-size="23" font-weight="600" fill="#111827" text-anchor="start">05  用户问题 → Explore Router</text>
+<text x="1024" y="321" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Intent / Scope / Requirements</text>
+<text x="1024" y="345" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Direct · Hierarchical · Hybrid</text>
+</g>
+<g class="node" data-detail="o-search" id="o-search" role="button" aria-label="06  调用 Context Engine" tabindex="0">
+<rect class="card" x="820" y="440" width="350" height="175" rx="8" fill="#ffffff" stroke="#2563eb" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="o-search"/>
+<rect x="821" y="441" width="6" height="173" rx="3" fill="#2563eb" data-graph-role="decoration"/>
+<text x="844" y="479" font-size="23" font-weight="600" fill="#111827" text-anchor="start">06  调用 Context Engine</text>
+<text x="844" y="516" font-size="19" font-weight="400" fill="#475569" text-anchor="start">四个只读 Context Tools</text>
+<text x="844" y="540" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Anchor / Aggregate Hybrid</text>
+<text x="844" y="564" font-size="19" font-weight="400" fill="#475569" text-anchor="start">L0 选分支 → L1 富读</text>
+<text x="844" y="588" font-size="19" font-weight="400" fill="#475569" text-anchor="start">机器端关系补全与预算</text>
+</g>
+<g class="node" data-detail="o-env" id="o-env" role="button" aria-label="按需：MetaOne 环境读取" tabindex="0">
+<rect class="card" x="1250" y="440" width="350" height="175" rx="8" fill="#ffffff" stroke="#c2410c" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="o-env"/>
+<rect x="1251" y="441" width="6" height="173" rx="3" fill="#c2410c" data-graph-role="decoration"/>
+<text x="1274" y="479" font-size="23" font-weight="600" fill="#111827" text-anchor="start">按需：MetaOne 环境读取</text>
+<text x="1274" y="516" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Adapter → MCP / Gateway</text>
+<text x="1274" y="540" font-size="19" font-weight="400" fill="#475569" text-anchor="start">当前资产、字段、显式关系</text>
+<text x="1274" y="564" font-size="19" font-weight="400" fill="#475569" text-anchor="start">保留能力 / 来源 / 快照</text>
+<text x="1274" y="588" font-size="19" font-weight="400" fill="#475569" text-anchor="start">失败或截断 ≠ 不存在</text>
+</g>
+<g class="node" data-detail="o-assemble" id="o-assemble" role="button" aria-label="07  Coverage + Focused Expansion + Binding" tabindex="0">
+<rect class="card" x="820" y="710" width="780" height="150" rx="8" fill="#ffffff" stroke="#2563eb" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="o-assemble"/>
+<rect x="821" y="711" width="6" height="148" rx="3" fill="#2563eb" data-graph-role="decoration"/>
+<text x="844" y="749" font-size="23" font-weight="600" fill="#111827" text-anchor="start">07  Coverage + Focused Expansion + Binding</text>
+<text x="844" y="786" font-size="19" font-weight="400" fill="#475569" text-anchor="start">按 Entity × Aspect × Layer × Selector 检查需求</text>
+<text x="844" y="810" font-size="19" font-weight="400" fill="#475569" text-anchor="start">缺口触发有界 L2 扩展；严格身份绑定与语义映射分开</text>
+<text x="844" y="834" font-size="19" font-weight="400" fill="#475569" text-anchor="start">保留 UNKNOWN / PARTIAL、候选、冲突和两层 Evidence</text>
+</g>
+<g class="node" data-detail="o-bundle" id="o-bundle" role="button" aria-label="Context Bundle → 主 Agent" tabindex="0">
+<rect class="card" x="1020" y="920" width="380" height="90" rx="8" fill="#ffffff" stroke="#9333ea" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="o-bundle"/>
+<rect x="1021" y="921" width="6" height="88" rx="3" fill="#9333ea" data-graph-role="decoration"/>
+<text x="1044" y="959" font-size="23" font-weight="600" fill="#111827" text-anchor="start">Context Bundle → 主 Agent</text>
+<text x="1044" y="996" font-size="19" font-weight="400" fill="#475569" text-anchor="start">参考语义 + 环境事实 + 缺口</text>
+</g>
+<g class="node" data-detail="o-eval" id="o-eval" role="button" aria-label="独立评测：消费运行结果" tabindex="0">
+<rect class="card" x="80" y="1155" width="455" height="105" rx="8" fill="#ffffff" stroke="#475569" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="o-eval"/>
+<rect x="81" y="1156" width="6" height="103" rx="3" fill="#475569" data-graph-role="decoration"/>
+<text x="104" y="1194" font-size="23" font-weight="600" fill="#111827" text-anchor="start">独立评测：消费运行结果</text>
+<text x="104" y="1231" font-size="19" font-weight="400" fill="#475569" text-anchor="start">正式 Benchmark + Hierarchy Ablation</text>
+</g>
+<g class="node" data-detail="o-draft" id="o-draft" role="button" aria-label="Dataset Builder：仅 DRAFT" tabindex="0">
+<rect class="card" x="610" y="1155" width="455" height="105" rx="8" fill="#ffffff" stroke="#475569" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="o-draft"/>
+<rect x="611" y="1156" width="6" height="103" rx="3" fill="#475569" data-graph-role="decoration"/>
+<text x="634" y="1194" font-size="23" font-weight="600" fill="#111827" text-anchor="start">Dataset Builder：仅 DRAFT</text>
+<text x="634" y="1231" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Raw + Parser 候选 → 人工审核</text>
+</g>
+<g class="node" data-detail="o-evidence" id="o-evidence" role="button" aria-label="验证范围：代码与样例" tabindex="0">
+<rect class="card" x="1140" y="1155" width="460" height="105" rx="8" fill="#ffffff" stroke="#475569" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="o-evidence"/>
+<rect x="1141" y="1156" width="6" height="103" rx="3" fill="#475569" data-graph-role="decoration"/>
+<text x="1164" y="1194" font-size="23" font-weight="600" fill="#111827" text-anchor="start">验证范围：代码与样例</text>
+<text x="1164" y="1231" font-size="19" font-weight="400" fill="#475569" text-anchor="start">真实 embedding 已验；现网待验</text>
+</g>
+<text x="80" y="994" font-size="18" font-weight="400" fill="#15803d" text-anchor="start">Context Engine 管上下文；不回答最终业务问题。</text>
+<text x="40" y="1100" font-size="18" font-weight="400" fill="#475569" text-anchor="start">独立质量验证与评测：Gold / Alias / Scorer 不进入生产链路</text>
+<g data-graph-role="legend">
+<path d="M42 1300 L84 1300" stroke="#15803d" stroke-width="2" fill="none" marker-end="url(#overview-arrow-green)"/>
+<text x="97" y="1306" font-size="16" font-weight="400" fill="#64748b" text-anchor="start">参考知识写入 / 读取</text>
+<path d="M382 1300 L424 1300" stroke="#2563eb" stroke-width="2" fill="none" marker-end="url(#overview-arrow-blue)"/>
+<text x="437" y="1306" font-size="16" font-weight="400" fill="#64748b" text-anchor="start">查询与上下文流</text>
+<path d="M722 1300 L764 1300" stroke="#c2410c" stroke-width="2" fill="none" stroke-dasharray="7 5" marker-end="url(#overview-arrow-orange)"/>
+<text x="777" y="1306" font-size="16" font-weight="400" fill="#64748b" text-anchor="start">环境事实 / 外部边界</text>
+<path d="M1062 1300 L1104 1300" stroke="#9333ea" stroke-width="2" fill="none" stroke-dasharray="7 5" marker-end="url(#overview-arrow-purple)"/>
+<text x="1117" y="1306" font-size="16" font-weight="400" fill="#64748b" text-anchor="start">治理与可选候选控制</text>
+</g>
+<text x="1640" y="1306" font-size="16" font-weight="400" fill="#64748b" text-anchor="end">fd8538f · 2026-09-09</text>
+</svg>

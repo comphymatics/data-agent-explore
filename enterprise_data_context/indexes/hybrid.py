@@ -3,6 +3,7 @@ from collections import Counter, defaultdict
 import hashlib
 import math
 import re
+from itertools import islice
 
 # Versioned local concept features are an offline encoder, not a trained embedding model.
 CONCEPTS = (
@@ -44,14 +45,41 @@ def cosine(a, b):
     return sum(x*y for x, y in zip(a, b))/denom
 
 
-def hybrid_search(index, query, types=None, scope=None, top_k=8):
+def hybrid_search(index, query, types=None, scope=None, top_k=8, *, candidate_limit=None, allowed_paths=None, fallback_paths=()):
     from .page import toks, FACET_ALIASES, CLASSIFICATION_FILTERS, facet_matches
     from enterprise_data_context.models import SearchHit
     if top_k < 1:
         raise ValueError("top_k must be positive")
     index.last_score_breakdown = {}
     eligible = []
-    for path in index.docs:
+    examined = 0
+    if candidate_limit is None:
+        candidates = index.docs
+    else:
+        # Recall from existing exact/token postings. Bound posting reads as well as
+        # scoring; membership is an O(1) filter, never a branch enumeration.
+        from .mention import normalize, SYMBOL
+        keys = {normalize(query), *(m.group() for m in SYMBOL.finditer(normalize(query)))}
+        keys.update(index.mentions.phrases(normalize(query)))
+        pools = [index.exact.get(k, ()) for k in sorted(keys)]
+        pools += [index.postings.get(t, ()) for t in sorted(set(toks(query)), key=lambda t: (index.df[t], t))]
+        candidates = dict.fromkeys(islice(fallback_paths, candidate_limit))
+        posting_reads = 0
+        recalled = {}
+        for pool in pools:
+            for path in islice(pool, max(0, candidate_limit-posting_reads)):
+                posting_reads += 1
+                if allowed_paths is None or path in allowed_paths:
+                    recalled[path] = None
+        candidates = list(dict.fromkeys([*recalled, *candidates]))[:candidate_limit]
+        if allowed_paths is None and len(candidates) < candidate_limit:
+            candidates = list(dict.fromkeys([*candidates, *islice(index.docs, candidate_limit)]))[:candidate_limit]
+        index.last_candidate_diagnostics = {"posting_reads": posting_reads, "candidate_limit": candidate_limit,
+            "candidate_count": len(candidates), "truncated": len(index.docs) > candidate_limit}
+    for path in candidates:
+        examined += 1
+        if path not in index.docs or allowed_paths is not None and path not in allowed_paths:
+            continue
         page = index.pages[path]
         if types and page.context_type not in types:
             continue
@@ -62,6 +90,9 @@ def hybrid_search(index, query, types=None, scope=None, top_k=8):
                if page.context_type in {"physical-model", "logical-model"}):
             continue
         eligible.append(path)
+    index.last_examined_count = examined
+    if index.mode == "baseline":
+        return index.baseline_search(query, types, scope, top_k, candidate_paths=eligible)
     identifier=(scope or {}).get("symbol")
     if not identifier and re.fullmatch(r"[A-Za-z][A-Za-z0-9]*(?:[_:.][A-Za-z0-9]+)+",query.strip()):
         identifier=query.strip()
@@ -76,13 +107,13 @@ def hybrid_search(index, query, types=None, scope=None, top_k=8):
         eligible=[p for p in eligible if token in index.docs[p] or token in
                   {str(k).casefold() for k in [index.pages[p].name,index.pages[p].canonical_id,*index.pages[p].aliases]} or explicit_parent(p)]
     n = max(1, len(index.docs))
-    avgdl = sum(sum(tf.values()) for tf in index.docs.values()) / n or 1
+    avgdl = index.total_length / n or 1
     lexical, exact, facets, vectors = {}, {}, {}, {}
     q = Counter(toks(query))
     qnorm = query.casefold().strip()
     for path in eligible:
         tf = index.docs[path]
-        dl = sum(tf.values())
+        dl = index.doc_lengths[path]
         lexical[path] = sum(
             math.log(1 + (n-index.df[t]+0.5)/(index.df[t]+0.5)) *
             (tf[t]*2.2)/(tf[t]+1.2*(0.25+0.75*dl/avgdl))
@@ -94,22 +125,25 @@ def hybrid_search(index, query, types=None, scope=None, top_k=8):
             key = str(key).casefold().strip()
             if key and (key == qnorm or re.search(r"(?<![\w])"+re.escape(key)+r"(?![\w])", qnorm)):
                 exact[path] = 1.0
-        facets[path] = sum(facet_matches(page.facets.get(FACET_ALIASES.get(k, k)), v)
+        facets[path] = (0.25 if allowed_paths is not None else 0) + sum(facet_matches(page.facets.get(FACET_ALIASES.get(k, k)), v)
                            for k, v in (scope or {}).items())
     index.last_warnings = []
     try:
         if not eligible:
             return []
-        generation=(index.generation,getattr(index.encoder,"version","custom"))
-        if index.vector_generation != generation:
-            paths = sorted(index.docs)
+        encoder_version = getattr(index.encoder, "version", "custom")
+        if getattr(index, "_encoder_version", None) != encoder_version:
+            index.vectors.clear()
+            index._encoder_version = encoder_version
+        paths = [p for p in eligible if p not in index.vectors]
+        if paths:
             encoded = index.encoder.encode([index.pages[p].l0+"\n"+index.pages[p].l1 for p in paths])
             if len(encoded) != len(paths):
                 raise ValueError("encoder returned wrong vector count")
             for vector in encoded:
                 cosine(vector, vector)
-            index.vectors = dict(zip(paths, encoded))
-            index.vector_generation = (index.generation, getattr(index.encoder,"version","custom"))
+            index.vectors.update(zip(paths, encoded))
+        index.vector_generation = (index.generation, encoder_version)
         query_vector = (index.encoder.encode_query(query) if hasattr(index.encoder,"encode_query")
                         else index.encoder.encode([query])[0])
         vectors = {p: cosine(query_vector, index.vectors[p]) for p in eligible}

@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1680 1370" width="1680" height="1370" role="img" aria-labelledby="runtime-title runtime-desc" data-quality-profile="standard">
+<title id="runtime-title">一次 Explore 查询如何运行</title>
+<desc id="runtime-desc">需要环境事实时先完成 Adapter 读取；这里展开 Reference 检索、Coverage 与最终绑定。</desc>
+<style>text{font-family:"Helvetica Neue",Arial,"PingFang SC","Microsoft YaHei",sans-serif}.node{cursor:pointer}.node:focus{outline:none}.node:focus .card,.node.selected .card{stroke:#111827;stroke-width:3}.node:hover .card{stroke-width:3}</style>
+<defs>
+<marker id="runtime-arrow-blue" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L10 3.5 L0 7 Z" fill="#2563eb"/></marker>
+<marker id="runtime-arrow-green" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L10 3.5 L0 7 Z" fill="#15803d"/></marker>
+<marker id="runtime-arrow-purple" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L10 3.5 L0 7 Z" fill="#9333ea"/></marker>
+<marker id="runtime-arrow-orange" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L10 3.5 L0 7 Z" fill="#c2410c"/></marker>
+<marker id="runtime-arrow-gray" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L10 3.5 L0 7 Z" fill="#475569"/></marker>
+</defs>
+<rect width="1680" height="1370" fill="#ffffff" data-graph-role="background"/>
+<text x="40" y="60" font-size="34" font-weight="600" fill="#111827" text-anchor="start">一次 Explore 查询如何运行</text>
+<text x="40" y="98" font-size="19" font-weight="400" fill="#64748b" text-anchor="start">需要环境事实时先完成 Adapter 读取；这里展开 Reference 检索、Coverage 与最终绑定。</text>
+<path id="runtime-edge-0" d="M 700 300 L 700 350 L 300 350 L 300 410" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#runtime-arrow-blue)" data-graph-role="edge" data-source="r-router" data-target="r-direct"/>
+<path id="runtime-edge-1" d="M 840 300 L 840 410" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#runtime-arrow-blue)" data-graph-role="edge" data-source="r-router" data-target="r-hybrid"/>
+<path id="runtime-edge-2" d="M 980 300 L 980 350 L 1380 350 L 1380 410" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#runtime-arrow-blue)" data-graph-role="edge" data-source="r-router" data-target="r-hier"/>
+<path id="runtime-edge-3" d="M 300 565 L 300 640 L 680 640 L 680 700" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#runtime-arrow-blue)" data-graph-role="edge" data-source="r-direct" data-target="r-complete"/>
+<path id="runtime-edge-4" d="M 840 565 L 840 700" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#runtime-arrow-blue)" data-graph-role="edge" data-source="r-hybrid" data-target="r-complete"/>
+<text x="860" y="610" font-size="16" font-weight="400" fill="#2563eb" text-anchor="start">同一次 data_search</text>
+<path id="runtime-edge-5" d="M 1380 565 L 1380 640 L 1000 640 L 1000 700" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#runtime-arrow-blue)" data-graph-role="edge" data-source="r-hier" data-target="r-complete"/>
+<path id="runtime-edge-6" d="M 840 820 L 840 880 L 300 880 L 300 940" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#runtime-arrow-blue)" data-graph-role="edge" data-source="r-complete" data-target="r-coverage"/>
+<path id="runtime-edge-7" d="M 520 1018 L 620 1018" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#runtime-arrow-blue)" data-graph-role="edge" data-source="r-coverage" data-target="r-focused"/>
+<path id="runtime-edge-8" d="M 1060 1018 L 1160 1018" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#runtime-arrow-blue)" data-graph-role="edge" data-source="r-focused" data-target="r-bind"/>
+<path id="runtime-edge-9" d="M 1380 820 L 1380 940" fill="none" stroke="#c2410c" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#runtime-arrow-orange)" data-graph-role="edge" data-source="r-env" data-target="r-bind"/>
+<text x="1400" y="880" font-size="16" font-weight="400" fill="#c2410c" text-anchor="start">环境证据</text>
+<path id="runtime-edge-10" d="M 1380 1095 L 1380 1145 L 840 1145 L 840 1200" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#runtime-arrow-blue)" data-graph-role="edge" data-source="r-bind" data-target="r-output"/>
+<g class="node" data-detail="r-router" id="r-router" role="button" aria-label="Intent / Scope → Retrieval Strategy" tabindex="0">
+<rect class="card" x="620" y="180" width="440" height="120" rx="8" fill="#ffffff" stroke="#2563eb" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="r-router"/>
+<rect x="621" y="181" width="6" height="118" rx="3" fill="#2563eb" data-graph-role="decoration"/>
+<text x="644" y="219" font-size="23" font-weight="600" fill="#111827" text-anchor="start">Intent / Scope → Retrieval Strategy</text>
+<text x="644" y="256" font-size="19" font-weight="400" fill="#475569" text-anchor="start">真实 Exact Anchor 校准模式</text>
+<text x="644" y="280" font-size="19" font-weight="400" fill="#475569" text-anchor="start">View 来自 intent / scope / aspects</text>
+</g>
+<g class="node" data-detail="r-direct" id="r-direct" role="button" aria-label="Direct：明确实体" tabindex="0">
+<rect class="card" x="80" y="410" width="440" height="155" rx="8" fill="#ffffff" stroke="#2563eb" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="r-direct"/>
+<rect x="81" y="411" width="6" height="153" rx="3" fill="#2563eb" data-graph-role="decoration"/>
+<text x="104" y="449" font-size="23" font-weight="600" fill="#111827" text-anchor="start">Direct：明确实体</text>
+<text x="104" y="486" font-size="19" font-weight="400" fill="#475569" text-anchor="start">RSRP 有哪些模型？</text>
+<text x="104" y="510" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Exact / Element Anchor</text>
+<text x="104" y="534" font-size="19" font-weight="400" fill="#475569" text-anchor="start">复用 Entity Hybrid Search</text>
+</g>
+<g class="node" data-detail="r-hybrid" id="r-hybrid" role="button" aria-label="Hybrid：实体 + 扩展需求" tabindex="0">
+<rect class="card" x="620" y="410" width="440" height="155" rx="8" fill="#ffffff" stroke="#2563eb" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="r-hybrid"/>
+<rect x="621" y="411" width="6" height="153" rx="3" fill="#2563eb" data-graph-role="decoration"/>
+<text x="644" y="449" font-size="23" font-weight="600" fill="#111827" text-anchor="start">Hybrid：实体 + 扩展需求</text>
+<text x="644" y="486" font-size="19" font-weight="400" fill="#475569" text-anchor="start">RSRP 用于弱覆盖还需哪些数据？</text>
+<text x="644" y="510" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Direct Anchor + Relevant Branch</text>
+<text x="644" y="534" font-size="19" font-weight="400" fill="#475569" text-anchor="start">合并两路上下文锚点</text>
+</g>
+<g class="node" data-detail="r-hier" id="r-hier" role="button" aria-label="Hierarchical：宽泛语义" tabindex="0">
+<rect class="card" x="1160" y="410" width="440" height="155" rx="8" fill="#ffffff" stroke="#2563eb" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="r-hier"/>
+<rect x="1161" y="411" width="6" height="153" rx="3" fill="#2563eb" data-graph-role="decoration"/>
+<text x="1184" y="449" font-size="23" font-weight="600" fill="#111827" text-anchor="start">Hierarchical：宽泛语义</text>
+<text x="1184" y="486" font-size="19" font-weight="400" fill="#475569" text-anchor="start">地铁弱覆盖需要哪些数据？</text>
+<text x="1184" y="510" font-size="19" font-weight="400" fill="#475569" text-anchor="start">View Filter → Aggregate Hybrid</text>
+<text x="1184" y="534" font-size="19" font-weight="400" fill="#475569" text-anchor="start">L0 选分支 → L1 读概要 → 成员</text>
+</g>
+<g class="node" data-detail="r-complete" id="r-complete" role="button" aria-label="机器端上下文补全与组装" tabindex="0">
+<rect class="card" x="620" y="700" width="440" height="120" rx="8" fill="#ffffff" stroke="#2563eb" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="r-complete"/>
+<rect x="621" y="701" width="6" height="118" rx="3" fill="#2563eb" data-graph-role="decoration"/>
+<text x="644" y="739" font-size="23" font-weight="600" fill="#111827" text-anchor="start">机器端上下文补全与组装</text>
+<text x="644" y="776" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Typed References + Backrefs</text>
+<text x="644" y="800" font-size="19" font-weight="400" fill="#475569" text-anchor="start">相关性 / 多样性 / Token Budget</text>
+</g>
+<g class="node" data-detail="r-env" id="r-env" role="button" aria-label="已按需读取的环境事实" tabindex="0">
+<rect class="card" x="1160" y="700" width="440" height="120" rx="8" fill="#ffffff" stroke="#c2410c" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="r-env"/>
+<rect x="1161" y="701" width="6" height="118" rx="3" fill="#c2410c" data-graph-role="decoration"/>
+<text x="1184" y="739" font-size="23" font-weight="600" fill="#111827" text-anchor="start">已按需读取的环境事实</text>
+<text x="1184" y="776" font-size="19" font-weight="400" fill="#475569" text-anchor="start">MetaOne Adapter：来源与快照</text>
+<text x="1184" y="800" font-size="19" font-weight="400" fill="#475569" text-anchor="start">状态完整性 / 能力 / 实际关系</text>
+</g>
+<g class="node" data-detail="r-coverage" id="r-coverage" role="button" aria-label="Requirement Coverage" tabindex="0">
+<rect class="card" x="80" y="940" width="440" height="155" rx="8" fill="#ffffff" stroke="#2563eb" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="r-coverage"/>
+<rect x="81" y="941" width="6" height="153" rx="3" fill="#2563eb" data-graph-role="decoration"/>
+<text x="104" y="979" font-size="23" font-weight="600" fill="#111827" text-anchor="start">Requirement Coverage</text>
+<text x="104" y="1016" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Entity × Aspect × Layer × Selector</text>
+<text x="104" y="1040" font-size="19" font-weight="400" fill="#475569" text-anchor="start">SATISFIED / PARTIAL / UNKNOWN</text>
+<text x="104" y="1064" font-size="19" font-weight="400" fill="#475569" text-anchor="start">MISSING 必须有完整缺失证据</text>
+</g>
+<g class="node" data-detail="r-focused" id="r-focused" role="button" aria-label="Focused L2 → 再评估" tabindex="0">
+<rect class="card" x="620" y="940" width="440" height="155" rx="8" fill="#ffffff" stroke="#2563eb" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="r-focused"/>
+<rect x="621" y="941" width="6" height="153" rx="3" fill="#2563eb" data-graph-role="decoration"/>
+<text x="644" y="979" font-size="23" font-weight="600" fill="#111827" text-anchor="start">Focused L2 → 再评估</text>
+<text x="644" y="1016" font-size="19" font-weight="400" fill="#475569" text-anchor="start">针对缺口批量展开，最多一次</text>
+<text x="644" y="1040" font-size="19" font-weight="400" fill="#475569" text-anchor="start">字段 / 粒度 / Join / 业务映射</text>
+<text x="644" y="1064" font-size="19" font-weight="400" fill="#475569" text-anchor="start">不够就保留缺口与 stop_reason</text>
+</g>
+<g class="node" data-detail="r-bind" id="r-bind" role="button" aria-label="Binding Overlay" tabindex="0">
+<rect class="card" x="1160" y="940" width="440" height="155" rx="8" fill="#ffffff" stroke="#9333ea" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="r-bind"/>
+<rect x="1161" y="941" width="6" height="153" rx="3" fill="#9333ea" data-graph-role="decoration"/>
+<text x="1184" y="979" font-size="23" font-weight="600" fill="#111827" text-anchor="start">Binding Overlay</text>
+<text x="1184" y="1016" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Identity / Semantic / Structural 分离</text>
+<text x="1184" y="1040" font-size="19" font-weight="400" fill="#475569" text-anchor="start">同类型 + 稳定键 / 显式 Crosswalk</text>
+<text x="1184" y="1064" font-size="19" font-weight="400" fill="#475569" text-anchor="start">不回写 Reference；保留冲突</text>
+</g>
+<g class="node" data-detail="r-output" id="r-output" role="button" aria-label="Context Bundle" tabindex="0">
+<rect class="card" x="620" y="1200" width="440" height="95" rx="8" fill="#ffffff" stroke="#9333ea" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="r-output"/>
+<rect x="621" y="1201" width="6" height="93" rx="3" fill="#9333ea" data-graph-role="decoration"/>
+<text x="644" y="1239" font-size="23" font-weight="600" fill="#111827" text-anchor="start">Context Bundle</text>
+<text x="644" y="1276" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Evidence / Coverage / Versions / Trace</text>
+</g>
+<text x="80" y="180" font-size="18" font-weight="400" fill="#475569" text-anchor="start">四个 Context Tools 保持不变</text>
+<text x="80" y="213" font-size="18" font-weight="400" fill="#475569" text-anchor="start">data_search · data_read</text>
+<text x="80" y="246" font-size="18" font-weight="400" fill="#475569" text-anchor="start">data_expand · data_source</text>
+<text x="1160" y="210" font-size="18" font-weight="400" fill="#475569" text-anchor="start">分支默认最多 3 个 / 同时最多 2 个 View</text>
+<text x="1160" y="245" font-size="18" font-weight="400" fill="#475569" text-anchor="start">Dense 用于召回；不做逐实体 Dense 分类</text>
+<g data-graph-role="legend">
+<path d="M42 1330 L84 1330" stroke="#15803d" stroke-width="2" fill="none" marker-end="url(#runtime-arrow-green)"/>
+<text x="97" y="1336" font-size="16" font-weight="400" fill="#64748b" text-anchor="start">参考知识写入 / 读取</text>
+<path d="M382 1330 L424 1330" stroke="#2563eb" stroke-width="2" fill="none" marker-end="url(#runtime-arrow-blue)"/>
+<text x="437" y="1336" font-size="16" font-weight="400" fill="#64748b" text-anchor="start">查询与上下文流</text>
+<path d="M722 1330 L764 1330" stroke="#c2410c" stroke-width="2" fill="none" stroke-dasharray="7 5" marker-end="url(#runtime-arrow-orange)"/>
+<text x="777" y="1336" font-size="16" font-weight="400" fill="#64748b" text-anchor="start">环境事实 / 外部边界</text>
+<path d="M1062 1330 L1104 1330" stroke="#9333ea" stroke-width="2" fill="none" stroke-dasharray="7 5" marker-end="url(#runtime-arrow-purple)"/>
+<text x="1117" y="1336" font-size="16" font-weight="400" fill="#64748b" text-anchor="start">治理与可选候选控制</text>
+</g>
+<text x="1640" y="1336" font-size="16" font-weight="400" fill="#64748b" text-anchor="end">fd8538f · 2026-09-09</text>
+</svg>

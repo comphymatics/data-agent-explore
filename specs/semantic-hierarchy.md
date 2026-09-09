@@ -102,3 +102,27 @@ classification 保留小写 status（classified/partially_classified/unclassifie
 `taxonomy_nodes` 是受治理标签定义，`taxonomy_edges` 是独立规范关系；原 `taxonomy` 继续是 classifier 候选集合，不自动生成事实。示例及结构见 `config/semantic-hierarchy.sample.json`、`contracts/semantic-hierarchy-config.schema.json`。每条 edge 必须有 parent/child、CONFIRMED、provenance.method=explicit_taxonomy、provenance.source 和有效 SourceLocation Evidence。纯 source 名称不能代替 Evidence。无需任何模型携带共同标签即可构建 sparse taxonomy；不制造 UNKNOWN 层。配置节点 alias 可用于精确 placement，实例冲突边保留审计并失活。
 
 V1.1 新 gate 包含 page_path_collision、invalid_taxonomy_edge、taxonomy_cycle、unknown_taxonomy_node、entity_placed_in_non_applicable_view、candidate_as_classified、aggregate_index_stale、view_uri_mismatch、organization_config_stale。配置错误在构建前拒绝；其余错误阻止发布/加载。组织快照版本为 semantic-hierarchy/v1.1，保存适用矩阵、routing/materializer/index/inference 配置及指纹和 aggregate index manifest。
+
+## V1.2：Precision Governance 与索引一致性
+
+### Ambiguous Co-classification
+
+同一 Context 的相邻分类槽只在父基数=1、子基数=1，或存在明确 CONFIRMED typed relation/Explicit Taxonomy 支持时生成 DERIVED pairwise organization。多父×多子无配对依据时默认省略；不会产生 Candidate 来填满组合，也不影响原有 section 对实体的显式 placement。来源 label 先解析到 Canonical/虚拟节点；`RELATION_VIEWS` 的已治理方向决定配对支持，不以任意 Page 共现替代业务关系。
+
+派生 provenance 保留 parent/child cardinality、支持标记、原输入和 `co_classification_guard_version`。Guard 改变会失效受影响 Context placement 和祖先 Aggregate。独立消融可关闭守卫，默认生产开启。Quality Gate 新增 `ambiguous_derived_edge`；所有组织关系仍不会进入事实 Graph。
+
+### Taxonomy Transition Rules
+
+`taxonomy_transitions` 是集中配置：每个 View 下 parent kind 对应允许的 child kinds。默认包含 Domain 的 category→data-domain→topic-domain→topic、topic→business-object/sub-object/logical-model/physical-model；Analysis 的 scenario→purpose、purpose→metric/dimension/business-object/model；Asset 的 layer→model、logical→physical、physical→element。完整表在 `hierarchy_contracts.TAXONOMY_TRANSITIONS`。
+
+允许配置 sparse skip，不生成 UNKNOWN 中间层。配置可缩减/扩展符合该 View 顺序的方向，但不能倒转或跨 View。Explicit Taxonomy 还需 source Evidence、已知节点和无环。错误立即失败：`invalid_taxonomy_transition`、`invalid_parent_kind`、`invalid_child_kind`、`cross_view_taxonomy_edge`、`taxonomy_cycle`、`unknown_taxonomy_node`；不降成 Candidate。
+
+### Snapshot / Incremental / Quality
+
+同一配置指纹新增 hardening、mention index、co-classification guard version，以及 transitions、branch budget、view arbitration 配置。保存仍通过原 `semantic-organization.json` 进入 immutable snapshot content hash；旧组织快照缺少这些策略时明确要求重建，不能静默与新策略混用。Canonical/Page/Bundle 的 schema 不另建版本体系。
+
+Page/Element 增量更新按所属 Page 的旧 keys/record IDs 删除，再增加新的 name/alias/identity/element 项；不遍历所有 exact values 或所有 element records 来删除某一 Page。无变化编译直接复用索引；变化编译保留旧对象快照，通过副本只重建变动 Page 的索引贡献，原 encoder 模型对象复用。组织增量 clone 保留 Aggregate/membership，对受影响分支和旧新祖先更新；单纯 routing/budget/arbitration 变化不重跑 placement。
+
+新增 Quality Gate：`exact_mention_index_stale`（exact ownership/词汇 Trie）、`branch_member_index_stale`（membership/preview）、`unbounded_branch_retrieval`、`ambiguous_derived_edge`、`invalid_taxonomy_transition`、`invalid_view_arbitration_config`。快照 publication 验证实际可丢弃索引；加载按保存的 Page/Canonical 重建 Mention，再按组织产物重建 membership。
+
+增量更新不等于全流程亚线性构建：Compiler 仍运行 Canonical/Fusion；变化构建的内存快照复制与配置/来源指纹计算仍有全量成本，SortedPosting 插入也将成本放在写入端。Query-time 预算与离线构建成本分别报告。

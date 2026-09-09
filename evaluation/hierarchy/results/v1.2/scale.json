@@ -1,0 +1,510 @@
+{
+  "fixture_kind": "synthetic index and serving diagnostics; not Parser/E2E benchmark",
+  "page_count": 5000,
+  "field_parent_count": 5000,
+  "element_count": 500000,
+  "index_build_seconds": 5.558961040980648,
+  "A": {
+    "mention": {
+      "version": "exact-mention/v1.2",
+      "query_length": 13,
+      "mention_candidates_count": 2,
+      "exact_lookups_count": 4,
+      "total_exact_keys": 1005001,
+      "trie_steps": 27,
+      "targets_examined": 100,
+      "target_limit": 100,
+      "truncated": true,
+      "anchor_latency_ms": 0.02145799226127565
+    },
+    "anchor_latency": {
+      "p50_ms": 0.025437489966861904,
+      "p95_ms": 14.829459018073976,
+      "samples": 12
+    },
+    "element_search_latency": {
+      "p50_ms": 0.16720849089324474,
+      "p95_ms": 0.26058399816975,
+      "samples": 12
+    },
+    "element_diagnostics": {
+      "examined_elements": 100,
+      "candidate_limit": 100,
+      "candidate_count": 100,
+      "truncated": true
+    }
+  },
+  "encoder": {
+    "version": "fastembed:sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "channel": "dense"
+  },
+  "B": {
+    "latency": {
+      "p50_ms": 2.225395990535617,
+      "p95_ms": 6.879666994791478,
+      "samples": 12
+    },
+    "branch_recall_latency_ms": 0.09262500680051744,
+    "branch_budget": {
+      "branch_k": 3,
+      "entity_candidate_k": 50,
+      "max_entities_examined_per_branch": 100,
+      "bundle_k": 8,
+      "branches": [
+        {
+          "path": "data://views/domain/topic/%E6%97%A0%E7%BA%BF%E8%A6%86%E7%9B%96%E8%B4%A8%E9%87%8F",
+          "branch_size": 10000,
+          "examined_members": 100,
+          "candidate_count": 50,
+          "posting_reads": 100,
+          "entity_retrieval_latency_ms": 0.6426249747164547,
+          "truncated": true
+        }
+      ],
+      "examined_members": 100
+    },
+    "bundle_size": 8,
+    "dense_active": false,
+    "retrieval_warnings": [
+      {
+        "code": "vector_retrieval_unavailable",
+        "message": "ModuleNotFoundError",
+        "encoder": "fastembed:sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+      }
+    ]
+  },
+  "C": {
+    "aggregate_branch_count": 100,
+    "page_count": 10000,
+    "element_count": 500000,
+    "queries": [
+      {
+        "case": "Exact",
+        "query": "CELL_ID在哪些模型？",
+        "latency": {
+          "p50_ms": 0.8168125059455633,
+          "p95_ms": 2.942916995380074,
+          "samples": 12
+        },
+        "routing": {
+          "initial": {
+            "mode": "direct",
+            "views": [],
+            "confidence": 0.99
+          },
+          "arbitration": {
+            "triggered": false,
+            "view_scores": {}
+          },
+          "final": {
+            "mode": "direct",
+            "primary_view": null,
+            "views": []
+          }
+        },
+        "mention": {
+          "version": "exact-mention/v1.2",
+          "query_length": 13,
+          "mention_candidates_count": 2,
+          "exact_lookups_count": 4,
+          "total_exact_keys": 1015001,
+          "trie_steps": 27,
+          "targets_examined": 100,
+          "target_limit": 100,
+          "truncated": true,
+          "anchor_latency_ms": 0.10941698565147817
+        },
+        "entity_candidates": {
+          "posting_reads": 0,
+          "candidate_limit": 100,
+          "candidate_count": 100,
+          "truncated": true
+        },
+        "branch_budget": {},
+        "bundle_size": 8,
+        "dense_active": false,
+        "retrieval_warnings": [
+          {
+            "code": "vector_retrieval_unavailable",
+            "message": "ModuleNotFoundError",
+            "encoder": "fastembed:sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+          }
+        ]
+      },
+      {
+        "case": "Broad Analysis",
+        "query": "哪些数据支持无线覆盖分析？",
+        "latency": {
+          "p50_ms": 4.350062503363006,
+          "p95_ms": 12.359041022136807,
+          "samples": 12
+        },
+        "routing": {
+          "initial": {
+            "mode": "hierarchical",
+            "views": [
+              "analysis"
+            ],
+            "confidence": 0.95
+          },
+          "arbitration": {
+            "triggered": false,
+            "view_scores": {}
+          },
+          "final": {
+            "mode": "hierarchical",
+            "primary_view": "analysis",
+            "views": [
+              "analysis"
+            ]
+          }
+        },
+        "mention": {
+          "version": "exact-mention/v1.2",
+          "query_length": 13,
+          "mention_candidates_count": 1,
+          "exact_lookups_count": 2,
+          "total_exact_keys": 1015001,
+          "trie_steps": 26,
+          "targets_examined": 0,
+          "target_limit": 100,
+          "truncated": false,
+          "anchor_latency_ms": 0.012417003745213151
+        },
+        "entity_candidates": {
+          "posting_reads": 100,
+          "candidate_limit": 100,
+          "candidate_count": 100,
+          "truncated": true
+        },
+        "branch_budget": {
+          "branch_k": 3,
+          "entity_candidate_k": 50,
+          "max_entities_examined_per_branch": 100,
+          "bundle_k": 8,
+          "branches": [
+            {
+              "path": "data://views/analysis/analysis-purpose/%E6%97%A0%E7%BA%BF%E8%A6%86%E7%9B%96%E5%88%86%E6%9E%90%200",
+              "branch_size": 100,
+              "examined_members": 100,
+              "candidate_count": 50,
+              "posting_reads": 100,
+              "entity_retrieval_latency_ms": 0.6988329987507313,
+              "truncated": false
+            },
+            {
+              "path": "data://views/analysis/analysis-purpose/%E6%97%A0%E7%BA%BF%E8%A6%86%E7%9B%96%E5%88%86%E6%9E%90%201",
+              "branch_size": 100,
+              "examined_members": 100,
+              "candidate_count": 50,
+              "posting_reads": 100,
+              "entity_retrieval_latency_ms": 0.6895420083310455,
+              "truncated": false
+            },
+            {
+              "path": "data://views/analysis/analysis-purpose/%E6%97%A0%E7%BA%BF%E8%A6%86%E7%9B%96%E5%88%86%E6%9E%90%2010",
+              "branch_size": 100,
+              "examined_members": 100,
+              "candidate_count": 50,
+              "posting_reads": 100,
+              "entity_retrieval_latency_ms": 0.6644169916398823,
+              "truncated": false
+            }
+          ],
+          "examined_members": 300
+        },
+        "bundle_size": 8,
+        "dense_active": false,
+        "retrieval_warnings": [
+          {
+            "code": "vector_retrieval_unavailable",
+            "message": "ModuleNotFoundError",
+            "encoder": "fastembed:sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+          }
+        ]
+      },
+      {
+        "case": "Broad Domain",
+        "query": "有哪些数据可以描述网络资源配置？",
+        "latency": {
+          "p50_ms": 19.821020498056896,
+          "p95_ms": 20.94458299688995,
+          "samples": 12
+        },
+        "routing": {
+          "initial": {
+            "mode": "hierarchical",
+            "views": [
+              "domain"
+            ],
+            "confidence": 0.75
+          },
+          "arbitration": {
+            "triggered": true,
+            "view_scores": {
+              "analysis": 0.0,
+              "domain": 0.02243306850326946,
+              "asset": 0.0
+            },
+            "latency_ms": 7.044166995910928
+          },
+          "final": {
+            "mode": "hierarchical",
+            "primary_view": "domain",
+            "views": [
+              "domain"
+            ]
+          }
+        },
+        "mention": {
+          "version": "exact-mention/v1.2",
+          "query_length": 16,
+          "mention_candidates_count": 1,
+          "exact_lookups_count": 2,
+          "total_exact_keys": 1015001,
+          "trie_steps": 32,
+          "targets_examined": 0,
+          "target_limit": 100,
+          "truncated": false,
+          "anchor_latency_ms": 0.2329580020159483
+        },
+        "entity_candidates": {
+          "posting_reads": 0,
+          "candidate_limit": 100,
+          "candidate_count": 100,
+          "truncated": true
+        },
+        "branch_budget": {
+          "branch_k": 3,
+          "entity_candidate_k": 50,
+          "max_entities_examined_per_branch": 100,
+          "bundle_k": 8,
+          "branches": [
+            {
+              "path": "data://views/domain/topic/%E7%BD%91%E7%BB%9C%E8%B5%84%E6%BA%90%E9%85%8D%E7%BD%AE%2034",
+              "branch_size": 100,
+              "examined_members": 100,
+              "candidate_count": 50,
+              "posting_reads": 0,
+              "entity_retrieval_latency_ms": 2.320125000551343,
+              "truncated": false
+            },
+            {
+              "path": "data://views/domain/topic/%E7%BD%91%E7%BB%9C%E8%B5%84%E6%BA%90%E9%85%8D%E7%BD%AE%2035",
+              "branch_size": 100,
+              "examined_members": 100,
+              "candidate_count": 50,
+              "posting_reads": 0,
+              "entity_retrieval_latency_ms": 2.275042003020644,
+              "truncated": false
+            },
+            {
+              "path": "data://views/domain/topic/%E7%BD%91%E7%BB%9C%E8%B5%84%E6%BA%90%E9%85%8D%E7%BD%AE%2036",
+              "branch_size": 100,
+              "examined_members": 100,
+              "candidate_count": 50,
+              "posting_reads": 0,
+              "entity_retrieval_latency_ms": 2.300374995684251,
+              "truncated": false
+            }
+          ],
+          "examined_members": 300
+        },
+        "bundle_size": 8,
+        "dense_active": false,
+        "retrieval_warnings": [
+          {
+            "code": "vector_retrieval_unavailable",
+            "message": "ModuleNotFoundError",
+            "encoder": "fastembed:sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+          }
+        ]
+      },
+      {
+        "case": "Broad Asset",
+        "query": "Asset Inventory",
+        "latency": {
+          "p50_ms": 3.5321664909133688,
+          "p95_ms": 9.12933301879093,
+          "samples": 12
+        },
+        "routing": {
+          "initial": {
+            "mode": "hierarchical",
+            "views": [
+              "asset"
+            ],
+            "confidence": 0.95
+          },
+          "arbitration": {
+            "triggered": false,
+            "view_scores": {}
+          },
+          "final": {
+            "mode": "hierarchical",
+            "primary_view": "asset",
+            "views": [
+              "asset"
+            ]
+          }
+        },
+        "mention": {
+          "version": "exact-mention/v1.2",
+          "query_length": 15,
+          "mention_candidates_count": 3,
+          "exact_lookups_count": 6,
+          "total_exact_keys": 1015001,
+          "trie_steps": 30,
+          "targets_examined": 0,
+          "target_limit": 100,
+          "truncated": false,
+          "anchor_latency_ms": 0.014416989870369434
+        },
+        "entity_candidates": {
+          "posting_reads": 100,
+          "candidate_limit": 100,
+          "candidate_count": 100,
+          "truncated": true
+        },
+        "branch_budget": {
+          "branch_k": 3,
+          "entity_candidate_k": 50,
+          "max_entities_examined_per_branch": 100,
+          "bundle_k": 8,
+          "branches": [
+            {
+              "path": "data://views/asset/layer/Asset%20Inventory%2067",
+              "branch_size": 100,
+              "examined_members": 100,
+              "candidate_count": 50,
+              "posting_reads": 100,
+              "entity_retrieval_latency_ms": 0.5592920060735196,
+              "truncated": false
+            },
+            {
+              "path": "data://views/asset/layer/Asset%20Inventory%2068",
+              "branch_size": 100,
+              "examined_members": 100,
+              "candidate_count": 50,
+              "posting_reads": 100,
+              "entity_retrieval_latency_ms": 0.5254590068943799,
+              "truncated": false
+            },
+            {
+              "path": "data://views/asset/layer/Asset%20Inventory%2069",
+              "branch_size": 100,
+              "examined_members": 100,
+              "candidate_count": 50,
+              "posting_reads": 100,
+              "entity_retrieval_latency_ms": 0.5270830006338656,
+              "truncated": false
+            }
+          ],
+          "examined_members": 300
+        },
+        "bundle_size": 8,
+        "dense_active": false,
+        "retrieval_warnings": [
+          {
+            "code": "vector_retrieval_unavailable",
+            "message": "ModuleNotFoundError",
+            "encoder": "fastembed:sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+          }
+        ]
+      },
+      {
+        "case": "Hybrid",
+        "query": "MODEL_00001用于覆盖分析还需要哪些数据？",
+        "latency": {
+          "p50_ms": 4.315104495617561,
+          "p95_ms": 12.553541018860415,
+          "samples": 12
+        },
+        "routing": {
+          "initial": {
+            "mode": "hybrid",
+            "views": [
+              "analysis"
+            ],
+            "confidence": 0.99
+          },
+          "arbitration": {
+            "triggered": false,
+            "view_scores": {}
+          },
+          "final": {
+            "mode": "hybrid",
+            "primary_view": "analysis",
+            "views": [
+              "analysis"
+            ]
+          }
+        },
+        "mention": {
+          "version": "exact-mention/v1.2",
+          "query_length": 25,
+          "mention_candidates_count": 2,
+          "exact_lookups_count": 4,
+          "total_exact_keys": 1015001,
+          "trie_steps": 51,
+          "targets_examined": 1,
+          "target_limit": 100,
+          "truncated": false,
+          "anchor_latency_ms": 0.023458997020497918
+        },
+        "entity_candidates": {
+          "posting_reads": 100,
+          "candidate_limit": 100,
+          "candidate_count": 100,
+          "truncated": true
+        },
+        "branch_budget": {
+          "branch_k": 3,
+          "entity_candidate_k": 50,
+          "max_entities_examined_per_branch": 100,
+          "bundle_k": 8,
+          "branches": [
+            {
+              "path": "data://views/analysis/analysis-purpose/%E6%97%A0%E7%BA%BF%E8%A6%86%E7%9B%96%E5%88%86%E6%9E%90%201",
+              "branch_size": 100,
+              "examined_members": 100,
+              "candidate_count": 50,
+              "posting_reads": 100,
+              "entity_retrieval_latency_ms": 0.6532089901156723,
+              "truncated": false
+            },
+            {
+              "path": "data://views/analysis/analysis-purpose/%E6%97%A0%E7%BA%BF%E8%A6%86%E7%9B%96%E5%88%86%E6%9E%90%200",
+              "branch_size": 100,
+              "examined_members": 100,
+              "candidate_count": 50,
+              "posting_reads": 100,
+              "entity_retrieval_latency_ms": 0.6532910047098994,
+              "truncated": false
+            },
+            {
+              "path": "data://views/analysis/analysis-purpose/%E6%97%A0%E7%BA%BF%E8%A6%86%E7%9B%96%E5%88%86%E6%9E%90%2010",
+              "branch_size": 100,
+              "examined_members": 100,
+              "candidate_count": 50,
+              "posting_reads": 100,
+              "entity_retrieval_latency_ms": 0.6564579962287098,
+              "truncated": false
+            }
+          ],
+          "examined_members": 300
+        },
+        "bundle_size": 8,
+        "dense_active": false,
+        "retrieval_warnings": [
+          {
+            "code": "vector_retrieval_unavailable",
+            "message": "ModuleNotFoundError",
+            "encoder": "fastembed:sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+          }
+        ]
+      }
+    ]
+  },
+  "total_seconds": 8.577848124987213
+}

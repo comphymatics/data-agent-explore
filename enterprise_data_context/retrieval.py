@@ -19,8 +19,14 @@ class ContextRetrievalService:
         self.pages={p.path:p for p in compiled["pages"]}
         self.contexts={c.path:c for c in compiled["contexts"]}
         self.pidx=compiled["page_index"]; self.eidx=compiled["element_index"]
+        for context in self.contexts.values():
+            if context.path in self.pidx.docs:
+                self.pidx.add_exact_keys(context.path, [v for k, v in context.identity_hints.items() if k in {"stable_id", "strong_key"}])
         self.graph=compiled["graph"]; self.backrefs=compiled["backrefs"]
         self.hierarchy=compiled.get("hierarchy") or HierarchyIndex().project(compiled["contexts"])
+        from .indexes.hierarchy import fingerprint
+        if self.hierarchy._config_hash != fingerprint(self.hierarchy.config):
+            raise ValueError("organization_config_stale")
         self.association_report=dict(compiled.get("association_report",{}))
         self.index_version=compiled.get("index_version") or "context-memory-"+sha256(json.dumps(
             {"contexts":[asdict(c) for c in compiled["contexts"]],"coverage_declaration":compiled.get("coverage_declaration"),
@@ -68,15 +74,22 @@ class ContextRetrievalService:
             raise ValueError("seen_context_ids must be an array of context paths")
         seen_paths={path for path in (seen_context_ids or []) if path in self.pages}
         seed_limit=min(len(self.pages),top_k+len(seen_paths)) if seen_paths else top_k
-        seed_hits=self.pidx.search(query,types,scope,seed_limit)
         from .hierarchical_retrieval import route, discover
         retrieval_trace=route(self,query,mode,hierarchy,intent,scope,retrieval_strategy)
+        candidate_limit = self.hierarchy.config["hierarchy_retrieval"]["max_entities_examined_per_branch"]
+        seed_limit = min(seed_limit, self.hierarchy.config["hierarchy_retrieval"]["entity_candidate_k"])
+        seed_hits=self.pidx.search(query,types,scope,seed_limit, candidate_limit=candidate_limit,
+            fallback_paths=retrieval_trace["exact_anchor_ids"])
+        retrieval_trace["entity_retrieval"] = dict(self.pidx.last_candidate_diagnostics)
         seed_hits=discover(self,query,retrieval_trace,seed_hits,seed_limit,types,scope)
         assembler=BundleAssembler()
         candidates=assembler.complete(self,seed_hits,intent,types,scope)
+        retrieval_trace["relation_completion"] = assembler.last_diagnostics
 
         # Preserve seed relevance while allowing complementary referenced pages.
         limit=bundle_k if bundle_k is not None else max(top_k,top_k*2)
+        if retrieval_trace["mode"] != "direct":
+            limit = min(limit, self.hierarchy.config["hierarchy_retrieval"]["bundle_k"])
 
         ranked=assembler.rank(self,candidates,seed_hits)
         effective_content="auto" if token_budget is not None and read_content is None else read_content
@@ -140,7 +153,7 @@ class ContextRetrievalService:
             "anchor_context_ids":[h.path for h in seed_hits[:top_k]],
             "anchor_candidates":[{"path":h.path,"name":h.name,"rank":i+1} for i,h in enumerate(seed_hits[:top_k])],
             "retrieval_version":"page-serving/v4:"+self.pidx.mode+":"+getattr(self.pidx.encoder,"version","custom")+
-                ":hierarchy-v1.1:"+self.hierarchy.config["routing_policy_version"]+":"+self.hierarchy.aggregate_index.encoder.version,
+                ":hierarchy-v1.2:"+self.hierarchy.config["routing_policy_version"]+":"+self.hierarchy.aggregate_index.encoder.version,
             "encoder_version":getattr(self.pidx.encoder,"version","custom"),
             "truncated":bool(truncation_reasons),
             "truncation_reasons":truncation_reasons,

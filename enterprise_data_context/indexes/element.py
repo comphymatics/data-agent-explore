@@ -2,13 +2,15 @@ from collections import defaultdict
 from hashlib import sha256
 import json
 from .page import toks
+from .mention import MentionVocabulary, normalize, StablePosting
+from itertools import islice
 
 ALIASES = {"fields": "important_fields", "counters": "metric_catalog", "formulas": "formula",
            "join_keys": "joins"}
 KINDS = {"important_fields": "Field", "attributes": "Attribute", "object_attributes": "Attribute",
          "formula": "Formula", "metric_catalog": "Counter", "joins": "JoinKey"}
 IDENTIFIER_KEYS = {"id", "name", "code", "field", "field_name", "attribute", "attribute_name",
-                   "counter", "counter_id", "counter_name", "formula", "expression", "key",
+                   "counter", "counter_id", "counter_name", "alias", "aliases", "formula", "expression", "key",
                    "left_key", "right_key", "source_field", "target_field", "join_keys", "keys"}
 SECTIONS = ("important_fields", "formula", "dimensions", "metrics", "constraints", "grain",
             "attributes", "measurement_point", "record_sources", "metric_catalog",
@@ -45,17 +47,27 @@ class ElementIndex:
     def __init__(self):
         self.by_page = defaultdict(dict)
         self.records = {}
-        self.postings = defaultdict(set)
-        self.exact = defaultdict(set)
+        self.postings = defaultdict(StablePosting)
+        self.exact = defaultdict(StablePosting)
+        self.mentions = MentionVocabulary()
+        self.page_records = defaultdict(set)
+
+    def remove(self, path):
+        for eid in self.page_records.pop(path, ()):
+            row = self.records.pop(eid)
+            for token in set(toks(" ".join(text_values(row["value"])))):
+                self.postings[token].discard(eid)
+                if not self.postings[token]:
+                    del self.postings[token]
+            for key in {normalize(k) for k in [eid, *row["identifiers"]]}:
+                self.exact[key].discard(eid)
+                self.mentions.remove(key)
+                if not self.exact[key]:
+                    del self.exact[key]
+        self.by_page.pop(path, None)
 
     def add(self, page):
-        for eid in [eid for eid, row in self.records.items() if row["path"] == page.path]:
-            self.records.pop(eid)
-            for ids in self.postings.values():
-                ids.discard(eid)
-            for ids in self.exact.values():
-                ids.discard(eid)
-        self.by_page.pop(page.path, None)
+        self.remove(page.path)
         if page.identity_status in {"INFERRED", "CANDIDATE"}:
             return
         for section in SECTIONS:
@@ -77,12 +89,14 @@ class ElementIndex:
                        "parent_context": {"path": page.path, "name": page.name, "type": page.context_type,
                                           "content": page.l0, "knowledge_layer": "REFERENCE"}}
                 self.records[eid] = row
-                for key in [eid, *row["identifiers"]]:
-                    self.exact[key.casefold()].add(eid)
+                self.page_records[page.path].add(eid)
+                for key in {normalize(k) for k in [eid, *row["identifiers"]]}:
+                    self.exact[key].add(eid)
+                    self.mentions.add(key)
                 for token in set(toks(" ".join(text_values(element)))):
                     self.postings[token].add(eid)
 
-    def search(self, query, paths=None, sections=None, top_k=20):
+    def search(self, query, paths=None, sections=None, top_k=20, candidate_limit=100):
         if not isinstance(query, str) or not query.strip() or top_k < 1:
             raise ValueError("element search requires a query and positive top_k")
         terms = set(toks(query))
@@ -90,8 +104,18 @@ class ElementIndex:
         # Non-element expansion requests must never accidentally search every section.
         if sections and not (allowed & set(SECTIONS)) and "elements" not in sections:
             return []
-        ids = set().union(*(self.postings.get(t, set()) for t in terms)) if terms else set()
-        ids |= self.exact.get(query.strip().casefold(), set())
+        # Focused search intersects with parent-owned IDs first, never all fields.
+        scoped = set().union(*(self.page_records.get(p, set()) for p in paths)) if paths is not None else None
+        pools = [self.exact.get(normalize(query), ())] + [self.postings.get(t, ()) for t in sorted(terms)]
+        ids = set()
+        examined = 0
+        for pool in pools:
+            source = (eid for eid in scoped if eid in pool) if scoped is not None else iter(pool)
+            for eid in islice(source, max(0, candidate_limit-examined)):
+                examined += 1
+                ids.add(eid)
+        self.last_diagnostics = {"examined_elements": examined, "candidate_limit": candidate_limit,
+                                 "candidate_count": len(ids), "truncated": any(len(p) > candidate_limit for p in pools)}
         rows = []
         for eid in ids:
             row = self.records[eid]
@@ -102,6 +126,15 @@ class ElementIndex:
             score = len(terms & set(toks(text)))/max(1, len(terms)) + 2 * exact
             rows.append({**row, "score": score, "match": "EXACT_IDENTIFIER" if exact else "TEXT"})
         return sorted(rows, key=lambda row: (-row["score"], row["element_id"]))[:top_k]
+
+    def validate(self):
+        expected = defaultdict(set)
+        for eid, row in self.records.items():
+            for key in {normalize(k) for k in [eid, *row["identifiers"]]}:
+                expected[key].add(eid)
+        if not self.mentions.is_current() or expected != self.exact or {k: len(v) for k, v in expected.items()} != self.mentions.counts:
+            return [{"severity": "error", "code": "exact_mention_index_stale"}]
+        return []
 
     def expand(self, path, sections, top_k=20):
         data = self.by_page.get(path, {})

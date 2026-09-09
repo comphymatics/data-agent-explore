@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Data Explore · 当前技术方案 · V1.1</title>
+<style>
+:root{color-scheme:light;--ink:#111827;--muted:#64748b;--blue:#2563eb;--border:#e2e8f0}
+*{box-sizing:border-box}body{margin:0;background:#f8fafc;color:var(--ink);font:15px/1.65 -apple-system,BlinkMacSystemFont,"Helvetica Neue","PingFang SC",sans-serif}button,a{touch-action:manipulation}button{font:inherit;cursor:pointer}button:focus-visible,a:focus-visible{outline:3px solid #93c5fd;outline-offset:3px}[hidden]{display:none!important}
+header{background:white;border-bottom:1px solid var(--border);padding:24px 32px 18px}.eyebrow{font-size:12px;color:#15803d;letter-spacing:.12em;font-weight:700}h1{font-size:28px;letter-spacing:-.03em;line-height:1.3;margin:8px 0}header p{margin:7px 0;color:var(--muted);max-width:1020px}.meta{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}.tag{font-size:12px;border:1px solid var(--border);border-radius:5px;padding:2px 9px;background:#f8fafc;color:#475569}.tag.green{background:#f0fdf4;color:#15803d;border-color:#bbf7d0}
+.toolbar{display:flex;gap:14px;justify-content:space-between;align-items:center;flex-wrap:wrap;padding:16px 32px;background:white;border-bottom:1px solid var(--border)}nav{display:flex;gap:5px;flex-wrap:wrap}nav button{border:0;background:transparent;padding:9px 16px;border-radius:6px;color:#475569;font-weight:600}nav button[aria-selected="true"]{color:#1d4ed8;background:#eff6ff}.actions{display:flex;gap:6px}.actions button{background:white;border:1px solid var(--border);border-radius:6px;padding:7px 12px;font-size:13px}.actions button:hover{background:#f1f5f9}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:18px;padding:20px 24px;max-width:2100px;margin:auto}.canvas{background:white;border:1px solid var(--border);border-radius:10px;overflow:auto;min-height:500px}.diagram-view{width:100%;min-width:640px}.diagram-view svg{display:block;width:100%;height:auto}.sidebar{background:white;border:1px solid var(--border);border-radius:10px;padding:23px;height:fit-content;position:sticky;top:20px}.sidebar h2{font-size:21px;margin:9px 0 13px;line-height:1.4}.sidebar p{color:#475569;font-size:14px}.sidebar h3{font-size:13px;margin-top:25px;color:#475569}.sidebar ul{padding-left:18px;font-size:13px;overflow-wrap:anywhere}.sidebar a{color:#2563eb;text-decoration:none}.sidebar a:hover{text-decoration:underline}.hint{font-size:12px!important;color:#64748b!important;border-top:1px solid var(--border);padding-top:16px}.status{font-size:12px;color:#15803d;background:#f0fdf4;border-radius:4px;padding:3px 7px;display:inline-block}.summary-box{margin:20px 0 0;padding:14px;background:#f8fafc;border-radius:6px}.summary-box strong{display:block;font-size:13px}.summary-box p{font-size:12px;margin:4px 0}.compare{padding:28px;min-width:640px}.compare h2{margin-top:0;font-size:25px}.compare h3{font-size:18px;margin-top:28px}.compare table{width:100%;border-collapse:collapse;font-size:14px}.compare th,.compare td{padding:13px 12px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}.compare th{background:#f1f5f9;font-size:13px}.compare .callout{border-left:4px solid #c2410c;background:#fff7ed;padding:15px 18px;margin:20px 0;font-size:14px}.compare a{color:var(--blue)}.cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}.cards article{background:#f8fafc;padding:16px;border-radius:8px}.cards article h3{margin:0 0 5px}.cards article p{margin:0;font-size:14px}.footer{padding:2px 32px 25px;font-size:12px;color:#64748b}.footer a{color:#2563eb}#message{color:#15803d;font-size:12px}
+@media(max-width:1050px){.layout{grid-template-columns:1fr}.sidebar{position:static}.cards{grid-template-columns:1fr}.toolbar{padding:12px 18px}header{padding:20px}h1{font-size:24px}.layout{padding:14px}.diagram-view,.compare{min-width:600px}}
+@media print{header,.toolbar,.sidebar,.footer{display:none}.layout{display:block;padding:0}.canvas{border:0;overflow:visible}.diagram-view{width:100%!important;min-width:0}body{background:white}@page{size:A3 landscape;margin:8mm}}
+</style>
+</head>
+<body>
+<header>
+<div class="eyebrow">DATA AGENT EXPLORE / CURRENT ARCHITECTURE</div>
+<h1>从参考语义到可验证的探索上下文</h1>
+<p>Context Engine 编译与管理知识；Explore Agent 选择检索路径、检查缺口并绑定环境事实；主 Agent 消费 Context Bundle，继续完成业务任务。</p>
+<div class="meta"><span class="tag green">代码基线 fd8538f</span><span class="tag">Semantic Hierarchy V1.1</span><span class="tag">核对日期 2026-09-09</span><span class="tag">离线可用 · 点击节点查看依据</span></div>
+</header>
+<div class="toolbar">
+<nav aria-label="架构视图" role="tablist">
+<button type="button" data-view="overview" role="tab" aria-selected="true">01 整体总览</button>
+<button type="button" data-view="build" role="tab" aria-selected="false">02 构建与发布</button>
+<button type="button" data-view="runtime" role="tab" aria-selected="false">03 查询与绑定</button>
+<button type="button" data-view="boundaries" role="tab" aria-selected="false">04 变化与验证边界</button>
+</nav>
+<div class="actions"><button id="minus" aria-label="缩小">−</button><button id="fit">适配宽度</button><button id="plus" aria-label="放大">+</button><button id="downloadSvg">下载 SVG</button><button id="downloadPng">下载 PNG</button></div>
+</div>
+<main class="layout">
+<div class="canvas" id="canvas">
+__DIAGRAMS__
+<section id="view-boundaries" class="compare" hidden>
+<h2>相对仓库旧方案图，哪些表达需要更新？</h2>
+<p>旧图保留作历史资料；本图根据当前生产模块和 V1.1 文档重新梳理，不把旧图中的“目标能力”直接当作已运行事实。</p>
+<table><thead><tr><th>主题</th><th>当前方案</th></tr></thead><tbody>
+<tr><td>实体、组织、页面</td><td>Canonical Entity 唯一；Hierarchy 多视图投影；组织边与 TypedReference 事实边分开。Canonical URI 与 Aggregate View URI 永不混用。</td></tr>
+<tr><td>宽泛问题的入口</td><td>集中 intent-aware strategy 选择最多两个 View；AggregatePageIndex 复用 Exact/BM25/Dense/Facet/RRF，按 L0/L1 富读发现成员锚点。</td></tr>
+<tr><td>明确实体的入口</td><td>Exact Page/Element Anchor 走 Direct；有跨语义扩展需求才合并分支。不会为使用 Hierarchy 而强制从根浏览。</td></tr>
+<tr><td>分类完成度</td><td>按实体适用视图计算；Metric 仅需 Analysis placement。Candidate 不使分类变为完成，也不参与强导航。</td></tr>
+<tr><td>企业规范层级</td><td>显式 taxonomy_nodes/edges + Evidence 可独立构建；不依赖实例同时携带多个标签。规则或候选不能覆盖受治理 taxonomy。</td></tr>
+<tr><td>Coverage</td><td>按 Entity × Aspect × Layer × Selector 检查证据；一个模型的字段不能满足另一个模型，Reference 不能满足 Environment 要求。</td></tr>
+<tr><td>跨层 Binding</td><td>IdentityBinding、SemanticMapping、StructuralRelation 分开；同名或相似度不能证明现网身份，Overlay 不回写全局快照。</td></tr>
+<tr><td>增量与状态</td><td>组织贡献、受影响分支/祖先与相关索引增量更新；resume 固定 query/requirements、IndexVersion 和 serving version。不是无限自主循环。</td></tr>
+<tr><td>评测与生产</td><td>Dataset Builder 只产 DRAFT；Gold/Alias/Scorer 独立，禁止进入生产 Context 或检索配置。正式 Benchmark 与 Hierarchy ablation 分开。</td></tr>
+</tbody></table>
+<h3>当前证据范围</h3>
+<div class="cards">
+<article><h3>已验证</h3><p>V1.1 记录：227 项 Python 回归；Template 样例 110 个 Context/Page；无变更重建保持同一版本；真实本地 MiniLM 的两个非词面查询均首位命中。</p></article>
+<article><h3>仍待验证</h3><p>企业真实材料与 taxonomy 审核、MetaOne 原始 payload/认证/分页联调、多义问题 Precision、大规模性能与 token 成本。样例成功不代表现网就绪。</p></article>
+</div>
+<div class="callout">本系统不是 Ontology，也不做通用 chunk-RAG；Graph 仅供机器使用。Explore 返回上下文，最终 SQL、模型设计或分析结论属于后续消费者。</div>
+<h3>LLM 在什么位置？</h3>
+<p>Parser-first：结构解析应确定性完成。可选 LLM 用于受治理的候选提取/组织选择，以及查询路由和证据片段选择；都有固定输出边界。它不能自由遍历 Graph、改写 Coverage、确认身份或提升候选为事实。Dense 在查询召回中使用，本轮没有逐实体 Dense taxonomy classification。</p>
+<h3>方案与代码依据</h3>
+<p><a href="data-explore-v1.1-architecture.md">当前方案说明与源码索引</a> · <a href="../../SEMANTIC_HIERARCHY_V1_1_IMPLEMENTATION.md">V1.1 实施报告</a> · <a href="../../specs/10-explore-agent.md">Explore / Coverage</a> · <a href="../../mcp/data-catalog/README.md">MetaOne 适配边界</a></p>
+</section>
+</div>
+<aside class="sidebar" aria-live="polite">
+<span id="detailStatus" class="status">阅读指南</span>
+<h2 id="detailTitle">先看主链，再看实现细节</h2>
+<p id="detailBody">总览左侧是参考语义构建，右侧是查询期编排。点击任意节点，查看职责、验证范围和源码依据。两个模块之间通过稳定只读契约连接。</p>
+<h3>代码 / 文档依据</h3><ul id="detailSources"><li><a href="data-explore-v1.1-architecture.md">完整方案说明</a></li></ul>
+<div class="summary-box"><strong>需要始终保留的边界</strong><p>Reference ≠ 当前环境存在性<br>Hierarchy Edge ≠ 业务事实<br>Candidate ≠ Confirmed<br>UNKNOWN ≠ MISSING</p></div>
+<p class="hint">视图切换不会请求网络。支持 + / − 缩放，0 恢复宽度。SVG 可编辑，PNG 可直接用于评审或演示。</p><span id="message" role="status"></span>
+</aside>
+</main>
+<footer class="footer">根据 fd8538f 的代码与文档核对；不覆盖旧方案图。<a href="data-explore-v1.1-architecture.md">阅读完整梳理</a></footer>
+<script>
+'use strict';
+const details=__DETAILS__;
+let current='overview',zoom=1;
+const byId=id=>document.getElementById(id);
+function showDetail(key){const item=details[key];if(!item)return;document.querySelectorAll('.node.selected').forEach(el=>el.classList.remove('selected'));byId(key).classList.add('selected');byId('detailTitle').textContent=item.title;byId('detailBody').textContent=item.body;byId('detailStatus').textContent=item.status;byId('detailSources').replaceChildren();item.sources.forEach(path=>{const li=document.createElement('li');const a=document.createElement('a');a.textContent=path;a.href='../../'+path;li.append(a);byId('detailSources').append(li)});}
+function resize(){document.querySelectorAll('.diagram-view').forEach(el=>{el.style.width=(zoom*100)+'%'});byId('fit').textContent=zoom===1?'适配宽度':Math.round(zoom*100)+'%';}
+function select(view){current=view;document.querySelectorAll('nav button').forEach(el=>el.setAttribute('aria-selected',String(el.dataset.view===view)));document.querySelectorAll('.diagram-view,.compare').forEach(el=>el.hidden=el.id!=='view-'+view);zoom=1;resize();byId('canvas').scrollTo(0,0);for(const id of ['plus','minus','fit','downloadSvg','downloadPng'])byId(id).disabled=view==='boundaries';if(view!=='boundaries'){const first=byId('view-'+view).querySelector('.node');showDetail(first.id)}else{byId('detailTitle').textContent='事实、机制和验证范围分开';byId('detailBody').textContent='这张方案图以当前代码为准。旧图的统一布尔 Coverage、宽松名称绑定或只按词面选择分支，不能代表当前实现。真实环境接口仍需内部联调。';byId('detailStatus').textContent='核对后的方案边界';byId('detailSources').replaceChildren();}}
+document.querySelectorAll('nav button').forEach(el=>el.addEventListener('click',()=>select(el.dataset.view)));
+document.querySelectorAll('.node').forEach(el=>{el.addEventListener('click',()=>showDetail(el.id));el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();showDetail(el.id)}})});
+byId('plus').onclick=()=>{zoom=Math.min(2.4,zoom+.2);resize()};byId('minus').onclick=()=>{zoom=Math.max(.6,zoom-.2);resize()};byId('fit').onclick=()=>{zoom=1;resize()};
+document.addEventListener('keydown',e=>{if(current==='boundaries'||e.target.closest('button,a'))return;if(e.key==='+'||e.key==='=')byId('plus').click();if(e.key==='-')byId('minus').click();if(e.key==='0')byId('fit').click()});
+function svgText(){const svg=byId('view-'+current).querySelector('svg').cloneNode(true);svg.querySelectorAll('.selected').forEach(el=>el.classList.remove('selected'));return new XMLSerializer().serializeToString(svg)}
+function download(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+byId('downloadSvg').onclick=()=>download(new Blob([svgText()],{type:'image/svg+xml;charset=utf-8'}),'data-explore-v1.1-'+current+'.svg');
+byId('downloadPng').onclick=async()=>{await document.fonts.ready;const svg=byId('view-'+current).querySelector('svg');const w=Number(svg.getAttribute('width')),h=Number(svg.getAttribute('height'));const name='data-explore-v1.1-'+current+'.png';const url=URL.createObjectURL(new Blob([svgText()],{type:'image/svg+xml;charset=utf-8'}));const img=new Image();img.onload=()=>{const canvas=document.createElement('canvas');canvas.width=w*2;canvas.height=h*2;canvas.getContext('2d').drawImage(img,0,0,w*2,h*2);canvas.toBlob(blob=>{if(blob)download(blob,name);URL.revokeObjectURL(url)},'image/png')};img.onerror=()=>{byId('message').textContent='当前浏览器无法导出 PNG，请使用随附 PNG 文件。';URL.revokeObjectURL(url)};img.src=url};
+</script>
+</body></html>

@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1680 1150" width="1680" height="1150" role="img" aria-labelledby="build-title build-desc" data-quality-profile="standard">
+<title id="build-title">参考语义如何构建与发布</title>
+<desc id="build-desc">Canonical 实体唯一；事实图、组织视图、LLM 页面承担不同职责。</desc>
+<style>text{font-family:"Helvetica Neue",Arial,"PingFang SC","Microsoft YaHei",sans-serif}.node{cursor:pointer}.node:focus{outline:none}.node:focus .card,.node.selected .card{stroke:#111827;stroke-width:3}.node:hover .card{stroke-width:3}</style>
+<defs>
+<marker id="build-arrow-blue" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L10 3.5 L0 7 Z" fill="#2563eb"/></marker>
+<marker id="build-arrow-green" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L10 3.5 L0 7 Z" fill="#15803d"/></marker>
+<marker id="build-arrow-purple" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L10 3.5 L0 7 Z" fill="#9333ea"/></marker>
+<marker id="build-arrow-orange" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L10 3.5 L0 7 Z" fill="#c2410c"/></marker>
+<marker id="build-arrow-gray" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L10 3.5 L0 7 Z" fill="#475569"/></marker>
+</defs>
+<rect width="1680" height="1150" fill="#ffffff" data-graph-role="background"/>
+<text x="40" y="60" font-size="34" font-weight="600" fill="#111827" text-anchor="start">参考语义如何构建与发布</text>
+<text x="40" y="98" font-size="19" font-weight="400" fill="#64748b" text-anchor="start">Canonical 实体唯一；事实图、组织视图、LLM 页面承担不同职责。</text>
+<path id="build-edge-0" d="M 430 270 L 540 270" fill="none" stroke="#15803d" stroke-width="2" marker-end="url(#build-arrow-green)" data-graph-role="edge" data-source="b-input" data-target="b-compiler"/>
+<path id="build-edge-1" d="M 1250 270 L 1140 270" fill="none" stroke="#9333ea" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#build-arrow-purple)" data-graph-role="edge" data-source="b-policy" data-target="b-compiler"/>
+<path id="build-edge-2" d="M 620 350 L 620 420 L 300 420 L 300 510" fill="none" stroke="#15803d" stroke-width="2" marker-end="url(#build-arrow-green)" data-graph-role="edge" data-source="b-compiler" data-target="b-pages"/>
+<path id="build-edge-3" d="M 840 350 L 840 510" fill="none" stroke="#15803d" stroke-width="2" marker-end="url(#build-arrow-green)" data-graph-role="edge" data-source="b-compiler" data-target="b-hierarchy"/>
+<text x="860" y="463" font-size="16" font-weight="400" fill="#15803d" text-anchor="start">组织投影</text>
+<path id="build-edge-4" d="M 1060 350 L 1060 420 L 1380 420 L 1380 510" fill="none" stroke="#15803d" stroke-width="2" marker-end="url(#build-arrow-green)" data-graph-role="edge" data-source="b-compiler" data-target="b-machine"/>
+<path id="build-edge-5" d="M 300 725 L 300 820 L 680 820 L 680 900" fill="none" stroke="#15803d" stroke-width="2" marker-end="url(#build-arrow-green)" data-graph-role="edge" data-source="b-pages" data-target="b-publish"/>
+<path id="build-edge-6" d="M 840 725 L 840 900" fill="none" stroke="#15803d" stroke-width="2" marker-end="url(#build-arrow-green)" data-graph-role="edge" data-source="b-hierarchy" data-target="b-publish"/>
+<path id="build-edge-7" d="M 1380 725 L 1380 820 L 1000 820 L 1000 900" fill="none" stroke="#15803d" stroke-width="2" marker-end="url(#build-arrow-green)" data-graph-role="edge" data-source="b-machine" data-target="b-publish"/>
+<g class="node" data-detail="b-input" id="b-input" role="button" aria-label="Parser 交付边界" tabindex="0">
+<rect class="card" x="80" y="190" width="350" height="160" rx="8" fill="#ffffff" stroke="#c2410c" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="b-input"/>
+<rect x="81" y="191" width="6" height="158" rx="3" fill="#c2410c" data-graph-role="decoration"/>
+<text x="104" y="229" font-size="23" font-weight="600" fill="#111827" text-anchor="start">Parser 交付边界</text>
+<text x="104" y="266" font-size="19" font-weight="400" fill="#475569" text-anchor="start">五类 Template JSON</text>
+<text x="104" y="290" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Schema + 来源 / Shape 校验</text>
+<text x="104" y="314" font-size="19" font-weight="400" fill="#475569" text-anchor="start">转为内部 ContextFragment</text>
+</g>
+<g class="node" data-detail="b-compiler" id="b-compiler" role="button" aria-label="ContextCompiler：确定性语义主链" tabindex="0">
+<rect class="card" x="540" y="190" width="600" height="160" rx="8" fill="#ffffff" stroke="#15803d" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="b-compiler"/>
+<rect x="541" y="191" width="6" height="158" rx="3" fill="#15803d" data-graph-role="decoration"/>
+<text x="564" y="229" font-size="23" font-weight="600" fill="#111827" text-anchor="start">ContextCompiler：确定性语义主链</text>
+<text x="564" y="266" font-size="19" font-weight="400" fill="#475569" text-anchor="start">① Canonical Resolution  ② Section-level Fusion</text>
+<text x="564" y="290" font-size="19" font-weight="400" fill="#475569" text-anchor="start">③ 业务语义映射与分类规范化</text>
+<text x="564" y="314" font-size="19" font-weight="400" fill="#475569" text-anchor="start">④ Typed Reference Resolution：明确与未解引用</text>
+</g>
+<g class="node" data-detail="b-policy" id="b-policy" role="button" aria-label="独立治理配置" tabindex="0">
+<rect class="card" x="1250" y="190" width="350" height="160" rx="8" fill="#ffffff" stroke="#9333ea" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="b-policy"/>
+<rect x="1251" y="191" width="6" height="158" rx="3" fill="#9333ea" data-graph-role="decoration"/>
+<text x="1274" y="229" font-size="23" font-weight="600" fill="#111827" text-anchor="start">独立治理配置</text>
+<text x="1274" y="266" font-size="19" font-weight="400" fill="#475569" text-anchor="start">来源权威 / 显式 Taxonomy</text>
+<text x="1274" y="290" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Applicable Views / Rules</text>
+<text x="1274" y="314" font-size="19" font-weight="400" fill="#475569" text-anchor="start">候选推断有界、默认无 LLM</text>
+</g>
+<g class="node" data-detail="b-pages" id="b-pages" role="button" aria-label="Rich Context Page + PageIndex" tabindex="0">
+<rect class="card" x="80" y="510" width="440" height="215" rx="8" fill="#ffffff" stroke="#15803d" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="b-pages"/>
+<rect x="81" y="511" width="6" height="213" rx="3" fill="#15803d" data-graph-role="decoration"/>
+<text x="104" y="549" font-size="23" font-weight="600" fill="#111827" text-anchor="start">Rich Context Page + PageIndex</text>
+<text x="104" y="586" font-size="19" font-weight="400" fill="#475569" text-anchor="start">L0 摘要 / L1 富语义 / L2 细节</text>
+<text x="104" y="610" font-size="19" font-weight="400" fill="#475569" text-anchor="start">实体级 Exact + BM25 + Dense</text>
+<text x="104" y="634" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Facet + RRF 融合</text>
+<text x="104" y="658" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Canonical URI：data://metrics/…</text>
+</g>
+<g class="node" data-detail="b-hierarchy" id="b-hierarchy" role="button" aria-label="Hierarchy + Aggregate Pages" tabindex="0">
+<rect class="card" x="620" y="510" width="440" height="215" rx="8" fill="#ffffff" stroke="#15803d" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="b-hierarchy"/>
+<rect x="621" y="511" width="6" height="213" rx="3" fill="#15803d" data-graph-role="decoration"/>
+<text x="644" y="549" font-size="23" font-weight="600" fill="#111827" text-anchor="start">Hierarchy + Aggregate Pages</text>
+<text x="644" y="586" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Analysis / Domain / Asset</text>
+<text x="644" y="610" font-size="19" font-weight="400" fill="#475569" text-anchor="start">CONFIRMED / DERIVED / CANDIDATE</text>
+<text x="644" y="634" font-size="19" font-weight="400" fill="#475569" text-anchor="start">独立 URI：data://views/…</text>
+<text x="644" y="658" font-size="19" font-weight="400" fill="#475569" text-anchor="start">AggregatePageIndex 复用 Hybrid</text>
+</g>
+<g class="node" data-detail="b-machine" id="b-machine" role="button" aria-label="机器端关系与局部元素" tabindex="0">
+<rect class="card" x="1160" y="510" width="440" height="215" rx="8" fill="#ffffff" stroke="#15803d" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="b-machine"/>
+<rect x="1161" y="511" width="6" height="213" rx="3" fill="#15803d" data-graph-role="decoration"/>
+<text x="1184" y="549" font-size="23" font-weight="600" fill="#111827" text-anchor="start">机器端关系与局部元素</text>
+<text x="1184" y="586" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Typed Graph：血缘 / 关系补全</text>
+<text x="1184" y="610" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Backrefs：从前向引用派生</text>
+<text x="1184" y="634" font-size="19" font-weight="400" fill="#475569" text-anchor="start">ElementIndex：字段 / Counter 等</text>
+<text x="1184" y="658" font-size="19" font-weight="400" fill="#475569" text-anchor="start">不暴露逐节点 LLM traversal</text>
+</g>
+<g class="node" data-detail="b-publish" id="b-publish" role="button" aria-label="Quality Gate → Immutable Snapshot" tabindex="0">
+<rect class="card" x="580" y="900" width="520" height="150" rx="8" fill="#ffffff" stroke="#15803d" stroke-opacity="0.55" stroke-width="1.5" data-graph-role="node" data-node-id="b-publish"/>
+<rect x="581" y="901" width="6" height="148" rx="3" fill="#15803d" data-graph-role="decoration"/>
+<text x="604" y="939" font-size="23" font-weight="600" fill="#111827" text-anchor="start">Quality Gate → Immutable Snapshot</text>
+<text x="604" y="976" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Evidence / Path / Cycle / Index 一致性</text>
+<text x="604" y="1000" font-size="19" font-weight="400" fill="#475569" text-anchor="start">保存配置、贡献、Aggregate 与指纹</text>
+<text x="604" y="1024" font-size="19" font-weight="400" fill="#475569" text-anchor="start">固定版本加载；重建可丢弃索引与图</text>
+</g>
+<text x="40" y="130" font-size="18" font-weight="400" fill="#475569" text-anchor="start">输入材料默认 PARTIAL；缺失来源不代表企业知识不存在。</text>
+<text x="80" y="1080" font-size="18" font-weight="400" fill="#475569" text-anchor="start">增量：变动实体 / Taxonomy → 受影响分支与旧新祖先；路由变化不重跑分类。</text>
+<g data-graph-role="legend">
+<path d="M42 1110 L84 1110" stroke="#15803d" stroke-width="2" fill="none" marker-end="url(#build-arrow-green)"/>
+<text x="97" y="1116" font-size="16" font-weight="400" fill="#64748b" text-anchor="start">参考知识写入 / 读取</text>
+<path d="M382 1110 L424 1110" stroke="#2563eb" stroke-width="2" fill="none" marker-end="url(#build-arrow-blue)"/>
+<text x="437" y="1116" font-size="16" font-weight="400" fill="#64748b" text-anchor="start">查询与上下文流</text>
+<path d="M722 1110 L764 1110" stroke="#c2410c" stroke-width="2" fill="none" stroke-dasharray="7 5" marker-end="url(#build-arrow-orange)"/>
+<text x="777" y="1116" font-size="16" font-weight="400" fill="#64748b" text-anchor="start">环境事实 / 外部边界</text>
+<path d="M1062 1110 L1104 1110" stroke="#9333ea" stroke-width="2" fill="none" stroke-dasharray="7 5" marker-end="url(#build-arrow-purple)"/>
+<text x="1117" y="1116" font-size="16" font-weight="400" fill="#64748b" text-anchor="start">治理与可选候选控制</text>
+</g>
+<text x="1640" y="1116" font-size="16" font-weight="400" fill="#64748b" text-anchor="end">fd8538f · 2026-09-09</text>
+</svg>

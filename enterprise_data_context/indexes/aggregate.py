@@ -95,7 +95,10 @@ class AggregatePageIndex:
             if method == "lexical":
                 hits = index.baseline_search(query, top_k=top_k)
             else:
-                hits = index.search(query, scope=facets, top_k=top_k)
+                hits = index.search(query, scope=facets, top_k=top_k, candidate_limit=256)
+                if index.last_candidate_diagnostics["truncated"]:
+                    self.last_warnings.append({"code":"aggregate_candidate_budget", "view":view,
+                                               **index.last_candidate_diagnostics})
                 self.last_warnings.extend(index.last_warnings)
             for hit in hits:
                 page = self.pages[hit.path]; summary = page["views"][view]["L1"]

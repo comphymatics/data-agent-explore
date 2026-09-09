@@ -1,5 +1,8 @@
 # Target Architecture
 
+Current code-grounded V1.1 overview: [technical diagram](../docs/architecture/data-explore-v1.1-architecture.html)
+and [architecture explanation](../docs/architecture/data-explore-v1.1-architecture.md).
+
 ```text
 Source Materials
   -> Deterministic Parsers / agreed Template JSON Delivery

@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from .hierarchy_contracts import (SOURCE_PRIORITY, VIEWS, VERSION, APPLICABLE_VIEWS,
-    MATERIALIZATION_VERSION, ROUTING_VERSION, AGGREGATE_INDEX_VERSION)
+    MATERIALIZATION_VERSION, ROUTING_VERSION, AGGREGATE_INDEX_VERSION, TAXONOMY_TRANSITIONS, HARDENING_VERSION, BRANCH_RETRIEVAL_DEFAULTS, ARBITRATION_DEFAULTS)
 
 
 def load_hierarchy_config(path=None):
@@ -15,6 +15,47 @@ def validate_hierarchy_config(value):
     config = deepcopy(value)
     if not isinstance(config, dict) or not config.get("version"):
         raise ValueError("hierarchy config requires a version")
+    from .indexes.mention import VERSION as MENTION_VERSION
+    config.setdefault("hardening_version", HARDENING_VERSION)
+    config.setdefault("mention_index_version", MENTION_VERSION)
+    config.setdefault("co_classification_guard_version", "co-classification/v1.2")
+    config.setdefault("co_classification_guard", True)
+    if (config["hardening_version"] != HARDENING_VERSION or config["mention_index_version"] != MENTION_VERSION):
+        raise ValueError("retrieval_policy_version_mismatch")
+    if type(config["co_classification_guard"]) is not bool:
+        raise ValueError("invalid_co_classification_guard")
+    if not isinstance(config.get("hierarchy_retrieval", {}), dict):
+        raise ValueError("unbounded_branch_retrieval")
+    budget = {**BRANCH_RETRIEVAL_DEFAULTS, **config.get("hierarchy_retrieval", {})}
+    if "branch_k" in config:
+        budget["branch_k"] = config["branch_k"]
+    if any(type(v) is not int or not 1 <= v <= 1000 for v in budget.values()) or set(budget) != set(BRANCH_RETRIEVAL_DEFAULTS):
+        raise ValueError("unbounded_branch_retrieval")
+    if budget["entity_candidate_k"] > budget["max_entities_examined_per_branch"] or budget["branch_k"] > 10:
+        raise ValueError("unbounded_branch_retrieval")
+    config["hierarchy_retrieval"] = budget
+    if not isinstance(config.get("view_arbitration", {}), dict):
+        raise ValueError("invalid_view_arbitration_config")
+    arbitration = {**ARBITRATION_DEFAULTS, **config.get("view_arbitration", {})}
+    if (set(arbitration) != set(ARBITRATION_DEFAULTS) or type(arbitration["enabled"]) is not bool or
+        type(arbitration["confidence_threshold"]) not in (float, int) or not 0 <= arbitration["confidence_threshold"] <= 1 or
+        type(arbitration["max_views"]) is not int or not 1 <= arbitration["max_views"] <= 2 or
+        type(arbitration["branch_k"]) is not int or not 1 <= arbitration["branch_k"] <= 10):
+        raise ValueError("invalid_view_arbitration_config")
+    config["view_arbitration"] = arbitration
+    transitions = config.setdefault("taxonomy_transitions", deepcopy(TAXONOMY_TRANSITIONS))
+    if not isinstance(transitions, dict) or set(transitions) != set(VIEWS):
+        raise ValueError("invalid_taxonomy_transition")
+    for view, parents in transitions.items():
+        if not isinstance(parents, dict):
+            raise ValueError("invalid_parent_kind")
+        for parent, children in parents.items():
+            if parent not in VIEWS[view]:
+                raise ValueError("invalid_parent_kind")
+            if not isinstance(children, list) or any(child not in VIEWS[view] for child in children):
+                raise ValueError("invalid_child_kind")
+            if any(VIEWS[view].index(child) <= VIEWS[view].index(parent) for child in children):
+                raise ValueError("invalid_taxonomy_transition")
     for key in ("hierarchy_enabled", "inference_enabled", "llm_enabled"):
         if key in config and not isinstance(config[key], bool):
             raise ValueError(f"{key} must be boolean")
@@ -93,6 +134,10 @@ def validate_hierarchy_config(value):
         parent, child = edge.get("parent"), edge.get("child")
         if parent not in nodes or child not in nodes:
             raise ValueError("unknown_taxonomy_node")
+        if nodes[parent]["view"] != nodes[child]["view"]:
+            raise ValueError("cross_view_taxonomy_edge")
+        if parent == child:
+            raise ValueError("taxonomy_cycle")
         provenance = edge.get("provenance", {})
         proofs = edge.get("evidence", [])
         if (parent == child or nodes[parent]["view"] != nodes[child]["view"] or
@@ -114,4 +159,8 @@ def validate_hierarchy_config(value):
         pending.remove(node); done.add(node)
     for node in nodes:
         visit(node)
+    for edge in config.get("taxonomy_edges", []):
+        parent, child = nodes[edge["parent"]], nodes[edge["child"]]
+        if child["kind"] not in transitions[parent["view"]].get(parent["kind"], []):
+            raise ValueError("invalid_taxonomy_transition")
     return config

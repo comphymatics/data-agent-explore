@@ -9,6 +9,11 @@ The intended topology is **Main Agent → Explore SubAgent → four read-only Co
 tools**. MCP is a transport for those tools; Enterprise Data Context remains a
 deterministic Context Engine and does not answer user questions.
 
+V1.2 retrieval hardening: [implementation and measured limits](V1_2_RETRIEVAL_HARDENING_IMPLEMENTATION.md), [development plan](V1_2_RETRIEVAL_HARDENING_PLAN.md).
+
+Current architecture (code baseline `fd8538f`): [interactive technical diagram](docs/architecture/data-explore-v1.1-architecture.html),
+[overview PNG](docs/architecture/data-explore-v1.1-overview.png), and [code-grounded explanation](docs/architecture/data-explore-v1.1-architecture.md).
+
 ## Core rules
 
 - Graph for machines; Pages for LLMs.

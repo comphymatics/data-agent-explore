@@ -1,0 +1,54 @@
+{
+  "baseline_commit": "fd8538fbe911560ac8250b59d4a47d969f8d6d23",
+  "verified_at": "2026-09-09",
+  "scope": "Architecture documentation and diagrams; backend tests were not rerun for this documentation change.",
+  "renderer": "Local Google Chrome via Playwright; embedded SVG rasterized using browser Canvas at 2x scale.",
+  "svg_checks": {
+    "xml": "passed for all three diagrams",
+    "markers": "passed for all three diagrams",
+    "collisions": "passed for all three diagrams",
+    "geometry": "passed for all three diagrams",
+    "composition": "passed for all three diagrams"
+  },
+  "html_interactions": "passed",
+  "text_fit": "passed",
+  "offline_network_requests": 0,
+  "svg_and_png_download": "passed",
+  "source_and_document_links": "passed",
+  "visual_review": "passed",
+  "visual_review_detail": "Inspected overview, build, runtime PNGs and rendered HTML preview. Corrected two label/arrow overlaps and inspected the updated exports.",
+  "artifacts": [
+    {
+      "file": "data-explore-v1.1-architecture.html",
+      "sha256": "b98e38c7626ecd41561c235efbc3e4d0771a9b331172d450ae11d8370744f428"
+    },
+    {
+      "file": "data-explore-v1.1-build.png",
+      "sha256": "513b24d39ce1b6253b559e3d3cef6134700d822910991f5a54717fc29ed74ef3"
+    },
+    {
+      "file": "data-explore-v1.1-build.svg",
+      "sha256": "74ff05ec608a621b1136c5aab855cd1c85c38ca970d8fb492ba553787f877ce2"
+    },
+    {
+      "file": "data-explore-v1.1-html-preview.png",
+      "sha256": "458aac3d2d1480a9a07cba8fe93f1e40def90472509bcce41411d106807a9f94"
+    },
+    {
+      "file": "data-explore-v1.1-overview.png",
+      "sha256": "300b7bef781a4d4dcee6e4a179b6632972656d0121b8dc5f0c5c8a702b181b1e"
+    },
+    {
+      "file": "data-explore-v1.1-overview.svg",
+      "sha256": "90713f5c6b871a6b4770d09d85d1db6a4b56f56da0e7403a9a773f6b72849b80"
+    },
+    {
+      "file": "data-explore-v1.1-runtime.png",
+      "sha256": "e92eb5b4216ba3ee61721f0a125fedada2cfff3855e2b8fc167ea9acc4dbbbe4"
+    },
+    {
+      "file": "data-explore-v1.1-runtime.svg",
+      "sha256": "b06d4b4be26a2fb8278c35c4145f2cf3526658e5cafc9a3809391be8ff789803"
+    }
+  ]
+}

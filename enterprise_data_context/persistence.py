@@ -49,6 +49,10 @@ def save_compiled(compiled, out_dir):
     hierarchy_errors = [i for i in hierarchy.validate() if i.get("severity") == "error"]
     if hierarchy_errors:
         raise QualityGateError("hierarchy quality errors: " + ", ".join(i["code"] for i in hierarchy_errors))
+    for name in ("page_index", "element_index"):
+        issues = compiled[name].validate()
+        if issues:
+            raise QualityGateError(", ".join(i["code"] for i in issues))
     assert_publishable(compiled)
     associations = compiled.get("association_report") or association_report(
         compiled["contexts"], hierarchy
@@ -180,6 +184,9 @@ def load_compiled(in_dir, index_version=None):
 
     graph = BackendGraph().project(contexts)
     organization_file = snapshot / "semantic-organization.json"
+    for context in contexts:
+        if context.path in page_index.docs:
+            page_index.add_exact_keys(context.path, [v for k, v in context.identity_hints.items() if k in {"stable_id", "strong_key"}])
     hierarchy = (HierarchyIndex.from_dict(_read_json(organization_file), contexts)
                  if organization_file.exists() else HierarchyIndex().project(contexts))
     errors = [i for i in hierarchy.validate() if i.get("severity") == "error"]

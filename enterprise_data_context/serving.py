@@ -1,5 +1,6 @@
 """Machine-side intent policies and evidence-bearing Page projections."""
 from dataclasses import asdict
+from itertools import chain, islice
 from .indexes.page import CLASSIFICATION_FILTERS, FACET_ALIASES, facet_matches
 from .indexes.element import governed
 from .materialization.pages import ORDER
@@ -114,15 +115,19 @@ class BundleAssembler:
         frontier=list(seed_hits)
         max_hops=2 if intent in {"analysis_data_requirement","metric_to_models","impact_analysis"} else 1
         candidate_limit=max(8,len(seed_hits)*6)
+        self.last_diagnostics = {"relation_records_examined": 0, "candidate_limit": candidate_limit}
         for _ in range(max_hops):
             next_frontier=[]
             for hit in frontier:
                 page=service.pages[hit.path]
-                candidates=[(r.get("target_path"),r.get("relation"),"reference",.75)
-                    for r in page.references if r.get("status")=="CONFIRMED"]
-                candidates += [(r.get("source"),r.get("relation"),"backref",.55)
-                               for r in service.backrefs.get(hit.path,[])]
-                for target,relation,origin,weight in candidates:
+                outgoing = ((r.get("target_path"),r.get("relation"),"reference",.75,r.get("status"))
+                            for r in islice(page.references,candidate_limit))
+                incoming = ((r.get("source"),r.get("relation"),"backref",.55,"CONFIRMED")
+                            for r in islice(service.backrefs.get(hit.path,[]),candidate_limit))
+                for target,relation,origin,weight,status in chain(outgoing,incoming):
+                    self.last_diagnostics["relation_records_examined"] += 1
+                    if status != "CONFIRMED":
+                        continue
                     if len(chosen)>=candidate_limit:
                         break
                     if target in chosen or target not in service.pages or not relation_allowed(relation,intent):

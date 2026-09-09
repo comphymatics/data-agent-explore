@@ -99,8 +99,29 @@ class ContextCompiler:
             self.materializer.materialize(c,hierarchy=hierarchy.describe(c.path) if hierarchy.config.get("hierarchy_enabled",True) else {})
             for c in contexts.values()
         ]
-        pidx=PageIndex(); eidx=ElementIndex()
-        for p in pages: pidx.add(p); eidx.add(p)
+        # Reuse per-page index contributions; no-op builds do not retokenize fields.
+        from copy import deepcopy
+        old_pages = {p.path: p for p in previous_compiled["pages"]} if previous_compiled else {}
+        new_pages = {p.path: p for p in pages}
+        changed_pages = {path for path in old_pages.keys() | new_pages.keys() if old_pages.get(path) != new_pages.get(path)}
+        if previous_compiled:
+            old_contexts = {c.path:c for c in previous_compiled["contexts"]}
+            changed_pages.update(c.path for c in contexts.values() if c.path in old_contexts and
+                                 c.identity_hints != old_contexts[c.path].identity_hints)
+        if previous_compiled:
+            pidx, eidx = previous_compiled["page_index"], previous_compiled["element_index"]
+            if changed_pages:
+                pidx, eidx = deepcopy(pidx, {id(pidx.encoder):pidx.encoder}), deepcopy(eidx)
+        else:
+            pidx, eidx = PageIndex(), ElementIndex()
+        for path in sorted(changed_pages):
+            if path not in new_pages:
+                pidx.remove(path); eidx.remove(path)
+            else:
+                pidx.add(new_pages[path]); eidx.add(new_pages[path])
+        for context in contexts.values():
+            if context.path in pidx.docs:
+                pidx.add_exact_keys(context.path, [v for k, v in context.identity_hints.items() if k in {"stable_id", "strong_key"}])
         graph=BackendGraph().project(list(contexts.values()))
         return {
             "documents":documents,"fragments":fragments,"contexts":list(contexts.values()),"pages":pages,

@@ -1,19 +1,11 @@
 """One serving operation performs branch recall, rich read and anchor discovery."""
-import re
+from time import perf_counter
 
 from .hierarchy_contracts import VIEWS
-from .indexes.page import toks, FACET_ALIASES, facet_matches
+from .indexes.page import FACET_ALIASES, facet_matches
 from .models import SearchHit
 from .serving import allowed_page
 from .materialization.aggregate_pages import read_aggregate
-
-
-def contains_identifier(query, key):
-    key = str(key).strip().casefold()
-    if len(key) < 2:
-        return query.strip().casefold() == key
-    # ASCII identifiers next to Chinese grammar are still exact anchors.
-    return bool(key and re.search(r"(?<![a-z0-9_])" + re.escape(key) + r"(?![a-z0-9_])", query.casefold()))
 
 
 def route(service, query, mode="auto", hierarchy=None, intent=None, scope=None, retrieval_strategy=None):
@@ -21,21 +13,18 @@ def route(service, query, mode="auto", hierarchy=None, intent=None, scope=None, 
         raise ValueError("invalid retrieval mode")
     if hierarchy is not None and hierarchy not in VIEWS:
         raise ValueError("invalid hierarchy view")
-    exact = set()
-    for key, paths in service.pidx.exact.items():
-        if contains_identifier(query, key):
-            exact.update(p for p in paths if service.pages[p].context_type in {"metric", "dimension", "logical-model", "physical-model"})
-    for p, c in service.contexts.items():
-        if contains_identifier(query, c.path) or any(contains_identifier(query, v) for k, v in c.identity_hints.items() if k in {"stable_id", "strong_key"}):
-            exact.add(p)
-    page_anchors = sorted(exact)
-    element_paths = set()
-    # Element records remain in ElementIndex, never promoted to pages.
-    for key, ids in service.eidx.exact.items():
-        if contains_identifier(query, key):
-            element_paths.update(service.eidx.records[i]["path"] for i in ids
-                                 if service.eidx.records[i]["kind"] in {"Field", "Attribute", "Counter", "Formula", "JoinKey"})
-    exact.update(element_paths)
+    from .indexes.mention import ExactMentionResolver
+    result = ExactMentionResolver(service.pidx, service.eidx).resolve(query,
+        service.hierarchy.config["hierarchy_retrieval"]["max_entities_examined_per_branch"])
+    page_anchors, element_paths = set(), set()
+    for mention in result["mentions"]:
+        for target in mention["targets"]:
+            if target["entity_type"] in {"metric", "dimension", "logical-model", "physical-model"} and mention["source"] == "page":
+                page_anchors.add(target["parent_page"])
+            elif mention["source"] == "element" and target["element_type"] in {"Field", "Attribute", "Counter", "Formula", "JoinKey"}:
+                element_paths.add(target["parent_page"])
+    page_anchors = sorted(page_anchors)
+    exact = set(page_anchors) | element_paths
     from .retrieval_strategy import strategy
     anchor_types = [service.pages[p].context_type for p in page_anchors if p in service.pages]
     if element_paths:
@@ -46,10 +35,42 @@ def route(service, query, mode="auto", hierarchy=None, intent=None, scope=None, 
     if not service.hierarchy.config.get("hierarchy_enabled", True):
         decision.update(mode="direct", hierarchy_views=[], primary_view=None)
         decision["reasons"].append("hierarchy_disabled")
-    return {**decision, "retrieval_strategy": decision, "hierarchy_view": decision["primary_view"],
+    initial = {"mode": decision["mode"], "views": list(decision["hierarchy_views"]), "confidence": decision["confidence"]}
+    arbitration = {"triggered": False, "view_scores": {}}
+    recalled = None
+    config = service.hierarchy.config["view_arbitration"]
+    if (decision["mode"] != "direct" and not exact and hierarchy is None and config["enabled"] and
+            decision["confidence"] < config["confidence_threshold"]):
+        arbitration["triggered"] = True
+        started = perf_counter()
+        recalled = []
+        for view in VIEWS:
+            rows = service.hierarchy.aggregate_index.search(query, [view], top_k=config["branch_k"], scope=scope)
+            recalled.extend(rows)
+            # RRF normalized by channel mass avoids raw BM25 scale differences.
+            scores = [r["score"] for r in rows]
+            score = (max(scores, default=0) * .7 + sum(scores)/max(1, len(scores)) * .3)
+            # Small prior resolves channel-rank ties; it cannot create evidence.
+            if view == initial["views"][0] and scores:
+                score *= 1.1
+            arbitration["view_scores"][view] = score
+        ranked_views = sorted(VIEWS, key=lambda v: (-arbitration["view_scores"][v], v))
+        best = arbitration["view_scores"][ranked_views[0]]
+        if best > 0:
+            selected_views = [v for v in ranked_views if arbitration["view_scores"][v] >= best*.8][:config["max_views"]]
+            decision.update(hierarchy_views=selected_views, primary_view=selected_views[0])
+            decision["reasons"].append("aggregate_cross_view_arbitration")
+        else:
+            arbitration["fallback"] = "no_relevant_aggregate_evidence"
+        arbitration["latency_ms"] = (perf_counter()-started)*1000
+    return {**decision, "retrieval_strategy": decision,
+            "mention_resolution": {**result["diagnostics"], "mentions": result["mentions"]},
+            "routing": {"initial": initial, "arbitration": arbitration,
+                        "final": {"mode": decision["mode"], "primary_view": decision["primary_view"], "views": decision["hierarchy_views"]}},
+            "view_arbitration": arbitration, "_arbitrated_rows": recalled, "hierarchy_view": decision["primary_view"],
             "exact_anchor_ids": sorted(exact), "page_anchor_ids": page_anchors, "element_anchor_ids": sorted(element_paths),
             "selected_branches": [], "hierarchy_contexts": [], "branch_candidates": [],
-            "fallback": None, "version": "hierarchical-serving/v1.1"}
+            "fallback": None, "version": "hierarchical-serving/v1.2"}
 
 
 def discover(service, query, trace, seed_hits, top_k, types=None, scope=None):
@@ -63,44 +84,50 @@ def discover(service, query, trace, seed_hits, top_k, types=None, scope=None):
                 max([h.score for h in seed_hits] or [.05]) * (1.5 if path in trace["page_anchor_ids"] or not trace["page_anchor_ids"] else .6),
                 ["exact_element_anchor" if path in trace["element_anchor_ids"] else "exact_semantic_anchor"], page.l0, page.l1)
     if trace["mode"] == "direct":
+        trace.pop("_arbitrated_rows", None)
         return sorted(selected.values(), key=lambda h: (-h.score, h.path))[:top_k]
-    q = set(toks(query))
     views = trace["hierarchy_views"]
-    branch_k = index.config.get("branch_k", 3)
-    rows = index.aggregate_index.search(query, views, top_k=branch_k * 3,
-        method=index.config.get("branch_retrieval", "hybrid"), scope=scope)
-    trace["branch_candidates"] = rows
+    budget = index.config["hierarchy_retrieval"]
+    branch_k = budget["branch_k"]
+    started = perf_counter()
+    recalled = trace.pop("_arbitrated_rows", None)
+    rows = (sorted((r for r in recalled if r["hierarchy_view"] in views), key=lambda r: (-r["score"], r["path"]))
+            if recalled is not None else index.aggregate_index.search(query, views, top_k=branch_k * 3,
+                method=index.config.get("branch_retrieval", "hybrid"), scope=scope))
+    trace["branch_recall_latency_ms"] = (perf_counter()-started)*1000
+    trace["branch_candidates"] = rows[:branch_k*3]
     trace["branch_warnings"] = index.aggregate_index.last_warnings
-    branch_members = {}
+    trace["branch_budget"] = {**budget, "branches": [], "examined_members": 0}
+    base = max([h.score for h in seed_hits] or [.05])
     for row in rows[:branch_k]:
-        score, path, view = row["score"], row["path"], row["hierarchy_view"]
-        aggregate = index.aggregate_pages[path]
-        members = list(aggregate["member_refs"])
-        if aggregate["canonical_ref"]:
-            members.insert(0, aggregate["canonical_ref"])
-        eligible = [p for p in members if p in service.pages and organization_allowed_page(service, p, types, scope)]
+        path, view = row["path"], row["hierarchy_view"]
+        members = index.branch_membership[path]
+        started = perf_counter()
+        hits = service.pidx.search(query, types=types, top_k=budget["entity_candidate_k"],
+            candidate_limit=budget["max_entities_examined_per_branch"], allowed_paths=members,
+            fallback_paths=index.branch_previews[path])
+        examined = service.pidx.last_examined_count
+        trace["branch_budget"]["examined_members"] += examined
+        trace["branch_budget"]["branches"].append({"path": path, "branch_size": len(members),
+            "examined_members": examined, "candidate_count": len(hits),
+            "posting_reads": service.pidx.last_candidate_diagnostics["posting_reads"],
+            "entity_retrieval_latency_ms": (perf_counter()-started)*1000,
+            "truncated": len(members) > examined})
+        eligible = [hit for hit in hits if organization_allowed_page(service, hit.path, types, scope)]
         if not eligible:
             continue
         trace["selected_branches"].append(path)
         trace["hierarchy_contexts"].append(read_aggregate(index, path, "L1", view=view))
-        for p in eligible:
-            branch_members[p] = max(branch_members.get(p, 0), score)
-    if not branch_members:
+        for rank, hit in enumerate(eligible):
+            old = selected.get(hit.path)
+            score = base*(.9 + .1/(rank+1))
+            if old:
+                score = max(score, old.score) + base*.2
+            selected[hit.path] = SearchHit(hit.path, hit.context_type, hit.name, score,
+                list(dict.fromkeys((old.reasons if old else []) + hit.reasons + ["hierarchy:" + view])), hit.l0, hit.l1)
+    if not trace["selected_branches"]:
         trace["fallback"] = "no_supported_branch"
-    # The existing hybrid retrieval is reused for entity relevance; branch membership
-    # supplies anchors that the original query vocabulary could not retrieve.
-    base = max([h.score for h in seed_hits] or [.05])
-    strongest = max(branch_members.values(), default=1)
-    for path, branch_score in branch_members.items():
-        page = service.pages[path]
-        lexical = len(q & set(toks(page.l0 + " " + page.l1))) / max(1, len(q))
-        score = base * (.7 + .2 * branch_score / strongest + .1 * lexical)
-        old = selected.get(path)
-        if old:
-            score = max(score, old.score) + base * .2
-        selected[path] = SearchHit(path, page.context_type, page.name, score,
-                                  list(dict.fromkeys((old.reasons if old else []) + ["hierarchy:" + "+".join(views)])), page.l0, page.l1)
-    return sorted(selected.values(), key=lambda h: (-h.score, h.path))[:max(top_k, top_k * 2)]
+    return sorted(selected.values(), key=lambda h: (-h.score, h.path))[:budget["entity_candidate_k"]]
 
 
 def organization_allowed_page(service, path, types, scope):
