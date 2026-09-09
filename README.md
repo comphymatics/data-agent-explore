@@ -9,6 +9,12 @@ The intended topology is **Main Agent → Explore SubAgent → four read-only Co
 tools**. MCP is a transport for those tools; Enterprise Data Context remains a
 deterministic Context Engine and does not answer user questions.
 
+Claude Code / Codex / OpenCode: [直接 MCP 与 Explore 子 Agent 接入](integrations/harness/README.md).
+Claude Code and OpenCode reuse their built-in Explore roles by default; custom
+`data-explore` roles remain optional (and are the configured Codex path).
+Run `uv run scripts/configure_harness.py --client all --mode both` to generate native
+project configurations; use `scripts/check_harness_mcp.py` to verify the service without an LLM.
+
 V1.2 retrieval hardening: [implementation and measured limits](V1_2_RETRIEVAL_HARDENING_IMPLEMENTATION.md), [development plan](V1_2_RETRIEVAL_HARDENING_PLAN.md).
 
 Current architecture (code baseline `fd8538f`): [interactive technical diagram](docs/architecture/data-explore-v1.1-architecture.html),

@@ -1,0 +1,15 @@
+{
+  "name": "explore",
+  "native": true,
+  "mode": "subagent",
+  "effective_permissions": {
+    "enterprise_data_context_data_search": "allow",
+    "enterprise_data_context_data_read": "allow",
+    "enterprise_data_context_data_expand": "allow",
+    "enterprise_data_context_data_source": "allow",
+    "read": "allow",
+    "edit": "deny",
+    "task": "deny"
+  },
+  "validation_scope": "resolved built-in configuration; not an LLM delegation trace"
+}

@@ -1,0 +1,34 @@
+{
+  "status": "passed",
+  "config": "/Users/fengyajie/Projects/data-agent-explore/opencode.json",
+  "validation_scope": "native launch command + MCP protocol + real snapshot tools; no host LLM delegation",
+  "server": {
+    "name": "enterprise-data-context",
+    "title": "Enterprise Data Context",
+    "version": "1.0.0",
+    "description": "Read-only Rich Context Page retrieval for Explore agents."
+  },
+  "tools": [
+    "data_search",
+    "data_read",
+    "data_expand",
+    "data_source"
+  ],
+  "calls": [
+    "data_search",
+    "data_read",
+    "data_expand",
+    "data_source"
+  ],
+  "query": "高铁场景",
+  "hit_count": 3,
+  "hit_names": [
+    "LTE FDD/TDD 高铁专题",
+    "5G NR 高铁专题",
+    "SmartCare Suite APP售前说明书--高铁专题"
+  ],
+  "index_version": "context-70d6ec1b561057b9",
+  "retrieval_version": "page-serving/v4:hybrid:fastembed:0.8.0:sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2:hierarchy-v1.2:intent-strategy/v1.1:fastembed:0.8.0:sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+  "warnings": [],
+  "elapsed_seconds": 13.89
+}

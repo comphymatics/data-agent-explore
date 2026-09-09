@@ -1,0 +1,8 @@
+["mcp_servers"."enterprise_data_context"]
+"command" = "/Users/fengyajie/.local/bin/uv"
+"args" = ["run", "--isolated", "--directory", "/Users/fengyajie/Projects/data-agent-explore", "--extra", "dense", "data-context-mcp", "/Users/fengyajie/Projects/data-agent-explore/generated"]
+"startup_timeout_sec" = 120
+"tool_timeout_sec" = 60
+"enabled_tools" = ["data_search", "data_read", "data_expand", "data_source"]
+["mcp_servers"."enterprise_data_context"."env"]
+"DATA_CONTEXT_DENSE_LOCAL_ONLY" = "1"

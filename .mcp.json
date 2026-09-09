@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "enterprise_data_context": {
+      "type": "stdio",
+      "command": "/Users/fengyajie/.local/bin/uv",
+      "args": [
+        "run",
+        "--isolated",
+        "--directory",
+        "/Users/fengyajie/Projects/data-agent-explore",
+        "--extra",
+        "dense",
+        "data-context-mcp",
+        "/Users/fengyajie/Projects/data-agent-explore/generated"
+      ],
+      "env": {
+        "DATA_CONTEXT_DENSE_LOCAL_ONLY": "1"
+      }
+    }
+  }
+}
