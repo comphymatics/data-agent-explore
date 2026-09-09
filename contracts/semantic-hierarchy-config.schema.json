@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Semantic hierarchy configuration V1.1",
+  "type": "object",
+  "required": [
+    "version"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "branch_retrieval": {
+      "enum": [
+        "lexical",
+        "hybrid"
+      ]
+    },
+    "candidate_branch_weight": {
+      "const": 0
+    },
+    "applicable_views": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 1,
+        "uniqueItems": true,
+        "items": {
+          "enum": [
+            "analysis",
+            "domain",
+            "asset"
+          ]
+        }
+      }
+    },
+    "taxonomy_nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "view",
+          "kind",
+          "label"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "view": {
+            "enum": [
+              "analysis",
+              "domain",
+              "asset"
+            ]
+          },
+          "kind": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "aliases": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "taxonomy_edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "parent",
+          "child",
+          "status",
+          "provenance",
+          "evidence"
+        ],
+        "properties": {
+          "parent": {
+            "type": "string",
+            "minLength": 1
+          },
+          "child": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "const": "CONFIRMED"
+          },
+          "provenance": {
+            "type": "object",
+            "required": [
+              "method",
+              "source"
+            ],
+            "properties": {
+              "method": {
+                "const": "explicit_taxonomy"
+              },
+              "source": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "source"
+              ],
+              "properties": {
+                "source": {
+                  "type": "object",
+                  "required": [
+                    "source_id",
+                    "path"
+                  ],
+                  "properties": {
+                    "source_id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "path": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -367,6 +367,9 @@ Canonical Entities, with governed edge status and deterministic L0/L1/L2 aggrega
 pages. Explore supports direct, hierarchical and hybrid retrieval inside the same
 four read-only tools. See [implementation review](SEMANTIC_HIERARCHY_IMPLEMENTATION.md)
 and [contracts and governance](specs/semantic-hierarchy.md).
+V1.1 adds intent-aware routing, hybrid aggregate branch retrieval, independent View URIs,
+applicable-view classification and explicit taxonomy edges; see
+[V1.1 implementation and validation](SEMANTIC_HIERARCHY_V1_1_IMPLEMENTATION.md).
 
 ```bash
 # Build from the agreed parser handoff with an explicit organization policy.

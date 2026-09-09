@@ -6,6 +6,7 @@ import sys
 
 from enterprise_data_context.runtime import load_runtime
 from enterprise_data_context.tools import DataContextTools
+from enterprise_data_context.retrieval_strategy import STRATEGY_SCHEMA, INTENT_VIEWS
 
 
 PROTOCOL_VERSION = "2025-11-25"
@@ -31,6 +32,7 @@ TOOL_DEFINITIONS = [
                 "query": {"type": "string", "minLength": 1},
                 "mode": {"enum": ["auto", "direct", "hierarchical", "hybrid"], "default": "auto"},
                 "hierarchy": {"enum": ["analysis", "domain", "asset"]},
+                "retrieval_strategy": STRATEGY_SCHEMA,
                 "scope": {
                     "type": "object",
                     "description": "Keyed retrieval scope; governed model facets use formal ODS/SDL/ODI/ADS values.",
@@ -55,7 +57,7 @@ TOOL_DEFINITIONS = [
                 "seen_context_ids": {"type": "array", "items": {"type": "string"}},
                 "read_content": {"enum": ["L0", "L1", "auto"]},
                 "max_per_type": {"type": "integer", "minimum": 1},
-                "intent": {"enum": ["generic", "metric_to_models", "analysis_data_requirement", "model_understanding", "impact_analysis"]},
+                "intent": {"enum": ["generic", "metric_to_models", "analysis_data_requirement", "model_understanding", "impact_analysis", *INTENT_VIEWS]},
             },
             "required": ["query"],
             "additionalProperties": False,
@@ -96,7 +98,7 @@ TOOL_DEFINITIONS = [
                 "expand": {"type": "array", "minItems": 1, "items": {"type": "string"}},
                 "top_k": {"type": "integer", "minimum": 1, "default": 20},
                 "query": {"type": "string", "minLength": 1},
-                "intent": {"enum": ["generic", "metric_to_models", "analysis_data_requirement", "model_understanding", "impact_analysis"]},
+                "intent": {"enum": ["generic", "metric_to_models", "analysis_data_requirement", "model_understanding", "impact_analysis", *INTENT_VIEWS]},
                 "token_budget": {"type": "integer", "minimum": 1},
             },
             "required": ["paths", "expand"],

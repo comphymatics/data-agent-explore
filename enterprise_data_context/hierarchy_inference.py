@@ -98,7 +98,7 @@ class OverlayClassifier:
         # Explicit organization occupies its slot: the classifier never rejudges it.
         occupied = {(e["hierarchy_id"], self._kind(e, contexts)) for e in backbone
                     if e["child_id"] == context.path and e["status"] == "CONFIRMED"}
-        candidates = [l for l in self.labels if (l["view"], l["kind"]) not in occupied]
+        candidates = [l for l in self.labels if l["view"] in self.config["applicable_views"].get(context.context_type, []) and (l["view"], l["kind"]) not in occupied]
         neighbors = self._neighbors(context, contexts, backbone)
         audit = {"context": context.path, "source_priority": list(SOURCE_PRIORITY),
                  "features": fs, "neighbor_summary": neighbors, "decisions": []}

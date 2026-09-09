@@ -34,6 +34,15 @@ class PageIndex:
         self.df=Counter()
         self.exact=defaultdict(set)
 
+    def remove(self, path):
+        for token in self.docs.pop(path, {}):
+            self.df[token] -= 1
+        for paths in self.exact.values():
+            paths.discard(path)
+        self.pages.pop(path, None)
+        self.vectors.pop(path, None)
+        self.generation += 1
+
     def add(self,page):
         if page.path in self.docs:
             for token in self.docs.pop(page.path):

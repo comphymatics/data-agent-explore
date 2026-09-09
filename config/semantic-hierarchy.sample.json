@@ -1,5 +1,5 @@
 {
-  "version": "synthetic-organization/v1",
+  "version": "synthetic-organization/v1.1",
   "confidence_threshold": 0.8,
   "hierarchy_enabled": true,
   "inference_enabled": true,
@@ -39,6 +39,58 @@
         ]
       },
       "confidence": 0.95
+    }
+  ],
+  "branch_retrieval": "hybrid",
+  "candidate_branch_weight": 0,
+  "applicable_views": {
+    "metric": [
+      "analysis"
+    ],
+    "dimension": [
+      "analysis"
+    ],
+    "business-object": [
+      "analysis",
+      "domain"
+    ]
+  },
+  "taxonomy_nodes": [
+    {
+      "id": "standard:performance",
+      "view": "domain",
+      "kind": "topic-domain",
+      "label": "性能"
+    },
+    {
+      "id": "standard:coverage",
+      "view": "domain",
+      "kind": "topic",
+      "label": "无线覆盖",
+      "aliases": [
+        "Wireless Coverage"
+      ]
+    }
+  ],
+  "taxonomy_edges": [
+    {
+      "parent": "standard:performance",
+      "child": "standard:coverage",
+      "status": "CONFIRMED",
+      "provenance": {
+        "method": "explicit_taxonomy",
+        "source": "synthetic_modeling_standard"
+      },
+      "evidence": [
+        {
+          "source": {
+            "source_id": "synthetic-standard",
+            "path": "fixtures/synthetic-modeling-standard.json",
+            "section": "performance/coverage"
+          },
+          "note": "Synthetic example only; replace with approved enterprise standard evidence."
+        }
+      ]
     }
   ]
 }

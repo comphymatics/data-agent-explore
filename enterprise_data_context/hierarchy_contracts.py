@@ -5,7 +5,7 @@ from hashlib import sha256
 import json
 
 VIEWS = {
-    "analysis": ("scenario", "analysis-purpose", "metric", "dimension", "business-object", "logical-model", "physical-model"),
+    "analysis": ("topic", "scenario", "analysis-purpose", "metric", "dimension", "business-object", "logical-model", "physical-model"),
     "domain": ("business-category", "data-domain", "topic-domain", "topic", "business-object", "sub-object", "logical-model", "physical-model"),
     "asset": ("layer", "logical-model", "physical-model", "element"),
 }
@@ -16,7 +16,12 @@ SOURCE_PRIORITY = (
     "model_tags", "explicit_entity_relations", "grain_dimension_metric",
     "important_fields", "neighbor_context", "dense_similarity", "llm_inference",
 )
-VERSION = "semantic-hierarchy/v1"
+VERSION = "semantic-hierarchy/v1.1"
+MATERIALIZATION_VERSION = "aggregate-view/v1.1"
+ROUTING_VERSION = "intent-strategy/v1.1"
+AGGREGATE_INDEX_VERSION = "aggregate-hybrid/v1.1"
+APPLICABLE_VIEWS = {kind: [view for view, kinds in VIEWS.items() if kind in kinds]
+                    for kind in set().union(*map(set, VIEWS.values()))}
 
 
 @dataclass
@@ -65,7 +70,7 @@ def edge_errors(edge):
     if not edge.get("inference_version"):
         errors.append("missing_inference_version")
     method = provenance.get("method")
-    if edge.get("status") == "CONFIRMED" and method != "explicit":
+    if edge.get("status") == "CONFIRMED" and method not in {"explicit", "explicit_taxonomy"}:
         errors.append("candidate_promoted_without_policy")
     if edge.get("status") == "DERIVED" and (method != "domain_rule" or
             not provenance.get("rule_id") or not provenance.get("input_facts")):

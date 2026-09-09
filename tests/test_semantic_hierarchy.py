@@ -282,7 +282,7 @@ def test_ablation_is_independent_and_keeps_unknowns_and_zero_denominators():
     result = run_sample()
     assert result["evidence_scope"] == "SYNTHETIC_ONLY"
     assert not result["headline_benchmark"]
-    assert len(result["variants"]) == 3
+    assert len(result["variants"]) == 5
     for variant in result["variants"].values():
         assert variant["summary"]["query_llm_tokens"] == 0
         assert variant["summary"]["tool_calls"] <= 2
@@ -301,7 +301,8 @@ def test_incremental_new_canonical_label_replaces_virtual_group():
     model = named(c, "LTE_PERIODIC_MR")
     assert any(e["parent_id"] == topic.path for e in index.parents[model.path])
     assert view_path("domain", "topic", "无线覆盖") not in index.nodes
-    assert topic.path in index.aggregate_pages
+    assert topic.path not in index.aggregate_pages
+    assert index.aggregate_pages["data://views/domain/topic/wireless-coverage"]["canonical_ref"] == topic.path
     assert not [i for i in index.validate() if i["severity"] == "error"]
 
 

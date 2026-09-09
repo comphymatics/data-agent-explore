@@ -94,8 +94,33 @@ class HierarchyIndex:
         previous_hashes = getattr(self, "_hashes", {})
         config_hash = fingerprint(self.config)
         changed = {p for p in set(previous_hashes) | set(hashes) if previous_hashes.get(p) != hashes.get(p)}
-        if config_hash != getattr(self, "_config_hash", None):
+        inference_config = {k: v for k, v in self.config.items() if k not in {
+            "taxonomy_nodes", "taxonomy_edges", "routing_policy_version", "aggregate_materialization_version",
+            "aggregate_index_version", "branch_retrieval", "branch_k", "hierarchy_enabled", "candidate_branch_weight"}}
+        inference_hash = fingerprint(inference_config)
+        if inference_hash != getattr(self, "_inference_hash", None):
             changed |= set(current)
+        old_taxonomy = deepcopy(self.contributions.get("@taxonomy", {"nodes": {}, "edges": []}))
+        taxonomy_hash = fingerprint([self.config.get("taxonomy_nodes", []), self.config.get("taxonomy_edges", [])])
+        taxonomy_changed = taxonomy_hash != getattr(self, "_taxonomy_hash", None)
+        if taxonomy_changed:
+            # Only contributors using changed governed names require reprojection.
+            old_labels = getattr(self, "_taxonomy_labels", [])
+            labels = self.config.get("taxonomy_nodes", [])
+            changed_labels = [n for n in old_labels if n not in labels] + [n for n in labels if n not in old_labels]
+            from ..hierarchy_inference import values
+            names = {name.casefold() for n in changed_labels for name in [n["label"], *n.get("aliases", [])]}
+            for p, c in current.items():
+                source_labels = [v for sections in SECTION_VIEWS.values() for section, _ in sections for v in values(c.sections.get(section))]
+                tags = c.sections.get("tags", [])
+                source_labels.extend(v for tag in (tags if isinstance(tags, list) else [tags]) for v in values(tag))
+                if names.intersection(v.casefold() for v in source_labels):
+                    changed.add(p)
+            governed_paths = {p for p, node in self.nodes.items() if node["name"].casefold() in names}
+            for owner, contribution in self.contributions.items():
+                if owner in current and any(e["parent_id"] in governed_paths or e["child_id"] in governed_paths
+                                            for e in contribution["edges"]):
+                    changed.add(owner)
         old_deps = self.dependencies
         new_deps = neighbor_dependencies(current, self.config)
         affected = set(changed)
@@ -106,6 +131,7 @@ class HierarchyIndex:
         old_ancestors = set(affected) | old_endpoints
         for p in list(old_ancestors):
             old_ancestors.update(self.ancestors(p))
+        old_taxonomy_ancestors = {e["parent_id"]: self.ancestors(e["parent_id"]) for e in old_taxonomy["edges"]}
         old_nodes = deepcopy(self.nodes)
         self.contexts = current
         self.nodes = {p: {"path": p, "name": c.name, "kind": c.context_type, "virtual": False,
@@ -124,8 +150,11 @@ class HierarchyIndex:
             self.contributions.pop(path, None)
             self.inference_audit.pop(path, None)
         # Restore nodes owned by unchanged contributors. No LLM is called here.
-        for record in self.contributions.values():
-            self.nodes.update(deepcopy(record["nodes"]))
+        for owner, record in self.contributions.items():
+            if owner != "@taxonomy":
+                self.nodes.update(deepcopy(record["nodes"]))
+        self._taxonomy_lookup = {}
+        self._build_taxonomy(old_taxonomy)
         for path in sorted(affected & current.keys()):
             self._build_context(current[path])
         self._reindex()
@@ -143,7 +172,22 @@ class HierarchyIndex:
         self._reindex()
         # Prune orphan virtual nodes after reclassification/deletion.
         endpoints = {p for e in self.edges for p in (e["parent_id"], e["child_id"])}
-        self.nodes = {p: n for p, n in self.nodes.items() if not n["virtual"] or p in endpoints}
+        self.nodes = {p: n for p, n in self.nodes.items() if not n["virtual"] or p in endpoints or p in self.contributions["@taxonomy"]["nodes"]}
+        def edge_key(edge):
+            return fingerprint({k: v for k, v in edge.items() if k != "created_at"})
+        new_taxonomy = self.contributions["@taxonomy"]
+        old_keys = {edge_key(e) for e in old_taxonomy["edges"]}
+        new_keys = {edge_key(e) for e in new_taxonomy["edges"]}
+        for e in [e for e in old_taxonomy["edges"] if edge_key(e) not in new_keys]:
+            old_ancestors.update((e["parent_id"], e["child_id"]))
+            old_ancestors.update(old_taxonomy_ancestors.get(e["parent_id"], set()))
+        for e in [e for e in new_taxonomy["edges"] if edge_key(e) not in old_keys]:
+            old_ancestors.update((e["parent_id"], e["child_id"]))
+            old_ancestors.update(self.ancestors(e["parent_id"]))
+        if taxonomy_changed:
+            for label in changed_labels:
+                p = self._taxonomy_lookup.get((label["view"], label["kind"], label["label"].casefold()), view_path(label["view"], label["kind"], label["label"]))
+                old_ancestors.add(p); old_ancestors.update(self.ancestors(p))
         touched = old_ancestors | (set().union(*(self.ancestors(p) for p in affected)) if affected else set())
         touched |= {p for p in set(old_nodes) | set(self.nodes) if old_nodes.get(p) != self.nodes.get(p)}
         # Contributor edge changes can affect ancestors of virtual parents, even if the
@@ -152,23 +196,66 @@ class HierarchyIndex:
             for e in self.contributions.get(p, {}).get("edges", []):
                 touched.add(e["parent_id"])
                 touched.update(self.ancestors(e["parent_id"]))
-        eligible = {p for p in self.nodes if self.children[p]}
-        for p in set(self.aggregate_pages) - eligible:
-            self.aggregate_pages.pop(p, None)
-            self._index_aggregate(p, None)
+        eligible = {p for p, n in self.nodes.items() if self.children[p] or n["virtual"] and n["kind"] != "element"}
+        eligible.update(p for p in self._taxonomy_lookup.values() if p)
+        existing_nodes = {a["node_ref"] for a in self.aggregate_pages.values()}
+        materialization_hash = fingerprint([self.config["aggregate_materialization_version"], self.config["aggregate_index_version"]])
+        if materialization_hash != getattr(self, "_materialization_hash", None):
+            touched.update(eligible)
+        rebuild_nodes = (touched | (eligible - existing_nodes)) & eligible
+        self._materialization_hash = materialization_hash
         rebuilt = []
-        from .page import toks
-        for p in sorted((touched | (eligible - self.aggregate_pages.keys())) & eligible):
-            self.aggregate_pages[p] = materialize_aggregate(self, p)
-            self._index_aggregate(p, self.aggregate_pages[p])
-            rebuilt.append(p)
+        for uri, page in list(self.aggregate_pages.items()):
+            if page["node_ref"] not in eligible or page["node_ref"] in rebuild_nodes:
+                self.aggregate_pages.pop(uri)
+                self._index_aggregate(uri, None)
+        for p in sorted(rebuild_nodes):
+            for page in materialize_aggregate(self, p):
+                uri = page["path"]
+                if uri in self.aggregate_pages and self.aggregate_pages[uri]["node_ref"] != p:
+                    self.build_issues.setdefault("@aggregate", []).append({"severity": "error", "code": "page_path_collision", "path": uri})
+                    continue
+                self.aggregate_pages[uri] = page
+                self._index_aggregate(uri, page)
+                rebuilt.append(uri)
+        self._inference_hash, self._taxonomy_hash = inference_hash, taxonomy_hash
+        self._taxonomy_labels = deepcopy(self.config.get("taxonomy_nodes", []))
+        from .aggregate import AggregatePageIndex
+        if not hasattr(self, "aggregate_index"):
+            self.aggregate_index = AggregatePageIndex()
+        self.aggregate_index.sync(self.aggregate_pages)
         self.dependencies = new_deps
         self._hashes, self._config_hash = hashes, config_hash
         self.last_update = {"changed_entities": sorted(changed), "rebuilt_entities": sorted(affected & current.keys()),
                             "rebuilt_aggregates": rebuilt, "inference_calls": classifier.calls}
         return self
 
+    def _build_taxonomy(self, previous=None):
+        self.contributions["@taxonomy"] = {"nodes": {}, "edges": []}
+        paths = {}
+        for label in self.config.get("taxonomy_nodes", []):
+            path = self._node(label["view"], label["kind"], label["label"], "@taxonomy")
+            if path is None:
+                raise ValueError("ambiguous_taxonomy_node")
+            paths[label["id"]] = path
+            for name in [label["label"], *label.get("aliases", [])]:
+                self._taxonomy_lookup[(label["view"], label["kind"], name.casefold())] = path
+        for edge in self.config.get("taxonomy_edges", []):
+            parent, child = paths[edge["parent"]], paths[edge["child"]]
+            label = next(n for n in self.config["taxonomy_nodes"] if n["id"] == edge["parent"])
+            self._record("@taxonomy", label["view"], parent, child, "CONFIRMED", edge["evidence"],
+                         source_relation="taxonomy", method="explicit_taxonomy", source=edge["provenance"]["source"])
+        if previous:
+            old = {e["edge_id"]: e for e in previous["edges"]}
+            for edge in self.contributions["@taxonomy"]["edges"]:
+                before = old.get(edge["edge_id"])
+                if before and {k: v for k, v in edge.items() if k != "created_at"} == {k: v for k, v in before.items() if k != "created_at"}:
+                    edge["created_at"] = before["created_at"]
+
     def _node(self, view, kind, name, owner):
+        governed = getattr(self, "_taxonomy_lookup", {}).get((view, kind, name.casefold()))
+        if governed:
+            return governed
         matches = sorted(set(self._name_index.get((kind, name.casefold()), [])))
         if len(matches) == 1:
             return matches[0]
@@ -183,8 +270,13 @@ class HierarchyIndex:
 
     def _record(self, owner, view, parent, child, status, evidence, *, source_relation,
                 method="explicit", confidence=1.0, **provenance):
-        if not parent or parent == child:
+        if not parent or not child or parent == child:
             return
+        for endpoint in (parent, child):
+            kind = self.nodes.get(endpoint, {}).get("kind")
+            if view not in self.config["applicable_views"].get(kind, []):
+                self.build_issues.setdefault(owner, []).append({"severity": "error", "code": "entity_placed_in_non_applicable_view", "context": endpoint, "hierarchy_id": view})
+                return
         if not evidence:
             self.build_issues.setdefault(owner, []).append({"severity": "warning", "code": "missing_provenance", "context": owner, "section": source_relation})
             return
@@ -212,7 +304,7 @@ class HierarchyIndex:
                              source_relation=reference.relation, source_priority="explicit_entity_relations")
         self._build_tags(context)
         for view, sections in SECTION_VIEWS.items():
-            if context.context_type not in VIEWS[view]:
+            if view not in self.config["applicable_views"].get(context.context_type, []):
                 continue
             previous = []
             previous_proofs = []
@@ -252,7 +344,7 @@ class HierarchyIndex:
                     label = values(value.get("name", value.get("field_name", value.get("field")))) if isinstance(value, dict) else values(value)
                     if not label or (isinstance(value, dict) and value.get("status", "EXPLICIT") not in {"EXPLICIT", "DERIVED"}):
                         continue
-                    path = view_path("asset", "element", context.canonical_id + "/" + label[0])
+                    path = hierarchy_path("elements", "asset", context.canonical_id, label[0])
                     node = {"path": path, "name": label[0], "kind": "element", "virtual": True,
                             "hierarchy_id": "asset", "parent_context": context.path, "facets": {}}
                     self.nodes[path] = node
@@ -308,9 +400,11 @@ class HierarchyIndex:
             groups[(e["hierarchy_id"], e["child_id"], self.nodes.get(e["parent_id"], {}).get("kind"))].append(e)
         self.conflicts = []
         for (view, child, kind), edges in groups.items():
-            best = max(STATUS_RANK.get(e["status"], 0) for e in edges)
+            def priority(edge):
+                return (edge["provenance"].get("method") == "explicit_taxonomy", STATUS_RANK.get(edge["status"], 0))
+            best = max(priority(e) for e in edges)
             for e in edges:
-                e["active"] = e["status"] != "CANDIDATE" and STATUS_RANK.get(e["status"], 0) == best
+                e["active"] = e["status"] != "CANDIDATE" and priority(e) == best
                 # No candidate placement participates in strong navigation.
             if len({e["parent_id"] for e in edges}) > 1:
                 self.conflicts.append({"hierarchy_id": view, "child_id": child, "kind": kind,
@@ -364,9 +458,16 @@ class HierarchyIndex:
         return set().union(*(self.branch_postings[view].get(t, set()) for t in terms)) if terms else set()
 
     def classification(self, path):
-        views = {v: [e for e in self.parents.get(path, []) if e["hierarchy_id"] == v and e["active"]] for v in VIEWS}
-        count = sum(bool(es) for es in views.values())
-        return {"status": "classified" if count == len(VIEWS) else "partially_classified" if count else "unclassified",
+        applicable = self.config["applicable_views"].get(self.nodes.get(path, {}).get("kind"), [])
+        views = {v: [e for e in self.parents.get(path, []) if e["hierarchy_id"] == v and e["active"]
+                      and e["status"] in {"CONFIRMED", "DERIVED"}] for v in applicable}
+        placed = [v for v, es in views.items() if es]
+        return {"status": "classified" if applicable and len(placed) == len(applicable) else "partially_classified" if placed else "unclassified",
+                "applicable_views": list(applicable),
+                "confirmed_views": [v for v, es in views.items() if any(e["status"] == "CONFIRMED" for e in es)],
+                "derived_views": [v for v, es in views.items() if any(e["status"] == "DERIVED" for e in es)],
+                "candidate_views": [v for v in applicable if any(e["status"] == "CANDIDATE" and e["hierarchy_id"] == v for e in self.parents.get(path, []))],
+                "missing_views": [v for v in applicable if not views[v]],
                 "views": {v: [e["edge_id"] for e in es] for v, es in views.items()}}
 
     def resolve_path(self, path):
@@ -381,10 +482,14 @@ class HierarchyIndex:
         return path
 
     def has(self, path):
-        return self.resolve_path(path) in self.nodes
+        return self.resolve_path(path) in self.nodes or path in self.aggregate_pages
 
     def describe(self, path, view=None):
         path = self.resolve_path(path)
+        if path in self.aggregate_pages:
+            page = self.aggregate_pages[path]
+            view = view or page["hierarchy_view"]
+            path = page["node_ref"]
         if path not in self.nodes:
             return {}
         def visible(edges):
@@ -428,10 +533,24 @@ class HierarchyIndex:
 
     def validate(self):
         issues = [i for rows in self.build_issues.values() for i in rows]
+        from ..hierarchy_config import validate_hierarchy_config
+        try:
+            validate_hierarchy_config(self.config)
+        except ValueError as exc:
+            issues.append({"severity": "error", "code": str(exc)})
+        if getattr(self, "_config_hash", None) != fingerprint(self.config):
+            issues.append({"severity": "error", "code": "organization_config_stale"})
         seen = set()
         known_evidence = {json.dumps(asdict(e),sort_keys=True) for c in self.contexts.values()
                           for rows in [*c.evidence.values(), *[r.evidence for r in c.references]] for e in rows}
+        for edge in self.config.get("taxonomy_edges", []):
+            known_evidence.update(json.dumps(e, sort_keys=True) for e in edge["evidence"])
         for e in self.edges:
+            for endpoint in (e["parent_id"], e["child_id"]):
+                if endpoint in self.nodes and e["hierarchy_id"] not in self.config["applicable_views"].get(self.nodes[endpoint]["kind"], []):
+                    issues.append({"severity": "error", "code": "entity_placed_in_non_applicable_view", "context": endpoint})
+            if e["status"] == "CANDIDATE" and e.get("active"):
+                issues.append({"severity": "error", "code": "candidate_as_classified", "edge_id": e["edge_id"]})
             if any(json.dumps(proof,sort_keys=True) not in known_evidence for proof in e.get("evidence", [])):
                 issues.append({"severity": "error", "code": "evidence_not_found", "edge_id": e.get("edge_id")})
             for code in edge_errors(e):
@@ -462,20 +581,34 @@ class HierarchyIndex:
         exclusive = {(slot["view"],slot["kind"]) for slot in self.config.get("exclusive_slots", [])}
         issues.extend({"severity": "error" if c["code"]=="conflicting_confirmed_placement" and (c["hierarchy_id"],c["kind"]) in exclusive else "warning", **c} for c in self.conflicts)
         for p, page in self.aggregate_pages.items():
+            if p in self.contexts:
+                issues.append({"severity": "error", "code": "page_path_collision", "path": p})
+            if p != page["path"] or not p.startswith("data://views/" + page["hierarchy_view"] + "/") or set(page["views"]) != {page["hierarchy_view"]}:
+                issues.append({"severity": "error", "code": "view_uri_mismatch", "path": p})
             for view, content in page["views"].items():
-                expected = sorted(self.descendants(p, view) & self.contexts.keys())
+                expected = sorted(self.descendants(page["node_ref"], view) & self.contexts.keys())
                 if content["L2"]["members"] != expected:
                     issues.append({"severity": "error", "code": "aggregate_member_mismatch", "path": p})
+        if hasattr(self, "aggregate_index") and not self.aggregate_index.is_current(self.aggregate_pages):
+            issues.append({"severity": "error", "code": "aggregate_index_stale"})
         return issues
 
     def to_dict(self):
         return {"version": VERSION, "config": self.config, "contributions": self.contributions,
                 "inference_audit": self.inference_audit, "build_issues": self.build_issues,
                 "aggregate_pages": self.aggregate_pages, "dependencies": self.dependencies,
-                "hashes": self._hashes, "config_hash": self._config_hash, "history": self.history}
+                "hashes": self._hashes, "config_hash": self._config_hash, "history": self.history,
+                "inference_hash": self._inference_hash, "taxonomy_hash": self._taxonomy_hash,
+                "materialization_hash": self._materialization_hash,
+                "taxonomy_labels": self._taxonomy_labels,
+                "aggregate_index_manifest": self.aggregate_index.manifest}
 
     @classmethod
     def from_dict(cls, value, contexts):
+        if value.get("version") != VERSION:
+            raise ValueError("organization snapshot version mismatch; rebuild from canonical sources for V1.1")
+        if value["config_hash"] != fingerprint(value["config"]):
+            raise ValueError("organization config fingerprint mismatch")
         index = cls(value["config"])
         index.contexts = {c.path: c for c in contexts if c.identity_status not in {"INFERRED", "CANDIDATE"}}
         index.contributions = value["contributions"]
@@ -493,6 +626,14 @@ class HierarchyIndex:
         index.build_issues = value.get("build_issues", {})
         index.dependencies = value["dependencies"]
         index._hashes, index._config_hash = value["hashes"], value["config_hash"]
+        index._inference_hash, index._taxonomy_hash = value["inference_hash"], value["taxonomy_hash"]
+        index._taxonomy_labels = value["taxonomy_labels"]
+        index._materialization_hash = value["materialization_hash"]
+        from .aggregate import AggregatePageIndex
+        index.aggregate_index = AggregatePageIndex()
+        index.aggregate_index.sync(index.aggregate_pages)
+        if index.aggregate_index.manifest != value["aggregate_index_manifest"]:
+            raise ValueError("aggregate_index_stale")
         return index
 
     @property

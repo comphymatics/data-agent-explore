@@ -19,7 +19,7 @@ Canonical Entity 仍只有一份。`HierarchyIndex` 是现有 `SemanticOrganizat
 - Domain：Business Category/Data Domain → Topic Domain → Topic → Object/Sub-object → Logical/Physical Model。
 - Asset：Layer → Logical Model → Physical Model → 有界 Important Element 预览。
 
-以上是导航层级，允许跳级和多个 parent。不存在的 Topic 不补 UNKNOWN 节点。一个模型可以同时在三个 View 中；同名虚拟分组按 `view + kind + label` 稳定寻址。若标签精确匹配唯一 Canonical Entity，就复用其 path；别名歧义保留诊断并停止该匹配。
+以上是导航层级，允许跳级和多个 parent。不存在的 Topic 不补 UNKNOWN 节点。一个模型可以同时在三个 View 中；同名虚拟分组按 `view + kind + label` 稳定寻址。若标签精确匹配唯一 Canonical Entity，内部组织节点复用其 path；aggregate 始终使用独立 View URI，并以 canonical_ref 指向它。别名歧义保留诊断并停止该匹配。
 
 `data://views/domain/topic/<percent-encoded-label>` 是聚合分组路径。旧 `hierarchy://models/<layer>/<domain>/<topic>` 作为 URI 兼容入口分别映射到 Asset Layer、Domain Topic Domain、Domain Topic。它不再表示一棵 Layer→Domain→Topic 树。每个 Page 保留全部 `parents` 和各 View 的 `breadcrumbs`；单个 `breadcrumb` 只作兼容预览。
 
@@ -37,7 +37,7 @@ relation: organized_under
 status: CONFIRMED | DERIVED | CANDIDATE
 confidence: 0.95
 provenance:
-  method: explicit | domain_rule | metadata_inference | neighbor_inference | llm_inference
+  method: explicit | explicit_taxonomy | domain_rule | metadata_inference | neighbor_inference | llm_inference
   source_ids: [source-id]
   source_relation: topic
   rule_id: enterprise-rule/v1
@@ -53,7 +53,7 @@ created_at: UTC-timestamp
 - DERIVED：已有受治理分类、配置规则，以及显式共分类的导航组织投影。必须保存 rule ID、输入事实、confidence、policy version；不回写 Canonical 的 `topic` 等字段。
 - CANDIDATE：元数据特征匹配、邻居归纳或受控 LLM 选择。保存在独立贡献/audit 中，`active=false`；不会成为硬筛选或 Backend Graph 的事实。
 
-同一 View、child、parent kind 出现竞争时，CONFIRMED > DERIVED > CANDIDATE；较弱结果保留，附 `placement_conflict`。同等级多父组织允许存在，多个 confirmed placement 会报告诊断；企业配置可通过 `exclusive_slots` 指定互斥的 view/kind，使冲突阻止发布。跨 View 的重复出现不是冲突。
+同一 View、child、parent kind 出现竞争时，显式 taxonomy 优先，其次 CONFIRMED > DERIVED > CANDIDATE；较弱结果保留，附 `placement_conflict`。同等级多父组织允许存在，多个 confirmed placement 会报告诊断；企业配置可通过 `exclusive_slots` 指定互斥的 view/kind，使冲突阻止发布。跨 View 的重复出现不是冲突。
 
 ## Backbone 和配置
 
@@ -83,12 +83,22 @@ LLM 输入包含候选 ID、模型局部内容、邻居分布、允许支持的 
 
 ## 增量和快照
 
-`HierarchyIndex.update(contexts)` 对输入 Context 和组织策略做 fingerprint，利用 Entity→引用/共享特征依赖找到受影响实体。只重建相关贡献、必要邻居推断和旧/新 Aggregate Ancestors；无变更时不会重新 inference 或 materialize。增加、删除、重新分类都失效旧祖先，未受影响 aggregate 对象继续复用。全局配置变化允许全量失效。
+`HierarchyIndex.update(contexts)` 对输入 Context 和组织策略做 fingerprint，利用 Entity→引用/共享特征依赖找到受影响实体。只重建相关贡献、必要邻居推断和旧/新 Aggregate Ancestors；无变更时不会重新 inference 或 materialize。增加、删除、重新分类都失效旧祖先，未受影响 aggregate 对象继续复用。仅推断相关配置变化允许实体分类全量失效；taxonomy 边修改只更新变动端点和旧/新祖先，routing 版本变化不重跑分类，materializer/index 版本变化只失效 aggregate。
 
 `ContextCompiler.compile_fragments(..., previous_compiled=previous)` 接入此路径。Canonical 编译本身仍使用原有流程；本轮增量保证针对组织贡献、aggregate 和 branch postings，并不宣称 Parser 或全部 Canonical Fusion 已增量化。
 
-`semantic-organization.json` 与不可变快照一同保存，包含贡献、候选审计、聚合页、依赖、fingerprints、历史。旧快照无此文件时重建 deterministic backbone，不调用 LLM。组织内容进入快照 hash，`created_at` 作为审计时间不进入语义 hash。重载不重新推断。
+`semantic-organization.json` 与不可变快照一同保存，包含贡献、候选审计、聚合页、依赖、fingerprints、历史。没有组织文件的旧快照可重建 deterministic backbone，不调用 LLM；已有 V1 组织文件必须显式从原始 Template/Fragment 交付重建，V1.1 loader 拒绝将它与新 contract 混用。组织内容进入快照 hash，`created_at` 作为审计时间不进入语义 hash。重载不重新推断。
 
 ## Quality gate
 
 发布和加载检查：broken parent/child、cycle（包括候选）、duplicate edge、confirmed placement 冲突、alias collision、无效 view/status/relation、candidate promotion、confidence、provenance、rule inputs、inference version、Evidence 是否存在、aggregate membership mismatch。结构化 snapshot 契约见 `contracts/semantic-organization.schema.json`。缺失知识/不完整来源是显式状态，不是发布错误；造假的引用、环、错误成员等是阻断错误。
+
+## V1.1 Applicable View 与显式 Taxonomy
+
+`hierarchy_config.validate_hierarchy_config` 是适用矩阵的单一入口；默认取正式 View 的实体类型交集，允许配置为更窄的非空集合。Metric/Dimension 仅 analysis；Scenario/Purpose 仅 analysis；Business Object 为 analysis/domain；两个 Model 类型适用全部三个视图。旧 topic 类型兼容 APP，适用 analysis/domain。
+
+classification 保留小写 status（classified/partially_classified/unclassified）和 views，增加 applicable_views、confirmed_views、derived_views、candidate_views、missing_views。只有 active CONFIRMED/DERIVED 的入边计入正式 placement；不适用视图不进分母，CANDIDATE 永远不能使分类完成。根节点没有 parent 时仍可以显示 unclassified，这不表示缺少源事实。
+
+`taxonomy_nodes` 是受治理标签定义，`taxonomy_edges` 是独立规范关系；原 `taxonomy` 继续是 classifier 候选集合，不自动生成事实。示例及结构见 `config/semantic-hierarchy.sample.json`、`contracts/semantic-hierarchy-config.schema.json`。每条 edge 必须有 parent/child、CONFIRMED、provenance.method=explicit_taxonomy、provenance.source 和有效 SourceLocation Evidence。纯 source 名称不能代替 Evidence。无需任何模型携带共同标签即可构建 sparse taxonomy；不制造 UNKNOWN 层。配置节点 alias 可用于精确 placement，实例冲突边保留审计并失活。
+
+V1.1 新 gate 包含 page_path_collision、invalid_taxonomy_edge、taxonomy_cycle、unknown_taxonomy_node、entity_placed_in_non_applicable_view、candidate_as_classified、aggregate_index_stale、view_uri_mismatch、organization_config_stale。配置错误在构建前拒绝；其余错误阻止发布/加载。组织快照版本为 semantic-hierarchy/v1.1，保存适用矩阵、routing/materializer/index/inference 配置及指纹和 aggregate index manifest。

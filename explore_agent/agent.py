@@ -84,6 +84,7 @@ class ExploreAgent:
             intent=intent,
             mode=mode,
             hierarchy=hierarchy,
+            retrieval_strategy=route["retrieval_strategy"],
         )
         current_version=search.get("index_version")
         if (

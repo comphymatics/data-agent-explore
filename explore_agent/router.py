@@ -11,6 +11,8 @@ class QueryRouter:
 
     def analyze(self, query):
         from .planner import REQUIREMENTS
+        from enterprise_data_context.retrieval_strategy import INTENT_VIEWS
+        allowed_intents = list(dict.fromkeys([*REQUIREMENTS, *INTENT_VIEWS]))
         from .coverage import ASPECTS
         baseline = {"scope": self.route(query), "intent": self.intent(query), "entities": [], "aspects": []}
         if baseline["intent"]=="metric_to_models":
@@ -18,7 +20,7 @@ class QueryRouter:
         def validate(value):
             if baseline["intent"] != "generic" and value.get("intent") != baseline["intent"]:
                 raise ValueError("semantic route cannot remove explicit intent requirements")
-            if set(value) != {"intent", "entities", "aspects"} or value["intent"] not in REQUIREMENTS:
+            if set(value) != {"intent", "entities", "aspects"} or value["intent"] not in allowed_intents:
                 raise ValueError("unsupported semantic route")
             if baseline["intent"]=="generic" and value["intent"]!="generic":
                 hints={
@@ -27,7 +29,7 @@ class QueryRouter:
                     "model_understanding": ("字段","field","grain","粒度","业务对象","business object","model","模型"),
                     "impact_analysis": ("影响","impact","下游","downstream","lineage","血缘"),
                 }
-                if not any(hint in query.casefold() for hint in hints.get(value["intent"],())):
+                if not any(hint in query.casefold() for hint in hints.get(value["intent"], {"analysis": ("分析", "体验", "移动", "场景", "analysis", "experience", "数据"), "domain": ("业务", "主题", "资源", "归类", "domain", "business"), "asset": ("模型", "字段", "层", "清单", "asset", "model", "field")}.get(INTENT_VIEWS.get(value["intent"]), ()))):
                     raise ValueError("intent upgrade has no query evidence")
             if not isinstance(value["entities"], list) or len(value["entities"]) > 8 or not all(
                 isinstance(entity, str) and entity and entity in query for entity in value["entities"]):
@@ -35,20 +37,22 @@ class QueryRouter:
             if not isinstance(value["aspects"], list) or len(value["aspects"]) > 8 or not all(a in ASPECTS for a in value["aspects"]):
                 raise ValueError("unsupported requirement aspect")
             return value
-        proposed = self.semantic.invoke("route", {"query": query, "allowed_intents": list(REQUIREMENTS), "allowed_aspects": sorted(ASPECTS)}, validate)
+        proposed = self.semantic.invoke("route", {"query": query, "allowed_intents": allowed_intents, "allowed_aspects": sorted(ASPECTS)}, validate)
         if proposed:
             baseline.update(proposed)
+        from enterprise_data_context.retrieval_strategy import strategy, query_anchor_types
+        baseline["retrieval_strategy"] = strategy(query, baseline["intent"], baseline["scope"],
+            query_anchor_types(query), baseline["aspects"])
         return baseline
 
     def route(self,query):
         q=query.lower(); scope=classification_scope(query)
-        # A broad business question may mention an object (e.g. 小区) whose name
-        # is also a taxonomy alias. That does not request its inferred warehouse
-        # layer as a hard filter. Explicit modeling-scope questions still use it.
-        if ("数据" in query or "data" in q) and not any(
-            word in q for word in ("主题", "分层", "domain", "topic", "ods", "sdl", "odi", "ads", "dwd", "dws")
-        ):
-            scope={k:v for k,v in scope.items() if k not in {"layer", "topic_domain", "topic"}}
+        # Taxonomy aliases can suggest facets, but a business phrase does not
+        # request a hard model filter. Retain only explicitly requested scopes.
+        if not re.search(r"(?<![a-z0-9_])(ods|sdl|odi|ads|dwd|dws)(?![a-z0-9_])", q):
+            scope.pop("layer", None)
+        if "layer" not in scope and not any(word in q for word in ("主题", "domain", "topic")):
+            scope.pop("topic_domain", None); scope.pop("topic", None)
         for t in KNOWN_TECH:
             if t.lower() in q: scope["technology"]=t; break
         if "地铁" in query or "metro" in q: scope["scenario"]="metro"

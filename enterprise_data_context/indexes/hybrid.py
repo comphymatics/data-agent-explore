@@ -49,6 +49,7 @@ def hybrid_search(index, query, types=None, scope=None, top_k=8):
     from enterprise_data_context.models import SearchHit
     if top_k < 1:
         raise ValueError("top_k must be positive")
+    index.last_score_breakdown = {}
     eligible = []
     for path in index.docs:
         page = index.pages[path]
@@ -123,6 +124,8 @@ def hybrid_search(index, query, types=None, scope=None, top_k=8):
         for rank, path in enumerate(ranked, 1):
             scores[path] += weight/(60+rank)
             reasons[path].append(channel)
+    index.last_score_breakdown = {p: {"exact": exact.get(p, 0.), "bm25": lexical.get(p, 0.),
+        "dense": vectors.get(p, 0.), "facet": facets.get(p, 0.), "rrf": score} for p, score in scores.items()}
     ranked = sorted(scores, key=lambda p: (-scores[p], p))[:top_k]
     return [SearchHit(p, index.pages[p].context_type, index.pages[p].name, scores[p],
                       reasons[p], index.pages[p].l0, index.pages[p].l1) for p in ranked]

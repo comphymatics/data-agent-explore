@@ -22,7 +22,9 @@ service.data_read("data://views/domain/topic/无线覆盖", level="L1")
 service.data_read("data://views/domain/topic/无线覆盖", level="L2", sections=["members", "evidence"])
 ```
 
-实际 path 应使用索引返回的 percent-encoded URI。如果分组复用了 Canonical Entity path，`data_read` 保持返回原 Rich Page；一次 `data_search` 的 `retrieval_trace.hierarchy_contexts` 返回其 aggregate，或通过既有 `data_expand(paths, ["aggregate"])` 按需读取。
+实际 path 应使用索引返回的 percent-encoded URI。Canonical 与 aggregate 永远不同址：`data://topics/<slug>` 的 L0/L1/L2 始终是 Canonical Page；`data://views/domain/topic/<slug>` 始终是 Aggregate Page。内部节点可复用 Canonical identity，但不会复用页面寻址。每个 aggregate 仅包含一个 view，继续保留 view-keyed content 兼容结构。
+
+Aggregate 返回 canonical_ref、member_refs、child_branches。L1 引用预览有界，L2 可获取全部成员；L2 sections 指定后只返回请求内容，不额外附全量 member refs。显式 taxonomy 的叶分组也可读取空成员 aggregate。Important Element 预览用 machine-facing `hierarchy://elements/...`，继续属于 ElementIndex，不创建 Field Rich Page。
 
 默认 `data_expand(..., ["hierarchy"])` 返回有界 L1 组织摘要；完整组织边、推断审计和 Evidence 用 `hierarchy_provenance` 显式展开。预算优先保留 Focused Expansion 的 support 与内容，再分配可选导航元数据，避免层级信息挤掉字段证据。
 

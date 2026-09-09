@@ -1,5 +1,4 @@
 """One serving operation performs branch recall, rich read and anchor discovery."""
-import math
 import re
 
 from .hierarchy_contracts import VIEWS
@@ -17,7 +16,7 @@ def contains_identifier(query, key):
     return bool(key and re.search(r"(?<![a-z0-9_])" + re.escape(key) + r"(?![a-z0-9_])", query.casefold()))
 
 
-def route(service, query, mode="auto", hierarchy=None, intent=None):
+def route(service, query, mode="auto", hierarchy=None, intent=None, scope=None, retrieval_strategy=None):
     if mode not in {"auto", "direct", "hierarchical", "hybrid"}:
         raise ValueError("invalid retrieval mode")
     if hierarchy is not None and hierarchy not in VIEWS:
@@ -37,24 +36,20 @@ def route(service, query, mode="auto", hierarchy=None, intent=None):
             element_paths.update(service.eidx.records[i]["path"] for i in ids
                                  if service.eidx.records[i]["kind"] in {"Field", "Attribute", "Counter", "Formula", "JoinKey"})
     exact.update(element_paths)
-    cross = any(word in query.casefold() for word in ("还需要", "跨域", "结合", "what else", "across domains"))
-    selected = mode
-    if selected == "auto":
-        selected = "hybrid" if exact and cross else "direct" if exact else "hierarchical"
+    from .retrieval_strategy import strategy
+    anchor_types = [service.pages[p].context_type for p in page_anchors if p in service.pages]
+    if element_paths:
+        anchor_types.append("field")
+    if exact and not anchor_types:
+        anchor_types.append("stable-id")
+    decision = strategy(query, intent, scope, anchor_types, mode=mode, hierarchy=hierarchy, preferred=retrieval_strategy)
     if not service.hierarchy.config.get("hierarchy_enabled", True):
-        selected = "direct"
-    view = hierarchy
-    if selected in {"hierarchical", "hybrid"} and view is None:
-        if any(word in query.casefold() for word in ("主题", "业务对象", "domain", "topic")):
-            view = "domain"
-        elif any(word in query.casefold() for word in ("数仓", "分层", "ods", "asset")):
-            view = "asset"
-        else:
-            view = "analysis"
-    return {"mode": selected, "hierarchy_view": view if selected != "direct" else None,
+        decision.update(mode="direct", hierarchy_views=[], primary_view=None)
+        decision["reasons"].append("hierarchy_disabled")
+    return {**decision, "retrieval_strategy": decision, "hierarchy_view": decision["primary_view"],
             "exact_anchor_ids": sorted(exact), "page_anchor_ids": page_anchors, "element_anchor_ids": sorted(element_paths),
             "selected_branches": [], "hierarchy_contexts": [], "branch_candidates": [],
-            "fallback": None, "version": "hierarchical-serving/v1"}
+            "fallback": None, "version": "hierarchical-serving/v1.1"}
 
 
 def discover(service, query, trace, seed_hits, top_k, types=None, scope=None):
@@ -70,31 +65,19 @@ def discover(service, query, trace, seed_hits, top_k, types=None, scope=None):
     if trace["mode"] == "direct":
         return sorted(selected.values(), key=lambda h: (-h.score, h.path))[:top_k]
     q = set(toks(query))
-    rows = []
-    view = trace["hierarchy_view"]
-    for path in sorted(index.recall_branches(q, view)):
-        aggregate = index.aggregate_pages[path]
-        content = aggregate["views"].get(view)
-        if not content:
-            continue
-        overlap = q & index.aggregate_terms[path][view]
-        if not overlap:
-            continue
-        # Root hubs get less weight than discriminative, compact branches.
-        name_overlap = len(q & set(toks(aggregate["name"])))
-        l1 = content["L1"]
-        rich_overlap = len(q & set(toks(str(l1))))
-        score = (len(overlap) + 2 * name_overlap + .15 * rich_overlap) / (1 + math.log1p(l1["member_count"]) * .2)
-        rows.append((score, path))
-    rows.sort(key=lambda x: (-x[0], x[1]))
+    views = trace["hierarchy_views"]
     branch_k = index.config.get("branch_k", 3)
-    trace["branch_candidates"] = [{"path": p, "score": s} for s, p in rows[:branch_k * 3]]
+    rows = index.aggregate_index.search(query, views, top_k=branch_k * 3,
+        method=index.config.get("branch_retrieval", "hybrid"), scope=scope)
+    trace["branch_candidates"] = rows
+    trace["branch_warnings"] = index.aggregate_index.last_warnings
     branch_members = {}
-    for score, path in rows[:branch_k]:
-        content = index.aggregate_pages[path]["views"][view]
-        members = content["L2"]["members"]
-        if path in service.pages:
-            members = [path, *members]
+    for row in rows[:branch_k]:
+        score, path, view = row["score"], row["path"], row["hierarchy_view"]
+        aggregate = index.aggregate_pages[path]
+        members = list(aggregate["member_refs"])
+        if aggregate["canonical_ref"]:
+            members.insert(0, aggregate["canonical_ref"])
         eligible = [p for p in members if p in service.pages and organization_allowed_page(service, p, types, scope)]
         if not eligible:
             continue
@@ -116,7 +99,7 @@ def discover(service, query, trace, seed_hits, top_k, types=None, scope=None):
         if old:
             score = max(score, old.score) + base * .2
         selected[path] = SearchHit(path, page.context_type, page.name, score,
-                                  list(dict.fromkeys((old.reasons if old else []) + ["hierarchy:" + view])), page.l0, page.l1)
+                                  list(dict.fromkeys((old.reasons if old else []) + ["hierarchy:" + "+".join(views)])), page.l0, page.l1)
     return sorted(selected.values(), key=lambda h: (-h.score, h.path))[:max(top_k, top_k * 2)]
 
 

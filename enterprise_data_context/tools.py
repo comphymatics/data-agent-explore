@@ -23,6 +23,7 @@ class DataContextTools:
         intent=None,
         mode="auto",
         hierarchy=None,
+        retrieval_strategy=None,
     ):
         return self.retrieval.data_search(
             query=query,
@@ -37,6 +38,7 @@ class DataContextTools:
             intent=intent,
             mode=mode,
             hierarchy=hierarchy,
+            retrieval_strategy=retrieval_strategy,
         )
 
     def data_read(self, path, level="L1", sections=None):

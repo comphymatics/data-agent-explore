@@ -1,0 +1,160 @@
+{
+  "evidence_scope": "TRAINED_LOCAL_ENCODER_SYNTHETIC_CORPUS",
+  "encoder": "fastembed:0.8.0:sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+  "trained_encoder_available": true,
+  "summary": {
+    "lexical": {
+      "hit_at_1": 0.0,
+      "hit_at_3": 0.0
+    },
+    "hybrid": {
+      "hit_at_1": 1.0,
+      "hit_at_3": 1.0
+    }
+  },
+  "cases": [
+    {
+      "query": "用户移动过程中网络体验如何分析？",
+      "expected": "Mobility",
+      "method": "lexical",
+      "hits": [],
+      "warnings": [],
+      "hit_at_1": false,
+      "hit_at_3": false
+    },
+    {
+      "query": "用户移动过程中网络体验如何分析？",
+      "expected": "Mobility",
+      "method": "hybrid",
+      "hits": [
+        {
+          "path": "data://views/analysis/analysis-purpose/Mobility",
+          "hierarchy_view": "analysis",
+          "score": 0.02042570068746695,
+          "score_breakdown": {
+            "exact": 0.0,
+            "bm25": 0,
+            "dense": 0.5571077126030315,
+            "facet": 1,
+            "rrf": 0.02042570068746695
+          },
+          "dense_encoder": "fastembed:0.8.0:sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+          "dense_channel": "dense",
+          "l0": "Mobility: 1 reference contexts; main_purposes: Mobility",
+          "member_summary": {
+            "member_count": 1,
+            "model_counts": {
+              "logical_models": 0,
+              "physical_models": 1
+            },
+            "environment_availability": {
+              "status": "UNRESOLVED",
+              "counts": {
+                "reference_only": 1
+              },
+              "scope": "REFERENCE",
+              "complete": false
+            }
+          },
+          "placement_quality": {
+            "confirmed": 1,
+            "derived": 0,
+            "candidate": 0
+          }
+        },
+        {
+          "path": "data://views/analysis/analysis-purpose/Wireless%20Coverage",
+          "hierarchy_view": "analysis",
+          "score": 0.020097286226318484,
+          "score_breakdown": {
+            "exact": 0.0,
+            "bm25": 0,
+            "dense": 0.3645009298104759,
+            "facet": 1,
+            "rrf": 0.020097286226318484
+          },
+          "dense_encoder": "fastembed:0.8.0:sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+          "dense_channel": "dense",
+          "l0": "Wireless Coverage: 1 reference contexts; main_purposes: Wireless Coverage",
+          "member_summary": {
+            "member_count": 1,
+            "model_counts": {
+              "logical_models": 0,
+              "physical_models": 1
+            },
+            "environment_availability": {
+              "status": "UNRESOLVED",
+              "counts": {
+                "reference_only": 1
+              },
+              "scope": "REFERENCE",
+              "complete": false
+            }
+          },
+          "placement_quality": {
+            "confirmed": 1,
+            "derived": 0,
+            "candidate": 0
+          }
+        }
+      ],
+      "warnings": [],
+      "hit_at_1": true,
+      "hit_at_3": true
+    },
+    {
+      "query": "哪里存在信号差、覆盖不足？",
+      "expected": "Wireless Coverage",
+      "method": "lexical",
+      "hits": [],
+      "warnings": [],
+      "hit_at_1": false,
+      "hit_at_3": false
+    },
+    {
+      "query": "哪里存在信号差、覆盖不足？",
+      "expected": "Wireless Coverage",
+      "method": "hybrid",
+      "hits": [
+        {
+          "path": "data://views/analysis/analysis-purpose/Wireless%20Coverage",
+          "hierarchy_view": "analysis",
+          "score": 0.02036169659120479,
+          "score_breakdown": {
+            "exact": 0.0,
+            "bm25": 0,
+            "dense": 0.3305865242754859,
+            "facet": 1,
+            "rrf": 0.02036169659120479
+          },
+          "dense_encoder": "fastembed:0.8.0:sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+          "dense_channel": "dense",
+          "l0": "Wireless Coverage: 1 reference contexts; main_purposes: Wireless Coverage",
+          "member_summary": {
+            "member_count": 1,
+            "model_counts": {
+              "logical_models": 0,
+              "physical_models": 1
+            },
+            "environment_availability": {
+              "status": "UNRESOLVED",
+              "counts": {
+                "reference_only": 1
+              },
+              "scope": "REFERENCE",
+              "complete": false
+            }
+          },
+          "placement_quality": {
+            "confirmed": 1,
+            "derived": 0,
+            "candidate": 0
+          }
+        }
+      ],
+      "warnings": [],
+      "hit_at_1": true,
+      "hit_at_3": true
+    }
+  ]
+}

@@ -3,8 +3,8 @@ from collections import Counter
 from dataclasses import asdict
 import json
 
-from ..hierarchy_contracts import VIEWS
-from ..indexes.hierarchy import values, fingerprint
+from ..hierarchy_contracts import VIEWS, MATERIALIZATION_VERSION
+from ..indexes.hierarchy import values, fingerprint, view_path
 
 SUMMARY_SECTIONS = {"primary_objects": "primary_objects", "core_metrics": "metrics",
                     "core_dimensions": "dimensions", "main_purposes": "analysis_purposes"}
@@ -12,11 +12,21 @@ TYPE_SECTIONS = {"business-object": "primary_objects", "metric": "core_metrics",
                  "dimension": "core_dimensions", "analysis-purpose": "main_purposes"}
 
 
+def aggregate_uri(index, path, view):
+    node = index.nodes[path]
+    if node["virtual"]:
+        return view_path(view, node["kind"], node["name"]) if not path.startswith("data://views/" + view + "/") else path
+    # Use canonical slug, not display name; names need not be unique.
+    return f"data://views/{view}/{node['kind']}/" + path.rsplit("/", 1)[-1]
+
+
 def materialize_aggregate(index, path):
     node = index.nodes[path]
     views = {}
     for view in VIEWS:
-        if not any(e["hierarchy_id"] == view for e in index.children[path]):
+        declared = any(v == view and p == path for (v, _, _), p in getattr(index, "_taxonomy_lookup", {}).items())
+        if not (any(e["hierarchy_id"] == view for e in index.children[path]) or
+                node.get("hierarchy_id") == view and node["kind"] != "element" or declared):
             continue
         members = sorted(index.descendants(path, view) & index.contexts.keys())
         member_set = set(members)
@@ -67,9 +77,27 @@ def materialize_aggregate(index, path):
               "partially_classified_members": [p for p in members if index.classification(p)["status"] == "partially_classified"],
               "candidate_placements": [e for e in relations if e["status"] == "CANDIDATE"]}
         views[view] = {"L0": l0[:800], "L1": l1, "L2": l2}
-    return {"path": path, "kind": "aggregate-context", "name": node["name"],
-            "L0": " | ".join(v["L0"] for v in views.values())[:1200], "views": views,
-            "member_fingerprints": {p: fingerprint(asdict(index.contexts[p])) for p in sorted(index.descendants(path) & index.contexts.keys())}}
+    pages = []
+    for view, content in views.items():
+        uri = aggregate_uri(index, path, view)
+        canonical_ref = path if path in index.contexts else None
+        children = sorted({aggregate_uri(index, e["child_id"], view) for e in index.children[path]
+                           if e["active"] and e["hierarchy_id"] == view and
+                           (any(c["hierarchy_id"] == view for c in index.children[e["child_id"]]) or
+                            index.nodes[e["child_id"]]["virtual"] and index.nodes[e["child_id"]]["kind"] != "element" or
+                            e["child_id"] in getattr(index, "_taxonomy_lookup", {}).values())})
+        aliases = list(index.contexts[path].aliases) if canonical_ref else []
+        labels = [node["name"]]
+        for label in [*index.config.get("taxonomy", []), *index.config.get("taxonomy_nodes", [])]:
+            if label["view"] == view and label["kind"] == node["kind"] and label["label"] == node["name"]:
+                aliases.extend(label.get("aliases", [])); labels.append(label["label"])
+        pages.append({"path": uri, "node_ref": path, "canonical_ref": canonical_ref,
+            "member_refs": content["L2"]["members"], "child_branches": children,
+            "hierarchy_view": view, "kind": "aggregate-context", "name": node["name"],
+            "aliases": sorted(set(aliases)), "taxonomy_labels": sorted(set(labels)),
+            "L0": content["L0"], "views": {view: content}, "materialization_version": MATERIALIZATION_VERSION,
+            "member_fingerprints": {p: fingerprint(asdict(index.contexts[p])) for p in content["L2"]["members"]}})
+    return pages
 
 
 def read_aggregate(index, path, level="L1", sections=None, view=None):
@@ -81,4 +109,7 @@ def read_aggregate(index, path, level="L1", sections=None, view=None):
     if sections and level == "L2":
         views = {v: {k: val for k, val in content.items() if k in sections} for v, content in views.items()}
     return {"path": path, "level": level, "context_type": "aggregate-context",
-            "knowledge_layer": "REFERENCE", "content": views, "hierarchy_views": list(views)}
+            "knowledge_layer": "REFERENCE", "content": views, "hierarchy_views": list(views),
+            "canonical_ref": page["canonical_ref"],
+            "member_refs": page["member_refs"] if level == "L2" and not sections else page["member_refs"][:12] if level == "L1" else [],
+            "child_branches": page["child_branches"] if level == "L2" else page["child_branches"][:12] if level == "L1" else []}

@@ -11,11 +11,16 @@
     "dependencies",
     "hashes",
     "config_hash",
-    "history"
+    "history",
+    "inference_hash",
+    "taxonomy_hash",
+    "taxonomy_labels",
+    "aggregate_index_manifest",
+    "materialization_hash"
   ],
   "properties": {
     "version": {
-      "const": "semantic-hierarchy/v1"
+      "const": "semantic-hierarchy/v1.1"
     },
     "config": {
       "type": "object",
@@ -53,7 +58,13 @@
           "kind",
           "L0",
           "views",
-          "member_fingerprints"
+          "member_fingerprints",
+          "node_ref",
+          "canonical_ref",
+          "member_refs",
+          "child_branches",
+          "hierarchy_view",
+          "materialization_version"
         ],
         "properties": {
           "kind": {
@@ -142,6 +153,44 @@
                 }
               }
             }
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^data://views/(analysis|domain|asset)/"
+          },
+          "node_ref": {
+            "type": "string"
+          },
+          "canonical_ref": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "hierarchy_view": {
+            "enum": [
+              "analysis",
+              "domain",
+              "asset"
+            ]
+          },
+          "member_refs": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string"
+            }
+          },
+          "child_branches": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^data://views/"
+            }
+          },
+          "materialization_version": {
+            "const": "aggregate-view/v1.1"
           }
         }
       }
@@ -248,7 +297,8 @@
                 "domain_rule",
                 "metadata_inference",
                 "neighbor_inference",
-                "llm_inference"
+                "llm_inference",
+                "explicit_taxonomy"
               ]
             },
             "source_ids": {
@@ -333,7 +383,10 @@
               "provenance": {
                 "properties": {
                   "method": {
-                    "const": "explicit"
+                    "enum": [
+                      "explicit",
+                      "explicit_taxonomy"
+                    ]
                   }
                 }
               }

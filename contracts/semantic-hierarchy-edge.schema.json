@@ -96,7 +96,8 @@
             "domain_rule",
             "metadata_inference",
             "neighbor_inference",
-            "llm_inference"
+            "llm_inference",
+            "explicit_taxonomy"
           ]
         },
         "source_ids": {
@@ -181,7 +182,10 @@
           "provenance": {
             "properties": {
               "method": {
-                "const": "explicit"
+                "enum": [
+                  "explicit",
+                  "explicit_taxonomy"
+                ]
               }
             }
           }

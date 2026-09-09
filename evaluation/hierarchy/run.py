@@ -19,19 +19,23 @@ from .sample import sample_fragments, sample_config
 def sample_cases():
     # Expectations never enter source fragments, build policy, routing or retrieval.
     return [
-        {"id": "A", "query": "RSRP有哪些现有模型可以提供？", "category": "exact_anchor", "mode": "direct",
+        {"id": "A", "query": "RSRP有哪些现有模型可以提供？", "category": "exact_anchor", "mode": "direct", "anchors": ["RSRP"],
          "relevant": ["RSRP", "LTE MR Logical Model", "LTE_PERIODIC_MR", "LTE_MR_NEW"]},
-        {"id": "B", "query": "地铁弱覆盖需要哪些数据？", "category": "broad_cross_document", "mode": "hierarchical", "view": "analysis",
+        {"id": "B", "query": "地铁弱覆盖需要哪些数据？", "category": "cross_document", "mode": "hierarchical", "view": "analysis",
          "branches": ["地铁覆盖分析", "弱覆盖诊断"], "relevant": ["地铁覆盖分析", "弱覆盖诊断", "RSRP", "位置", "小区", "LTE MR Logical Model", "LTE_PERIODIC_MR"]},
-        {"id": "C", "query": "有哪些数据可以描述小区无线覆盖质量？", "category": "purpose_to_data", "mode": "hierarchical", "view": "analysis",
+        {"id": "C", "query": "有哪些数据可以描述小区无线覆盖质量？", "category": "broad_analysis", "mode": "hierarchical", "view": "analysis",
          "branches": ["弱覆盖诊断"], "relevant": ["地铁覆盖分析", "弱覆盖诊断", "RSRP", "位置", "小区", "LTE MR Logical Model", "LTE_PERIODIC_MR"]},
-        {"id": "D", "query": "LTE_PERIODIC_MR属于哪个主题域和主题？", "category": "model_to_analysis", "mode": "direct",
+        {"id": "D", "anchors": ["LTE_PERIODIC_MR"], "query": "LTE_PERIODIC_MR属于哪个主题域和主题？", "category": "exact_anchor", "mode": "direct",
          "relevant": ["LTE_PERIODIC_MR", "LTE MR Logical Model", "小区"]},
         {"id": "E", "query": "一个没有Topic标签的新模型应该归到哪里？", "category": "unknown", "mode": "hierarchical", "view": "domain", "relevant": []},
-        {"id": "F", "query": "RSRP用于弱覆盖时还需要哪些数据？", "category": "cross_domain", "mode": "hybrid", "view": "analysis",
+        {"id": "F", "anchors": ["RSRP"], "query": "RSRP用于弱覆盖时还需要哪些数据？", "category": "cross_domain", "mode": "hybrid", "view": "analysis",
          "branches": ["弱覆盖诊断", "地铁覆盖分析"], "relevant": ["地铁覆盖分析", "弱覆盖诊断", "RSRP", "位置", "小区", "LTE MR Logical Model", "LTE_PERIODIC_MR", "LTE_MR_NEW"]},
-        {"id": "G", "query": "无线覆盖主题有哪些数据？", "category": "inferred_organization", "mode": "hierarchical", "view": "domain",
+        {"id": "G", "query": "无线覆盖主题有哪些数据？", "category": "broad_domain", "mode": "hierarchical", "view": "domain",
          "branches": ["无线覆盖"], "relevant": ["LTE MR Logical Model", "LTE_PERIODIC_MR", "LTE_MR_NEW", "小区"]},
+        {"id": "H", "query": "ODS层有哪些无线模型？", "category": "broad_asset", "mode": "hierarchical", "view": "asset",
+         "branches": ["ODS"], "relevant": ["LTE_PERIODIC_MR", "LTE_MR_NEW"]},
+        {"id": "I", "query": "有哪些数据描述网络资源配置？", "category": "broad_domain", "mode": "hierarchical", "view": "domain",
+         "branches": ["小区"], "relevant": ["小区", "LTE MR Logical Model", "LTE_PERIODIC_MR"]},
     ]
 
 
@@ -59,11 +63,11 @@ def evaluate_variant(compiled, cases, *, top_k=6, token_budget=5000):
         recall = ratio(tp, len(relevant))
         f1 = 2 * precision * recall / (precision + recall) if precision is not None and recall is not None and precision + recall else 0. if relevant else None
         trace = bundle.retrieval_trace
-        expected_branches = {p for p, n in index.nodes.items() if n["name"] in case.get("branches", [])}
+        expected_branches = {p for p, n in index.aggregate_pages.items() if n["name"] in case.get("branches", []) and n["hierarchy_view"] == case.get("view")}
         branches = set(trace["selected_branches"])
         members = set()
         for p in branches:
-            members.update(index.aggregate_pages[p]["views"][trace["hierarchy_view"]]["L2"]["members"])
+            members.update(index.aggregate_pages[p]["member_refs"])
         rows.append({"case_id": case["id"], "category": case["category"], "query": case["query"],
             "precision": precision, "recall": recall, "f1": f1,
             "query_llm_tokens": bundle.telemetry["model_tokens_reported"] if bundle.telemetry["model_token_usage_complete"] else None,
@@ -71,13 +75,19 @@ def evaluate_variant(compiled, cases, *, top_k=6, token_budget=5000):
             "routing_accuracy": float(trace["mode"] == case["mode"]),
             "hierarchy_entry_accuracy": float(trace["hierarchy_view"] == case["view"]) if case.get("view") else None,
             "branch_recall_at_k": ratio(len(branches & expected_branches), len(expected_branches)),
+            "branch_recall_at_1": ratio(len({r["path"] for r in trace["branch_candidates"][:1]} & expected_branches), len(expected_branches)),
+            "branch_recall_at_3": ratio(len({r["path"] for r in trace["branch_candidates"][:3]} & expected_branches), len(expected_branches)),
+            "branch_precision_at_3": ratio(len({r["path"] for r in trace["branch_candidates"][:3]} & expected_branches), 3) if expected_branches else None,
+            "anchor_recall": ratio(len({names.get(n, n) for n in case.get("anchors", [])} & retrieved), len(case.get("anchors", []))),
             "aggregate_context_precision": ratio(len(members & relevant), len(members)),
             "selected_context_ids": sorted(retrieved), "selected_branches": sorted(branches), "mode": trace["mode"],
             "missing_context": bundle.missing_context, "truncated": bundle.truncated,
+            "branch_warnings": trace.get("branch_warnings", []),
             "unknown_topic_remains_unclassified": not any(e["active"] and index.nodes[e["parent_id"]]["kind"] == "topic"
                 for e in index.parents.get(names["UNKNOWN_MODEL"], [])) if "UNKNOWN_MODEL" in names else None})
     metric_names = ("precision", "recall", "f1", "query_llm_tokens", "delivered_context_tokens_estimated", "tool_calls",
-                    "routing_accuracy", "hierarchy_entry_accuracy", "branch_recall_at_k", "aggregate_context_precision")
+                    "routing_accuracy", "hierarchy_entry_accuracy", "branch_recall_at_k", "aggregate_context_precision",
+                    "branch_recall_at_1", "branch_recall_at_3", "branch_precision_at_3", "anchor_recall")
     models = [c for c in compiled["contexts"] if c.context_type in {"logical-model", "physical-model"}]
     uncovered = [c for c in models if not c.sections.get("topic")]
     inferred = {e["child_id"] for e in index.edges if e["provenance"].get("source_relation") == "semantic_overlay"}
@@ -88,9 +98,12 @@ def evaluate_variant(compiled, cases, *, top_k=6, token_budget=5000):
                    "inference_coverage": ratio(sum(c.path in inferred for c in uncovered), len(uncovered)),
                    "unclassified_rate": ratio(sum(index.classification(c.path)["status"] == "unclassified" for c in models), len(models)),
                    "topic_unclassified_rate": ratio(sum(not any(e["active"] and index.nodes[e["parent_id"]]["kind"] == "topic" for e in index.parents[c.path]) for c in models), len(models)),
-                   "candidate_count": len(candidates)}
-    return {"summary": {k: average(rows, k) for k in metric_names}, "diagnostics": diagnostics,
+                   "candidate_count": len(candidates), "candidate_placement_rate": ratio(len(candidates), len(index.edges))}
+    return {"entity_encoder": getattr(compiled["page_index"].encoder, "version", "custom"),
+            "branch_encoder": index.aggregate_index.encoder.version,
+            "summary": {k: average(rows, k) for k in metric_names}, "diagnostics": diagnostics,
             "categories": {category: {k: average([r for r in rows if r["category"] == category], k) for k in metric_names} for category in sorted({r["category"] for r in rows})},
+            "query_groups": {group: {k: average([r for r in rows if (r["category"] == "exact_anchor") == (group == "exact")], k) for k in metric_names} for group in ("exact", "broad")},
             "cases": rows}
 
 
@@ -98,14 +111,35 @@ def run_sample():
     source = sample_fragments()
     variants = {}
     for name, overrides in (("Data Explore", {}), ("Hierarchy disabled", {"hierarchy_enabled": False}),
+                            ("Lexical branch retrieval", {"branch_retrieval": "lexical"}),
+                            ("Hybrid branch retrieval", {"branch_retrieval": "hybrid"}),
                             ("Semantic inference disabled", {"inference_enabled": False})):
         config = {**sample_config(), **overrides}
         compiled = ContextCompiler(hierarchy_config=config).compile_fragments(deepcopy(source))
         variants[name] = evaluate_variant(compiled, sample_cases())
-    return {"schema": "hierarchy-ablation/v1", "evidence_scope": "SYNTHETIC_ONLY", "headline_benchmark": False,
+    return {"schema": "hierarchy-ablation/v1.1", "evidence_scope": "SYNTHETIC_ONLY", "headline_benchmark": False,
             "query_llm": "disabled; zero actual query LLM calls", "context_token_measurement": "unicode-aware estimate of delivered ContextBundle",
             "candidate_precision_note": "null when no candidate placements; no live LLM inference evaluated",
+            "semantic_branch_fixture": semantic_branch_experiment(),
             "variants": variants}
+
+
+def semantic_branch_experiment():
+    # A separate synthetic channel-integration experiment, no production alias changes.
+    from .semantic_fixture import build_semantic_fixture, SEMANTIC_CASES
+    index = build_semantic_fixture()["hierarchy"]
+    rows = []
+    for query, branch in SEMANTIC_CASES:
+        expected = {p for p, a in index.aggregate_pages.items() if a["name"] == branch}
+        for method in ("lexical", "hybrid"):
+            hits = index.aggregate_index.search(query, ["analysis"], top_k=3, method=method)
+            rows.append({"query": query, "expected": branch, "method": method,
+                "branch_recall_at_1": float(bool(expected & {r["path"] for r in hits[:1]})),
+                "branch_recall_at_3": float(bool(expected & {r["path"] for r in hits[:3]})),
+                "hits": hits})
+    return {"evidence_scope": "SYNTHETIC_ENCODER_CHANNEL_TEST_ONLY", "trained_dense_validated": False,
+        "summary": {method: {key: average([r for r in rows if r["method"] == method], key)
+                             for key in ("branch_recall_at_1", "branch_recall_at_3")} for method in ("lexical", "hybrid")}, "cases": rows}
 
 
 def main():

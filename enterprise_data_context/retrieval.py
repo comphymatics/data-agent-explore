@@ -42,6 +42,7 @@ class ContextRetrievalService:
         intent=None,
         mode="auto",
         hierarchy=None,
+        retrieval_strategy=None,
     ):
         """
         Bundle retrieval:
@@ -69,7 +70,7 @@ class ContextRetrievalService:
         seed_limit=min(len(self.pages),top_k+len(seen_paths)) if seen_paths else top_k
         seed_hits=self.pidx.search(query,types,scope,seed_limit)
         from .hierarchical_retrieval import route, discover
-        retrieval_trace=route(self,query,mode,hierarchy,intent)
+        retrieval_trace=route(self,query,mode,hierarchy,intent,scope,retrieval_strategy)
         seed_hits=discover(self,query,retrieval_trace,seed_hits,seed_limit,types,scope)
         assembler=BundleAssembler()
         candidates=assembler.complete(self,seed_hits,intent,types,scope)
@@ -86,7 +87,7 @@ class ContextRetrievalService:
             if token_budget is not None and aggregate_tokens+cost > token_budget//4:
                 retrieval_trace["aggregate_truncated"]=True
                 from .materialization.aggregate_pages import read_aggregate
-                context=read_aggregate(self.hierarchy,context["path"],"L0",view=retrieval_trace["hierarchy_view"])
+                context=read_aggregate(self.hierarchy,context["path"],"L0")
                 cost=_estimate_tokens(json.dumps(context,ensure_ascii=False))
                 if aggregate_tokens+cost > token_budget//4:
                     continue
@@ -138,7 +139,8 @@ class ContextRetrievalService:
             "contexts":serialized,
             "anchor_context_ids":[h.path for h in seed_hits[:top_k]],
             "anchor_candidates":[{"path":h.path,"name":h.name,"rank":i+1} for i,h in enumerate(seed_hits[:top_k])],
-            "retrieval_version":"page-serving/v4:"+self.pidx.mode+":"+getattr(self.pidx.encoder,"version","custom"),
+            "retrieval_version":"page-serving/v4:"+self.pidx.mode+":"+getattr(self.pidx.encoder,"version","custom")+
+                ":hierarchy-v1.1:"+self.hierarchy.config["routing_policy_version"]+":"+self.hierarchy.aggregate_index.encoder.version,
             "encoder_version":getattr(self.pidx.encoder,"version","custom"),
             "truncated":bool(truncation_reasons),
             "truncation_reasons":truncation_reasons,
@@ -206,7 +208,7 @@ class ContextRetrievalService:
 
     def data_read(self,path,level="L1",sections=None):
         path=self.hierarchy.resolve_path(path)
-        if path not in self.pages and path in self.hierarchy.aggregate_pages:
+        if path.startswith("data://views/") and path in self.hierarchy.aggregate_pages:
             from .materialization.aggregate_pages import read_aggregate
             return read_aggregate(self.hierarchy,path,level,sections)
         if path not in self.pages:
